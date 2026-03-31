@@ -604,9 +604,9 @@ MonoBehaviour:
   width: 20
   height: 20
   hexPrefab: {fileID: 68164687811503300, guid: 28e3832a61ed2ea4486eeb4fd42e85e6, type: 3}
-  mountainPrefab: {fileID: 896407272291576252, guid: fb14fba27e454774ca468137892b7c49, type: 3}
-  hilPrefab: {fileID: 1271418318364823301, guid: fa8324b898a5d2a459b02b98cc3a46a4, type: 3}
-  grassPrefab: {fileID: 5337093508419300163, guid: 330609a04ff857f489aa2a63ce9c35d9, type: 3}
+  mountainPrefab: {fileID: 8348950557955394488, guid: 307a4f6699922804082eb77d11c1ac43, type: 3}
+  hilPrefab: {fileID: 894668185764195345, guid: 924018539db24f542885195a2727bf13, type: 3}
+  grassPrefab: {fileID: 7121972308137710051, guid: 2141a4d44887d654dbc9635e47cacb87, type: 3}
   widthOffset: 20.5
   heightOffset: 17.5
   waterHeight: -5
