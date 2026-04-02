@@ -9,10 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4383964278880104061}
-  - component: {fileID: 4068468499050262875}
-  - component: {fileID: 2377969469349253868}
-  - component: {fileID: 5909001594479038979}
-  - component: {fileID: 358540957929218636}
   m_Layer: 0
   m_Name: P-PlayerShip
   m_TagString: Untagged
@@ -36,57 +32,6 @@ Transform:
   - {fileID: 4111734866720797305}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4068468499050262875
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 693427283123718945}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 67b9a2d9ad77ddc4f93472384bbfbf16, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ShipToggle
---- !u!114 &2377969469349253868
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 693427283123718945}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e1576d289c87ac43ad7ae64d492cfdd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ShipInfo
-  health: 0
-  maxHealth: 10
---- !u!114 &5909001594479038979
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 693427283123718945}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c0123d0a7b4c7ad428ff06b7c1bbc6b2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ShipMovement
---- !u!114 &358540957929218636
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 693427283123718945}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dbcec1c9125208b4ab1c0c23cd7ccde1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ShipWeapon
-  ship: {fileID: 2377969469349253868}
 --- !u!1001 &7763466093938986619
 PrefabInstance:
   m_ObjectHideFlags: 0
