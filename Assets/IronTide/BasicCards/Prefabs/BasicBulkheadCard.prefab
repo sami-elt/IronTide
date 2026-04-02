@@ -180,4 +180,4 @@ MonoBehaviour:
   moduleType: 0
   buyCost: 3
   sellValue: 2
-  cardData: {fileID: 11400000, guid: 6fb3f4a7b1c44f1eb1a85d08dcf79102, type: 2}
+  cardData: {fileID: 11400000, guid: 9a36186316978433c8f6bcd8e2068820, type: 2}
