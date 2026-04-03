@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-[ExecuteAlways]
+
 public class GridManager : MonoBehaviour
 {
     public int width = 18;
@@ -11,6 +11,8 @@ public class GridManager : MonoBehaviour
     private Tile[,] grid;
     public Transform rockParent;
 
+    [Header("Spacing")]
+    public float tileSize = 0.5f;
     public bool generateGrid;
 
     void Update()
@@ -28,23 +30,22 @@ public class GridManager : MonoBehaviour
     {
         ClearGrid();
 
-        grid = new Tile[width, height];  // ← SKAPA ARRAY
+        grid = new Tile[width, height];
 
         for (int x = 0; x < width; x++)
         {
             for (int z = 0; z < height; z++)
             {
                 Vector3 position = new Vector3(
-                    x - (width / 2f) + 0.5f,
-                    0.05f,
-                    z - (height / 2f) + 0.5f
+                    (x - width / 2f) * tileSize,
+                    0.5f,
+                    (z - height / 2f) * tileSize
                 );
 
                 GameObject tileObject = Instantiate(tilePrefab, position, Quaternion.identity, transform);
 
                 Tile tile = tileObject.GetComponent<Tile>();
-
-                grid[x, z] = tile;   // ← SPARA I ARRAY
+                grid[x, z] = tile;
             }
         }
     }

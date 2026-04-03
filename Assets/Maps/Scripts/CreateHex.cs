@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-
+[ExecuteAlways]
 public class CreateHex : MonoBehaviour
 {
     public int width = 20;
