@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[ExecuteAlways]
 public class WaterManager : MonoBehaviour
 {
     public Material waterMaterial;
