@@ -56,6 +56,7 @@ namespace IronTide.BasicCards
         [SerializeField] private float ownedPreviewOffsetY = 214f;
 
         private readonly List<IronTideModuleCardEntry> _availableBasicCards = new List<IronTideModuleCardEntry>();
+        private readonly List<IronTideModuleCardEntry> _availableTier2Cards = new List<IronTideModuleCardEntry>();
         private readonly List<IronTideModuleCardEntry> _availableEpicCards = new List<IronTideModuleCardEntry>();
         private readonly List<IronTideModuleCardEntry> _availableLegendaryCards = new List<IronTideModuleCardEntry>();
         private readonly List<IronTideModuleCardEntry> _currentBasicCards = new List<IronTideModuleCardEntry>();
@@ -179,6 +180,7 @@ namespace IronTide.BasicCards
             }
 
             _availableBasicCards.Clear();
+            _availableTier2Cards.Clear();
             _availableEpicCards.Clear();
             _availableLegendaryCards.Clear();
 
@@ -190,6 +192,12 @@ namespace IronTide.BasicCards
                 if (card.AppearsInBasicShop)
                 {
                     _availableBasicCards.Add(card);
+                    continue;
+                }
+
+                if (card.IsTier2)
+                {
+                    _availableTier2Cards.Add(card);
                     continue;
                 }
 
@@ -319,7 +327,7 @@ namespace IronTide.BasicCards
                 TextAlignmentOptions.Center, new Color(0.96f, 0.89f, 0.73f, 1f), headingFont);
 
             CreateLabel("Help", body,
-                "4 epic or legendary cards appear on the upper row. 5 basic cards appear on the lower row. Legendary cards are rarer.",
+                "4 Tier 2, epic, or legendary cards appear on the upper row. 5 basic cards appear on the lower row. Legendary cards are rarer.",
                 16, FontStyles.Normal, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -92f),
                 new Vector2(980f, 38f), TextAlignmentOptions.Center, new Color(0.84f, 0.88f, 0.93f, 0.92f), bodyFont);
 
@@ -328,7 +336,7 @@ namespace IronTide.BasicCards
                 RerollShop, new Color(0.76f, 0.61f, 0.18f, 0.96f), headingFont,
                 buttonSprite, buttonHoverSprite, buttonPressedSprite);
 
-            CreateLabel("AdvancedHeading", body, "Epic & Legendary Modules", 24, FontStyles.Bold,
+            CreateLabel("AdvancedHeading", body, "Tier 2, Epic & Legendary Modules", 24, FontStyles.Bold,
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                 new Vector2(0f, highPowerRowY + slotSize.y * 0.5f + 38f), new Vector2(420f, 30f),
                 TextAlignmentOptions.Center, new Color(0.96f, 0.89f, 0.73f, 1f), headingFont);
@@ -468,7 +476,8 @@ namespace IronTide.BasicCards
         {
             _currentAdvancedCards.Clear();
 
-            var epicPool = new List<IronTideModuleCardEntry>(_availableEpicCards);
+            var advancedPool = new List<IronTideModuleCardEntry>(_availableTier2Cards);
+            advancedPool.AddRange(_availableEpicCards);
             var legendaryPool = new List<IronTideModuleCardEntry>(_availableLegendaryCards);
 
             for (var i = 0; i < _advancedSlots.Count; i++)
@@ -480,7 +489,7 @@ namespace IronTide.BasicCards
                     chosenCard = DrawRandomCard(legendaryPool);
 
                 if (chosenCard == null)
-                    chosenCard = DrawRandomCard(epicPool);
+                    chosenCard = DrawRandomCard(advancedPool);
 
                 if (chosenCard == null)
                     chosenCard = DrawRandomCard(legendaryPool);
@@ -636,6 +645,12 @@ namespace IronTide.BasicCards
                 return;
             }
 
+            if (card.IsTier2)
+            {
+                _availableTier2Cards.Remove(card);
+                return;
+            }
+
             if (card.IsEpic)
             {
                 _availableEpicCards.Remove(card);
@@ -652,6 +667,13 @@ namespace IronTide.BasicCards
             {
                 if (!_availableBasicCards.Contains(card))
                     _availableBasicCards.Add(card);
+                return;
+            }
+
+            if (card.IsTier2)
+            {
+                if (!_availableTier2Cards.Contains(card))
+                    _availableTier2Cards.Add(card);
                 return;
             }
 
@@ -706,12 +728,13 @@ namespace IronTide.BasicCards
             if (_currentAdvancedCards.Count >= _advancedSlots.Count)
                 return;
 
-            var epicPool = new List<IronTideModuleCardEntry>(_availableEpicCards);
+            var advancedPool = new List<IronTideModuleCardEntry>(_availableTier2Cards);
+            advancedPool.AddRange(_availableEpicCards);
             var legendaryPool = new List<IronTideModuleCardEntry>(_availableLegendaryCards);
 
             foreach (var card in _currentAdvancedCards)
             {
-                epicPool.Remove(card);
+                advancedPool.Remove(card);
                 legendaryPool.Remove(card);
             }
 
@@ -724,7 +747,7 @@ namespace IronTide.BasicCards
                     chosenCard = DrawRandomCard(legendaryPool);
 
                 if (chosenCard == null)
-                    chosenCard = DrawRandomCard(epicPool);
+                    chosenCard = DrawRandomCard(advancedPool);
 
                 if (chosenCard == null)
                     chosenCard = DrawRandomCard(legendaryPool);
@@ -750,7 +773,7 @@ namespace IronTide.BasicCards
                 return;
 
             _rerollButton.interactable = CurrentGold >= rerollCost &&
-                (_availableBasicCards.Count > 0 || _availableEpicCards.Count > 0 || _availableLegendaryCards.Count > 0);
+                (_availableBasicCards.Count > 0 || _availableTier2Cards.Count > 0 || _availableEpicCards.Count > 0 || _availableLegendaryCards.Count > 0);
         }
 
         private static IronTideModuleCardEntry DrawRandomCard(List<IronTideModuleCardEntry> cards)
