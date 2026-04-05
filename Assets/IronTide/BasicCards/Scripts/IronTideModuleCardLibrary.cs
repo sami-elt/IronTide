@@ -52,7 +52,8 @@ namespace IronTide.BasicCards
         public bool HasPassive => !string.IsNullOrWhiteSpace(passiveName) && passiveName != "-";
         public bool UsesDice => diceCount > 0 && diceSides > 0;
         public bool AppearsInBasicShop => tier == IronTideCardTier.Tier1;
-        public bool AppearsInAdvancedShop => tier == IronTideCardTier.Epic || tier == IronTideCardTier.Legendary;
+        public bool AppearsInAdvancedShop => tier == IronTideCardTier.Tier2 || tier == IronTideCardTier.Epic || tier == IronTideCardTier.Legendary;
+        public bool IsTier2 => tier == IronTideCardTier.Tier2;
         public bool IsLegendary => tier == IronTideCardTier.Legendary;
         public bool IsEpic => tier == IronTideCardTier.Epic;
 
