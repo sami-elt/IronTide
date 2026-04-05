@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 6f4c2eba40e20824f85cbcb02c80c089
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - hexPrefab: {fileID: 68164687811503300, guid: 28e3832a61ed2ea4486eeb4fd42e85e6, type: 3}
+  - mountainPrefab: {fileID: 8348950557955394488, guid: 307a4f6699922804082eb77d11c1ac43, type: 3}
+  - hilPrefab: {fileID: 894668185764195345, guid: 924018539db24f542885195a2727bf13, type: 3}
+  - grassPrefab: {fileID: 7121972308137710051, guid: 2141a4d44887d654dbc9635e47cacb87, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
