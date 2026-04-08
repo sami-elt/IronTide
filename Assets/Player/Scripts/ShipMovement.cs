@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class ShipMovement : MonoBehaviour
 {
+    [SerializeField] private Ship ship;
+
     [SerializeField] private float speed = 4;
     private float moveIncrement;
 
@@ -12,12 +14,29 @@ public class ShipMovement : MonoBehaviour
 
     private bool moving;
 
+    public int avaliableTileDistance;
+
     private void Start()
     {
+        ship = GetComponent<Ship>();
+
         moving = false;
         moveIncrement = 0;
 
     }
+
+    private void Update()
+    {
+        if (moving)
+            Move();
+    }
+
+    public void EnterMovePhase(bool addBonus = true)
+    {
+        avaliableTileDistance = ship.shipInfo.GetMoveDistance(addBonus);
+
+    }
+
 
     public void StartMove(Vector3 targetPosition)
     {
@@ -57,11 +76,4 @@ public class ShipMovement : MonoBehaviour
         }
 
     }
-
-    private void Update()
-    {
-        if (moving)
-            Move();
-    }
-
 }

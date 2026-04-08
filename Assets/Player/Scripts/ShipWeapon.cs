@@ -2,20 +2,20 @@ using UnityEngine;
 
 public class ShipWeapon : MonoBehaviour
 {
-    [SerializeField] ShipInfo ship;
+    [SerializeField] private Ship ship;
 
-    ShipInfo target;
+    private ShipInfo target;
 
     private void Awake()
     {
-        ship = GetComponent<ShipInfo>();
+        ship = GetComponent<Ship>();
     }
 
     public void Attack()
     {
         if (target != null)
         {
-            target.Hurt(ship.GetWeaponDamage());
+            target.Hurt(ship.shipInfo.GetWeaponDamage());
             target = null;
         }
             
