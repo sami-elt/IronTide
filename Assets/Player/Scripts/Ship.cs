@@ -7,6 +7,7 @@ public class Ship : MonoBehaviour
     public ShipInfo shipInfo;
     public ShipMovement shipMovement;
     public ShipWeapon shipWeapon;
+    public ShipController shipController;
     
 
     private void Awake()
@@ -14,6 +15,7 @@ public class Ship : MonoBehaviour
         shipInfo = GetComponent<ShipInfo>();
         shipMovement = GetComponent<ShipMovement>();
         shipWeapon = GetComponent<ShipWeapon>();
+        shipController = GetComponent<ShipController>();
 
         if (enabled == false)
         {
@@ -26,6 +28,7 @@ public class Ship : MonoBehaviour
         shipInfo.enabled = false;
         shipMovement.enabled = false;
         shipWeapon.enabled = false;
+        shipController.enabled = false;
     }
 
     private void OnDisable()
@@ -38,5 +41,6 @@ public class Ship : MonoBehaviour
         shipInfo.enabled = true;
         shipMovement.enabled = true;
         shipWeapon.enabled = true;
+        shipController.enabled = true;
     }
 }

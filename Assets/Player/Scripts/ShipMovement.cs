@@ -5,7 +5,7 @@ public class ShipMovement : MonoBehaviour
 {
     [SerializeField] private Ship ship;
 
-    [SerializeField] private float speed = 4;
+    [SerializeField] private float speed = 20;
     private float moveIncrement;
 
     private float moveProgress;
@@ -15,6 +15,8 @@ public class ShipMovement : MonoBehaviour
     private bool moving;
 
     public int avaliableTileDistance;
+
+    public float distanceBetweenTiles;//Since tiles are hexagonal they do not share the same distance in all directions but keeping value to the width works well enough on the current map size.
 
     private void Start()
     {
@@ -38,13 +40,16 @@ public class ShipMovement : MonoBehaviour
     }
 
 
-    public void StartMove(Vector3 targetPosition)
+    public void StartMove(Vector3 targetPosition, int tilesMoved)
     {
         if (moving)
         {
             Debug.Log("Current move not finished, did not start new move");
+            SkipMove();
             return;
         }
+
+        targetPosition.y = transform.position.y;
 
         startPosition = transform.position;
         endPosition = targetPosition;
@@ -53,9 +58,10 @@ public class ShipMovement : MonoBehaviour
 
         moveProgress = 0;
         moving = true;
+        avaliableTileDistance -= tilesMoved;
     }
 
-    public void SkipMove()
+    private void SkipMove()
     {
         if (moving == false)
             return;
