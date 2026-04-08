@@ -1,12 +1,12 @@
 using UnityEngine;
 
-public class ShipToggle : MonoBehaviour
+public class Ship : MonoBehaviour
 {
     //Allows easy toggle of ship scripts by disabling or enabling this script
 
-    [SerializeField] private ShipInfo shipInfo;
-    [SerializeField] private ShipMovement shipMovement;
-    [SerializeField] private ShipWeapon shipWeapon;
+    public ShipInfo shipInfo;
+    public ShipMovement shipMovement;
+    public ShipWeapon shipWeapon;
     
 
     private void Awake()
