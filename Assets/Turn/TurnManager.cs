@@ -13,6 +13,7 @@ public class TurnManager : MonoBehaviour
      private int movementRoll;
      private int attackRoll;
 
+    // Dice + bonuses
      private int totalMovement;
      private int totalAttack;
 
@@ -76,7 +77,7 @@ public class TurnManager : MonoBehaviour
                 break;
 
             case TurnPhase.Attack:
-                EndTurn();
+                EndTurn(); // end turn, next player
                 break;
         }
     }

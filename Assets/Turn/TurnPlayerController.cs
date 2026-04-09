@@ -8,7 +8,7 @@ public class TurnPlayerController : MonoBehaviour
     [Header("card bonuses")]
     public int motorBonus;
     public int weaponBonus;
-    public int armorBonus;
+    public int armorBonus; //finns inget än
 
     [Header("references")]
     [SerializeField] private DiceComponent diceComponent;
