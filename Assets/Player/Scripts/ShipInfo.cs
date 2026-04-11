@@ -1,5 +1,7 @@
 using UnityEngine;
 using IronTide.BasicCards;
+using UnityEditor.SceneManagement;
+using NueGames.NueDeck.Scripts.NueExtentions;
 
 public class ShipInfo : MonoBehaviour
 {
@@ -15,26 +17,33 @@ public class ShipInfo : MonoBehaviour
     [SerializeField] private int health;
     [SerializeField] private int maxHealth = 10;
 
-    private readonly DiceComponent dice = new();
+    private int defaultWeaponRange = 6;
+
+    private DiceComponent dice;
+
+    private void Awake()
+    {
+        dice = this.AddComponent<DiceComponent>();//If diceComponent is made into a singleton this will not be needed
+    }
 
     //Reset void to be called at start of round
     public void ResetValues()
     {
         health = maxHealth;
 
-        if (weaponModule != null)
+        if (weaponModule.Id != "")
             weaponEnabled = true;
 
-        if (engineModule != null)
+        if (engineModule.Id != "")
             engineEnabled = true;
 
-        if (armorModule != null)
+        if (armorModule.Id != "")
             armorEnabled = true;
     }
 
     public void Hurt(int damage)
     {
-        health -= damage;
+        health -= damage - GetArmor();
         if (health <= 0)
         {
 
@@ -56,32 +65,33 @@ public class ShipInfo : MonoBehaviour
         if (GetActiveModuleAmount() == 1)
         {
             //Find module that is active and deactivate it
-            if (weaponModule != null)
+            if (weaponEnabled)
             {
                 weaponEnabled = false;
             }
-            else if (engineModule != null)
+            else if (engineEnabled)
             {
                 engineEnabled = false;
             }
-            else if (armorModule != null)
+            else if (armorEnabled)
             {
                 armorEnabled = false;
             }
         }
         else
         {
+            health = maxHealth;
             int destroyRoll = dice.RollD4();
 
-            if (destroyRoll == 1 && weaponModule != null)
+            if (destroyRoll == 1 && weaponEnabled)
             {
                 weaponEnabled = false;
             }
-            else if (destroyRoll == 2 && engineModule != null)
+            else if (destroyRoll == 2 && engineEnabled)
             {
                 engineEnabled = false;
             }
-            else if (destroyRoll == 3 && armorModule != null)
+            else if (destroyRoll == 3 && armorEnabled)
             {
                 armorEnabled = false;
             }
@@ -115,7 +125,7 @@ public class ShipInfo : MonoBehaviour
     {
         int damage = 0;
 
-        if (weaponModule == null)
+        if (weaponModule.Id == "")
         {
             damage = dice.RollD6();
         }
@@ -134,11 +144,24 @@ public class ShipInfo : MonoBehaviour
         return damage;
     }
 
+    public int GetWeaponRange()
+    {
+        if (weaponModule.Id != "")
+        {
+            return defaultWeaponRange;
+        }
+        else
+        {
+            return 6; //*REPLACE WITH* Weapon range;
+        }
+
+    }
+
     public int GetMoveDistance(bool addBonus)
     {
         int distance = 0;
 
-        if (engineModule == null)
+        if (engineModule.Id == "")
         {
             distance = dice.RollD6();
         }
