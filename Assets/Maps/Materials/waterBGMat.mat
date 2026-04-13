@@ -7,16 +7,15 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: GridColor
+  m_Name: waterBGMat
   m_Shader: {fileID: 4800000, guid: ee7e4c9a5f6364b688a332c67fc32cca, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
-  - _EMISSION
   - _METALLICSPECGLOSSMAP
   - _NORMALMAP
   m_InvalidKeywords: []
-  m_LightmapFlags: 2
+  m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
@@ -29,11 +28,11 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 6f3505d79a28fc145be4a629bd43777e, type: 3}
+        m_Texture: {fileID: 2800000, guid: 2e01ab18a26269b48b505c6f44904240, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0.30798322, y: 0.09239497}
     - _BumpMap:
-        m_Texture: {fileID: 2800000, guid: 6f3505d79a28fc145be4a629bd43777e, type: 3}
+        m_Texture: {fileID: 2800000, guid: 2e01ab18a26269b48b505c6f44904240, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ClearCoatMap:
@@ -57,11 +56,11 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 6f3505d79a28fc145be4a629bd43777e, type: 3}
+        m_Texture: {fileID: 2800000, guid: b78422648b59f8c468d0d44e12c5693c, type: 3}
         m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
+        m_Offset: {x: 0.30798322, y: 0.09239497}
     - _MetallicGlossMap:
-        m_Texture: {fileID: 2800000, guid: 6f3505d79a28fc145be4a629bd43777e, type: 3}
+        m_Texture: {fileID: 2800000, guid: 2e01ab18a26269b48b505c6f44904240, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OcclusionMap:
@@ -115,7 +114,7 @@ Material:
     - _Parallax: 0.005
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _Smoothness: 0.696
+    - _Smoothness: 0.227
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
@@ -125,9 +124,9 @@ Material:
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.03867035, g: 0.51050615, b: 0.745283, a: 1}
-    - _Color: {r: 0.03867035, g: 0.5105061, b: 0.745283, a: 1}
-    - _EmissionColor: {r: 0.018066937, g: 0.080663316, b: 0.5471698, a: 1}
+    - _BaseColor: {r: 0.028969381, g: 0.07407436, b: 0.1981132, a: 0.39607844}
+    - _Color: {r: 0.10760052, g: 0.28710002, b: 0.735849, a: 0.25490198}
+    - _EmissionColor: {r: 0.016820932, g: 0.016820932, b: 0.16981131, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
