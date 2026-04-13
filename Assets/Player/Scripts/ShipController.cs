@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -6,114 +5,101 @@ public class ShipController : MonoBehaviour
 {
     [SerializeField] private Ship ship;
 
-
+    private readonly int playerLayer = 3;
 
 
     private void Start()
     {
         ship = GetComponent<Ship>();
 
+        ship.shipInfo.ResetValues();
     }
 
-    private void Update()
-    {
-
-    }
 
     private void OnInteract()
     {
-        //Should only be done if player wishes to move/has the ability to move
-        TryMoveShipToTileAtMouse();
+        if (enabled == false || !ship.turnPlayerController.IsMyTurn)
+            return;
+
+        switch (TurnManager.Instance.currentPhase)
+        {
+            case TurnPhase.Move:
+                TryMoveShipToTileAtMouse();
+                break;
+
+            case TurnPhase.Attack:
+                if (!ship.shipWeapon.HasAttacked)
+                    TryAttackingShipAtMouse();
+                break;
+        }
+
     }
 
-    public void TryMoveShipToTileAtMouse()
+
+    private void TryMoveShipToTileAtMouse()
     {
         Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
 
         if (!Physics.Raycast(ray, out RaycastHit hitInfo))
         {
-            Debug.Log("Ray did not hit any collider");
             return;
         }
 
-        HexTile tile;
-        if (hitInfo.collider.TryGetComponent(out HexTile component))
+
+        Vector3 tilePos = hitInfo.transform.position;
+        if (!ship.shipMovement.ReachableTileMoveCosts.TryGetValue(tilePos, out int tileDistance))
         {
-            tile = component;
-        }
-        else
-        {
-            Debug.Log("Object hit by ray does not have the HexTile component");
+            Debug.Log("Tile is not currently reachable");
             return;
         }
 
-        if (!tile.isWalkable)
-        {
-            Debug.Log("Tile is not walkable");
-            return;
-        }
-
-        Vector3 tilePos = tile.gameObject.transform.position;
-        tilePos.y = transform.position.y;
-        int tileDistance =  (int)(Vector3.Distance(tilePos, transform.position) / ship.shipMovement.distanceBetweenTiles);
-        if (ship.shipMovement.avaliableTileDistance < tileDistance)
-        {
-            Debug.Log("Target tile is too far for the current avaliable range");
-            return;
-        }
-
-        float angleToTarget = Vector3.Angle((tilePos - transform.position).normalized, Vector3.forward);
-
-        //Rounding the angle to nearest 10th
-        angleToTarget *= 0.1f;
-        angleToTarget = (int)angleToTarget;
-        angleToTarget *= 10;
-        
-        bool acceptedAngle = angleToTarget == 30 || angleToTarget == 90 || angleToTarget == 140;//Could likely be done better
-        if (!acceptedAngle)
-        {
-            Debug.Log("No straight path to tile");
-            return;
-        }
-
-        if (ObsticlesOnPath(tilePos, tileDistance))
-        {
-            Debug.Log("Obsticle(s) in the way");
-            return;
-        }
-
-        ship.shipMovement.StartMove(tilePos,tileDistance);
+        ship.shipMovement.StartMove(tilePos, tileDistance);
     }
 
-    private bool ObsticlesOnPath(Vector3 tilePos, int tileDistance)
+    private void TryAttackingShipAtMouse()
     {
-        Vector3 tileDirection = (tilePos - transform.position).normalized;
-        float tileSize = ship.shipMovement.distanceBetweenTiles;
+        Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
 
-        for (int step = 0; step < tileDistance; step++)
+        if (!Physics.Raycast(ray, out RaycastHit hitInfo))
         {
-            Vector3 stepPos = (1 + step) * tileSize * tileDirection + transform.position;
-            stepPos.y += 10;
+            return;
+        }
 
-            if (Physics.Raycast(stepPos, Vector3.down, out RaycastHit hitInfo))
+        Vector3 hitPos = hitInfo.transform.position;
+        if (!hitInfo.collider.TryGetComponent(out Ship component))
+        {
+            if (!TileOccupiedByPlayer(hitPos, out component))
             {
-                if (!hitInfo.collider.GetComponent<HexTile>().isWalkable)
-                {
-                    return true;
-                }
+                Debug.Log("Tile does not hold player");
+                return;
             }
         }
 
+        hitPos = component.transform.position;
+        if (!ship.shipWeapon.ReachableTargetsDamageReduction.TryGetValue(hitPos, out int damageReduction))
+        {
+            Debug.Log("Player is not reachable");
+            return;
+        }
+
+        ship.shipWeapon.SelectTarget(hitInfo.collider.gameObject);
+        ship.shipWeapon.Attack(damageReduction);
+    }
+
+
+    private bool TileOccupiedByPlayer(Vector3 tilePos, out Ship ship)
+    {
+        ship = null;
+        Ray ray = new(tilePos, Vector3.up);
+        if (Physics.Raycast(ray, out RaycastHit hitInfo, Mathf.Infinity, playerLayer))
+        {
+            if (hitInfo.collider.TryGetComponent(out Ship component))
+            {
+                ship = component;
+            }
+
+            return true;
+        }
         return false;
-    }
-
-    public void VisualizeReachableTiles()
-    {
-
-    }
-
-    public void VisualizeWeaponRange()
-    {
-
     }
 }

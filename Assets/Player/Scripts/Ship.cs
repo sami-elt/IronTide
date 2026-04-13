@@ -8,7 +8,7 @@ public class Ship : MonoBehaviour
     public ShipMovement shipMovement;
     public ShipWeapon shipWeapon;
     public ShipController shipController;
-    
+    public TurnPlayerController turnPlayerController;
 
     private void Awake()
     {
@@ -16,6 +16,7 @@ public class Ship : MonoBehaviour
         shipMovement = GetComponent<ShipMovement>();
         shipWeapon = GetComponent<ShipWeapon>();
         shipController = GetComponent<ShipController>();
+        turnPlayerController = GetComponent<TurnPlayerController>();
 
         if (enabled == false)
         {
