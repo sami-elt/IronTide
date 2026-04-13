@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 5326623181522260129}
   - component: {fileID: 4174277555462946843}
   - component: {fileID: 4504841130291987600}
+  - component: {fileID: -3308494960007981533}
   m_Layer: 3
   m_Name: P-PlayerShip
   m_TagString: Untagged
@@ -55,6 +56,7 @@ MonoBehaviour:
   shipMovement: {fileID: 0}
   shipWeapon: {fileID: 0}
   shipController: {fileID: 0}
+  turnPlayerController: {fileID: 0}
 --- !u!114 &2377969469349253868
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -67,44 +69,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e1576d289c87ac43ad7ae64d492cfdd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShipInfo
-  weaponModule:
-    id: 
-    displayName: 
-    archetype: 0
-    tier: 0
-    baseModifier: 0
-    diceCount: 0
-    diceSides: 0
-    passiveKey: 
-    passiveName: 
-    passiveDescription: 
-    artworkSprite: {fileID: 0}
   weaponEnabled: 0
-  engineModule:
-    id: 
-    displayName: 
-    archetype: 0
-    tier: 0
-    baseModifier: 0
-    diceCount: 0
-    diceSides: 0
-    passiveKey: 
-    passiveName: 
-    passiveDescription: 
-    artworkSprite: {fileID: 0}
   engineEnabled: 0
-  armorModule:
-    id: 
-    displayName: 
-    archetype: 0
-    tier: 0
-    baseModifier: 0
-    diceCount: 0
-    diceSides: 0
-    passiveKey: 
-    passiveName: 
-    passiveDescription: 
-    artworkSprite: {fileID: 0}
   armorEnabled: 0
   health: 0
   maxHealth: 10
@@ -121,9 +87,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShipMovement
   ship: {fileID: 0}
-  speed: 4
+  speed: 20
   avaliableTileDistance: 0
-  distanceBetweenTiles: 0
+  distanceBetweenTiles: 20.5
 --- !u!114 &358540957929218636
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -137,6 +103,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShipWeapon
   ship: {fileID: 0}
+  bulletObject: {fileID: 0}
 --- !u!114 &5326623181522260129
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -150,7 +117,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShipController
   ship: {fileID: 0}
-  phase: 0
 --- !u!114 &4174277555462946843
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -202,6 +168,25 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.6, y: 0.7, z: 2.2}
   m_Center: {x: 0, y: 0.05, z: 0}
+--- !u!114 &-3308494960007981533
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 693427283123718945}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2c6d2df9475b4e198f8d37b66f00851, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TurnPlayerController
+  playerID: 0
+  motorBonus: 0
+  weaponBonus: 0
+  armorBonus: 0
+  diceComponent: {fileID: 0}
+  shipMovement: {fileID: 0}
+  shipWeapon: {fileID: 0}
 --- !u!1 &6292613071403146322
 GameObject:
   m_ObjectHideFlags: 0

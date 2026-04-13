@@ -1,6 +1,5 @@
 using UnityEngine;
 using IronTide.BasicCards;
-using UnityEditor.SceneManagement;
 using NueGames.NueDeck.Scripts.NueExtentions;
 
 public class ShipInfo : MonoBehaviour
@@ -19,7 +18,7 @@ public class ShipInfo : MonoBehaviour
 
     public bool Sunk { get; private set; }
 
-    private int defaultWeaponRange = 6;
+    private readonly int defaultWeaponRange = 6;
 
     private DiceComponent dice;
 
@@ -34,19 +33,22 @@ public class ShipInfo : MonoBehaviour
         health = maxHealth;
         SetSunk(false);
 
-        if (WeaponModule.Id != "")
+        if (WeaponModule != null && WeaponModule.Id != "")
             weaponEnabled = true;
 
-        if (EngineModule.Id != "")
+        if (EngineModule != null && EngineModule.Id != "")
             engineEnabled = true;
 
-        if (ArmorModule.Id != "")
+        if (ArmorModule != null && ArmorModule.Id != "")
             armorEnabled = true;
     }
 
     public void Hurt(int damage)
     {
-        health -= damage - GetArmor();
+        int totalDamage = damage - GetArmor();
+        if (totalDamage > 0)
+            health -= totalDamage;
+
         if (health <= 0)
         {
 
@@ -115,7 +117,7 @@ public class ShipInfo : MonoBehaviour
     {
         Sunk = value;
 
-        gameObject.SetActive(Sunk);
+        gameObject.SetActive(!Sunk);
     }
 
     public void SetWeaponModule(IronTideModuleCardEntry weaponModule)
@@ -204,11 +206,7 @@ public class ShipInfo : MonoBehaviour
     {
         int damage = 0;
 
-        if (WeaponModule.Id == "")
-        {
-            damage = dice.RollD6();
-        }
-        else
+        if (WeaponModule != null && WeaponModule.Id != "")
         {
             for (int i = 0; i < WeaponModule.DiceCount; i++)
             {
@@ -217,7 +215,10 @@ public class ShipInfo : MonoBehaviour
 
             if (weaponEnabled)
                 damage += WeaponModule.BaseModifier;
-
+        }
+        else
+        {
+            damage = dice.RollD6();
         }
 
         return damage;
@@ -225,7 +226,7 @@ public class ShipInfo : MonoBehaviour
 
     public int GetWeaponRange()
     {
-        if (WeaponModule.Id != "")
+        if (WeaponModule != null && WeaponModule.Id != "")
         {
             return defaultWeaponRange;
         }
@@ -240,11 +241,7 @@ public class ShipInfo : MonoBehaviour
     {
         int distance = 0;
 
-        if (EngineModule.Id == "")
-        {
-            distance = dice.RollD6();
-        }
-        else
+        if (EngineModule != null && EngineModule.Id != "")
         {
             for (int i = 0; i < EngineModule.DiceCount; i++)
             {
@@ -253,6 +250,10 @@ public class ShipInfo : MonoBehaviour
 
             if (addBonus && engineEnabled)
                 distance += EngineModule.BaseModifier;
+        }
+        else
+        {
+            distance = dice.RollD6();
         }
 
         return distance;
