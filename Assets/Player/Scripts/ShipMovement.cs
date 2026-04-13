@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
 
@@ -12,37 +13,40 @@ public class ShipMovement : MonoBehaviour
     private Vector3 startPosition;
     private Vector3 endPosition;
 
-    private bool moving;
+    public bool Moving { get; private set; }
 
+    public Dictionary<Vector3, int> ReachableTileMoveCosts { get; private set; } = new();
     public int avaliableTileDistance;
 
     public float distanceBetweenTiles;//Since tiles are hexagonal they do not share the same distance in all directions but keeping value to the width works well enough on the current map size.
 
-    private void Start()
+    private void Awake()
     {
         ship = GetComponent<Ship>();
+    }
 
-        moving = false;
+    private void Start()
+    {
+        Moving = false;
         moveIncrement = 0;
-
     }
 
     private void Update()
     {
-        if (moving)
+        if (Moving)
             Move();
     }
 
     public void EnterMovePhase(bool addBonus = true)
     {
         avaliableTileDistance = ship.shipInfo.GetMoveDistance(addBonus);
-
+        FindReachableTiles();
     }
 
 
     public void StartMove(Vector3 targetPosition, int tilesMoved)
     {
-        if (moving)
+        if (Moving)
         {
             Debug.Log("Current move not finished, did not start new move");
             SkipMove();
@@ -57,16 +61,19 @@ public class ShipMovement : MonoBehaviour
         moveIncrement = speed / Vector3.Distance(endPosition, startPosition);
 
         moveProgress = 0;
-        moving = true;
+        Moving = true;
         avaliableTileDistance -= tilesMoved;
+
+        Vector3 direction = (endPosition - startPosition).normalized;
+        transform.rotation = Quaternion.Euler(direction);
     }
 
     private void SkipMove()
     {
-        if (moving == false)
+        if (Moving == false)
             return;
 
-        moving = false;
+        Moving = false;
         moveProgress = 1;
         transform.position = endPosition;
     }
@@ -78,8 +85,55 @@ public class ShipMovement : MonoBehaviour
 
         if (transform.position == endPosition)
         {
-            moving = false;
+            Moving = false;
+            FindReachableTiles();
         }
 
+    }
+
+    //Goes through the straight paths the player can take and saves the position and cost for reachable tiles.
+    private void FindReachableTiles()
+    {
+        ReachableTileMoveCosts.Clear();
+
+        for (int side = 0; side < 6; side++)
+        {
+            Vector3 origin = transform.position;
+            Vector3 direction = Quaternion.AngleAxis(30 + side * 60, Vector3.up) * Vector3.forward;
+            float tileSize = ship.shipMovement.distanceBetweenTiles;
+
+            //Debug.Log("side: " + side);
+
+            for (int step = 0; step < ship.shipMovement.avaliableTileDistance; step++)
+            {
+                //Debug.Log("step: " + step);
+                Vector3 stepPos = tileSize * direction + origin;
+                stepPos.y += 10;
+
+                if (!Physics.Raycast(stepPos, Vector3.down, out RaycastHit hitInfo))
+                {
+                    //Debug.LogWarning("Broke because of missed raycast");
+                    break;
+                }
+
+                Vector3 newOrigin = hitInfo.transform.position;
+                origin.x = newOrigin.x;
+                origin.z = newOrigin.z;
+
+                hitInfo.collider.TryGetComponent(out HexTile tileComponent);
+                hitInfo.collider.TryGetComponent(out Ship shipComponent);
+
+                if (shipComponent == null && tileComponent.isWalkable)
+                {
+                    ReachableTileMoveCosts.TryAdd(hitInfo.transform.position, step + 1);
+                }
+                else
+                {
+                    //Debug.LogWarning($"Broke because of obstacle or not walkable: shipComponent: {shipComponent}, tileComponent: {tileComponent}. Cast from position {stepPos}, hit object at {hitInfo.transform.position}.");
+                    break;
+                }
+            }
+            //Debug.LogWarning("Reached end of side " + side);
+        }
     }
 }
