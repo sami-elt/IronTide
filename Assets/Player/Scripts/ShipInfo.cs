@@ -13,8 +13,8 @@ public class ShipInfo : MonoBehaviour
     public IronTideModuleCardEntry ArmorModule { get; private set; }
     [SerializeField] private bool armorEnabled;
 
-    [SerializeField] private int health;
-    [SerializeField] private int maxHealth = 10;
+    public int Health { get; private set; }
+    public int MaxHealth { get; } = 10;
 
     public bool Sunk { get; private set; }
 
@@ -30,7 +30,7 @@ public class ShipInfo : MonoBehaviour
     //Reset void to be called at start of round
     public void ResetValues()
     {
-        health = maxHealth;
+        Health = MaxHealth;
         SetSunk(false);
 
         if (WeaponModule != null && WeaponModule.Id != "")
@@ -47,16 +47,16 @@ public class ShipInfo : MonoBehaviour
     {
         int totalDamage = damage - GetArmor();
         if (totalDamage > 0)
-            health -= totalDamage;
+            Health -= totalDamage;
 
-        if (health <= 0)
+        if (Health <= 0)
         {
 
             DestroyModule();
 
             if (GetActiveModuleAmount() > 0)
             {
-                health = maxHealth;
+                Health = MaxHealth;
             }
             else
             {

@@ -64,8 +64,8 @@ public class ShipMovement : MonoBehaviour
         Moving = true;
         avaliableTileDistance -= tilesMoved;
 
-        Vector3 direction = (endPosition - startPosition).normalized;
-        transform.rotation = Quaternion.Euler(direction);
+        Quaternion newRotation = Quaternion.FromToRotation(Vector3.forward, (endPosition - startPosition).normalized);
+        transform.rotation = newRotation;
     }
 
     private void SkipMove()
@@ -123,7 +123,7 @@ public class ShipMovement : MonoBehaviour
                 hitInfo.collider.TryGetComponent(out HexTile tileComponent);
                 hitInfo.collider.TryGetComponent(out Ship shipComponent);
 
-                if (shipComponent == null && tileComponent.isWalkable)
+                if (shipComponent == null && tileComponent != null && tileComponent.isWalkable)
                 {
                     ReachableTileMoveCosts.TryAdd(hitInfo.transform.position, step + 1);
                 }
