@@ -9,6 +9,9 @@ public class ShipController : MonoBehaviour
 
     public GameObject activeIndicator;
 
+    private float interactWait = 0.2f;
+    private float nextInteract = 0f;
+
 
     private void Start()
     {
@@ -55,6 +58,11 @@ public class ShipController : MonoBehaviour
 
     private void TryMoveShipToTileAtMouse()
     {
+        if (ship.shipMovement.Moving)
+        {
+            ship.shipMovement.SkipMove();
+        }
+
         Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
 
         if (!Physics.Raycast(ray, out RaycastHit hitInfo))
