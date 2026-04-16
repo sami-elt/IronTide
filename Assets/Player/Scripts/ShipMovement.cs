@@ -49,9 +49,12 @@ public class ShipMovement : MonoBehaviour
         if (Moving)
         {
             Debug.Log("Current move not finished, did not start new move");
-            SkipMove();
             return;
         }
+
+        ReachableTileMoveCosts.Clear();
+        Moving = true;
+        moveProgress = 0;
 
         targetPosition.y = transform.position.y;
 
@@ -60,15 +63,13 @@ public class ShipMovement : MonoBehaviour
 
         moveIncrement = speed / Vector3.Distance(endPosition, startPosition);
 
-        moveProgress = 0;
-        Moving = true;
         avaliableTileDistance -= tilesMoved;
 
         Quaternion newRotation = Quaternion.FromToRotation(Vector3.forward, (endPosition - startPosition).normalized);
         transform.rotation = newRotation;
     }
 
-    private void SkipMove()
+    public void SkipMove()
     {
         if (Moving == false)
             return;
@@ -76,6 +77,7 @@ public class ShipMovement : MonoBehaviour
         Moving = false;
         moveProgress = 1;
         transform.position = endPosition;
+        FindReachableTiles();
     }
 
     private void Move()
