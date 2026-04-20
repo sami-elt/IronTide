@@ -23,6 +23,7 @@ public class GenerateMap : MonoBehaviour
         ClearMap();
         Generate();
         SpawnZones();
+
     }
 
     void SetupSpawnPoints()
@@ -40,7 +41,7 @@ public class GenerateMap : MonoBehaviour
 
     void Generate()
     {
-        float spacing = 1.08f;
+        float spacing = 1.05f;
 
         for (int x = -radius; x <= radius; x++)
         {
@@ -63,21 +64,41 @@ public class GenerateMap : MonoBehaviour
                     (z + 100) * noiseScale
                 );
 
+                // EXTRA LAGER 
+                float noise2 = Mathf.PerlinNoise(
+                    (x - 50) * noiseScale * 0.5f,
+                    (z - 50) * noiseScale * 0.5f
+                );
+
+                float combined = (noise + noise2) * 0.5f;
+
                 bool inCenter = IsInCenter(x, z);
                 bool inSafeZone = IsInSafeZone(x, z);
 
-                // 🔥 HINDER LOGIK (ren och kontrollerad)
-                if (!inCenter && !inSafeZone)
+                //  HINDER LOGIK 
+               
+
+                if (inSafeZone)
                 {
-                    if (noise > 0.8f)
+                    prefab = waterPrefab;
+                }
+                else
+                {
+                    float rand = Random.value;
+
+                    if (rand > 0.9f)        // 10%
                         prefab = rockPrefab;
-                    else if (noise > 0.65f)
+                    else if (rand > 0.8f)   // 10%
                         prefab = hillPrefab;
+                    else
+                        prefab = waterPrefab;
                 }
 
                 Instantiate(prefab, pos, Quaternion.identity, transform);
+                
             }
         }
+        
     }
 
     bool IsInCenter(int x, int z)
@@ -95,7 +116,7 @@ public class GenerateMap : MonoBehaviour
                 new Vector2(spawn.x, spawn.y)
             );
 
-            if (dist < 3.5f) // 🔥 zon storlek
+            if (dist < 4f) // zon storlek
                 return true;
         }
         return false;
