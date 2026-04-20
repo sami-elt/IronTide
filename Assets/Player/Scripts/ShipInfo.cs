@@ -1,48 +1,66 @@
 using UnityEngine;
 using IronTide.BasicCards;
+using NueGames.NueDeck.Scripts.NueExtentions;
 
 public class ShipInfo : MonoBehaviour
 {
-    [SerializeField] private IronTideModuleCardEntry weaponModule;
+    public IronTideModuleCardEntry WeaponModule { get; private set; }
     [SerializeField] private bool weaponEnabled;
 
-    [SerializeField] private IronTideModuleCardEntry engineModule;
+    public IronTideModuleCardEntry EngineModule { get; private set; }
     [SerializeField] private bool engineEnabled;
 
-    [SerializeField] private IronTideModuleCardEntry armorModule;
+    public IronTideModuleCardEntry ArmorModule { get; private set; }
     [SerializeField] private bool armorEnabled;
 
-    [SerializeField] private int health;
-    [SerializeField] private int maxHealth = 10;
+    public int Health { get; private set; }
+    public int MaxHealth { get; } = 10;
 
-    private readonly DiceComponent dice = new();
+    public bool Sunk { get; private set; }
+
+    private readonly int defaultWeaponRange = 6;
+
+    private DiceComponent dice;
+
+    private void Awake()
+    {
+        dice = this.AddComponent<DiceComponent>();//If diceComponent is made into a singleton this will not be needed
+    }
 
     //Reset void to be called at start of round
     public void ResetValues()
     {
-        health = maxHealth;
+        Health = MaxHealth;
+        SetSunk(false);
 
-        if (weaponModule != null)
+        if (WeaponModule != null && WeaponModule.Id != "")
             weaponEnabled = true;
 
-        if (engineModule != null)
+        if (EngineModule != null && EngineModule.Id != "")
             engineEnabled = true;
 
-        if (armorModule != null)
+        if (ArmorModule != null && ArmorModule.Id != "")
             armorEnabled = true;
     }
 
     public void Hurt(int damage)
     {
-        health -= damage;
-        if (health <= 0)
+        int totalDamage = damage - GetArmor();
+        if (totalDamage > 0)
+            Health -= totalDamage;
+
+        if (Health <= 0)
         {
 
             DestroyModule();
 
             if (GetActiveModuleAmount() > 0)
             {
-                health = maxHealth;
+                Health = MaxHealth;
+            }
+            else
+            {
+                SetSunk(true);
             }
 
         }
@@ -56,15 +74,15 @@ public class ShipInfo : MonoBehaviour
         if (GetActiveModuleAmount() == 1)
         {
             //Find module that is active and deactivate it
-            if (weaponModule != null)
+            if (weaponEnabled)
             {
                 weaponEnabled = false;
             }
-            else if (engineModule != null)
+            else if (engineEnabled)
             {
                 engineEnabled = false;
             }
-            else if (armorModule != null)
+            else if (armorEnabled)
             {
                 armorEnabled = false;
             }
@@ -73,15 +91,15 @@ public class ShipInfo : MonoBehaviour
         {
             int destroyRoll = dice.RollD4();
 
-            if (destroyRoll == 1 && weaponModule != null)
+            if (destroyRoll == 1 && weaponEnabled)
             {
                 weaponEnabled = false;
             }
-            else if (destroyRoll == 2 && engineModule != null)
+            else if (destroyRoll == 2 && engineEnabled)
             {
                 engineEnabled = false;
             }
-            else if (destroyRoll == 3 && armorModule != null)
+            else if (destroyRoll == 3 && armorEnabled)
             {
                 armorEnabled = false;
             }
@@ -94,6 +112,79 @@ public class ShipInfo : MonoBehaviour
             }
         }
     }
+
+    private void SetSunk(bool value)
+    {
+        Sunk = value;
+
+        gameObject.SetActive(!Sunk);
+    }
+
+    public void SetWeaponModule(IronTideModuleCardEntry weaponModule)
+    {
+        IronTideModuleArchetype archetype = weaponModule.Archetype;
+
+        if (weaponModule == null)
+        {
+            WeaponModule = null;
+            return;
+        }
+
+        bool isWeapon = archetype == IronTideModuleArchetype.LongRangeWeapon ||
+            archetype == IronTideModuleArchetype.MediumRangeWeapon ||
+            archetype == IronTideModuleArchetype.ShortRangeWeapon;
+
+        if (isWeapon)
+        {
+            WeaponModule = weaponModule;
+            return;
+        }
+
+        Debug.LogWarning($"Module attempted to set as weapon for {this} is not a module of any weapon archetype and remains unchanged.");
+    }
+
+    public void SetEngineModule(IronTideModuleCardEntry engineModule)
+    {
+        IronTideModuleArchetype archetype = engineModule.Archetype;
+
+        if (engineModule == null)
+        {
+            EngineModule = null;
+            return;
+        }
+
+        bool isEngine = archetype == IronTideModuleArchetype.Engine;
+
+        if (isEngine)
+        {
+            EngineModule = engineModule;
+            return;
+        }
+
+        Debug.LogWarning($"Module attempted to set as engine for {this} is not a module of the engine archetype and remains unchanged.");
+    }
+
+    public void SetArmorModule(IronTideModuleCardEntry armorModule)
+    {
+        IronTideModuleArchetype archetype = armorModule.Archetype;
+
+        if (armorModule == null)
+        {
+            ArmorModule = null;
+            return;
+        }
+
+        bool isArmor = archetype == IronTideModuleArchetype.Armor;
+
+        if (isArmor)
+        {
+            ArmorModule = armorModule;
+            return;
+        }
+
+        Debug.LogWarning($"Module attempted to set as armor for {this} is not a module of the armor archetype and remains unchanged.");
+    }
+
 
     public int GetActiveModuleAmount()
     {
@@ -115,54 +206,65 @@ public class ShipInfo : MonoBehaviour
     {
         int damage = 0;
 
-        if (weaponModule == null)
+        if (WeaponModule != null && WeaponModule.Id != "")
         {
-            damage = dice.RollD6();
-        }
-        else
-        {
-            for (int i = 0; i < weaponModule.DiceCount; i++)
+            for (int i = 0; i < WeaponModule.DiceCount; i++)
             {
-                damage += dice.RollDice(weaponModule.DiceSides);
+                damage += dice.RollDice(WeaponModule.DiceSides);
             }
 
             if (weaponEnabled)
-                damage += weaponModule.BaseModifier;
-
+                damage += WeaponModule.BaseModifier;
+        }
+        else
+        {
+            damage = dice.RollD6();
         }
 
         return damage;
     }
 
-    public int GetMoveDistance(bool addBonus)
+    public int GetWeaponRange()
     {
-        int distance = 0;
-
-        if (engineModule == null)
+        if (WeaponModule != null && WeaponModule.Id != "")
         {
-            distance = dice.RollD6();
+            return defaultWeaponRange;
         }
         else
         {
-            for (int i = 0; i < engineModule.DiceCount; i++)
-            {
-                distance += dice.RollDice(engineModule.DiceSides);
-            }
-
-            if (addBonus && engineEnabled)
-                distance += engineModule.BaseModifier;
+            return 6; //*REPLACE WITH* Weapon range;
         }
 
-        return distance;
+    }
+
+    public int GetMoveDistance(bool addBonus = true)
+    {
+
+        DiceComponent myDice = GetComponent<DiceComponent>();
+
+        if (myDice != null)
+        {
+            int value = myDice.RollD6();
+
+            Debug.Log(gameObject.name + "rullade " + value);
+            
+            return value;
+        }
+        else
+        {
+            Debug.Log("saknar dice");
+            return 0;
+        }
+
     }
 
     public int GetArmor()
     {
         int armor = 0;
 
-        if (armorModule != null && armorEnabled)
+        if (ArmorModule != null && armorEnabled)
         {
-            armor = armorModule.BaseModifier;
+            armor = ArmorModule.BaseModifier;
         }
 
         return armor;
