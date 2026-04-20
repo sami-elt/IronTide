@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 80074650}
   - component: {fileID: 80074649}
   - component: {fileID: 80074652}
+  - component: {fileID: 80074653}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -155,7 +156,7 @@ Camera:
   m_GameObject: {fileID: 80074648}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
+  m_ClearFlags: 2
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
@@ -180,8 +181,8 @@ Camera:
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
-  orthographic: 0
-  orthographic size: 5
+  orthographic: 1
+  orthographic size: 20
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -205,13 +206,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 80074648}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 50, z: 0}
+  m_LocalRotation: {x: 0.5, y: 0, z: 0, w: 0.8660254}
+  m_LocalPosition: {x: 0, y: 25, z: -15}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 60, y: 0, z: 0}
 --- !u!114 &80074652
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -256,6 +257,67 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &80074653
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 80074648}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 928a5cf253cfffd4d8d88ae8ee2bf6ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraController
+  zoomSpeed: 10
+  minZoom: 5
+  maxZoom: 20
+--- !u!1 &239628069
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 239628071}
+  - component: {fileID: 239628070}
+  m_Layer: 0
+  m_Name: WaterManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &239628070
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 239628069}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c40dff38788dabf489af6ba4b114dd83, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WaterManager
+  waterMaterial: {fileID: 2100000, guid: b9baa854fb852504dbcc2839b9d10e8c, type: 2}
+  speed: 0.05
+--- !u!4 &239628071
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 239628069}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &616196643
 GameObject:
   m_ObjectHideFlags: 0
@@ -427,13 +489,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e95d7a98ecdb08447b770fb1cf484452, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GenerateMap
-  radius: 15
+  radius: 10
   hexSize: 1
   waterPrefab: {fileID: 1448183548141105987, guid: 7bbf86add4209474c97ad27d990d3481, type: 3}
   rockPrefab: {fileID: 8318852798768373249, guid: 5a4160f8723d1584e970d3cc5f3b0f3d, type: 3}
   hillPrefab: {fileID: 8944545742752766772, guid: 12aaf84adcb5d88488dbdb71c13e8bc0, type: 3}
-  zonePrefab: {fileID: 8798842275653806996, guid: 735cae48e442c7c4fb4df5748fb14a00, type: 3}
-  noiseScale: 0.2
+  zonePrefab: {fileID: 851940027801791030, guid: 78c0b74ec896900429b205de44faaaf8, type: 3}
+  noiseScale: 0.4
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -441,3 +503,4 @@ SceneRoots:
   - {fileID: 80074651}
   - {fileID: 616196645}
   - {fileID: 990012155}
+  - {fileID: 239628071}
