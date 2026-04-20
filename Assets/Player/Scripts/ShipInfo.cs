@@ -237,26 +237,25 @@ public class ShipInfo : MonoBehaviour
 
     }
 
-    public int GetMoveDistance(bool addBonus)
+    public int GetMoveDistance(bool addBonus = true)
     {
-        int distance = 0;
 
-        if (EngineModule != null && EngineModule.Id != "")
+        DiceComponent myDice = GetComponent<DiceComponent>();
+
+        if (myDice != null)
         {
-            for (int i = 0; i < EngineModule.DiceCount; i++)
-            {
-                distance += dice.RollDice(EngineModule.DiceSides);
-            }
+            int value = myDice.RollD6();
 
-            if (addBonus && engineEnabled)
-                distance += EngineModule.BaseModifier;
+            Debug.Log(gameObject.name + "rullade " + value);
+            
+            return value;
         }
         else
         {
-            distance = dice.RollD6();
+            Debug.Log("saknar dice");
+            return 0;
         }
 
-        return distance;
     }
 
     public int GetArmor()
