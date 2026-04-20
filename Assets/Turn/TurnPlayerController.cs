@@ -4,6 +4,7 @@ public class TurnPlayerController : MonoBehaviour
 {
     public int playerID;
     private bool isMyTurn = false;
+    public bool IsMyTurn { get => isMyTurn; }
 
     [Header("card bonuses")]
     public int motorBonus;
@@ -13,6 +14,7 @@ public class TurnPlayerController : MonoBehaviour
     [Header("references")]
     [SerializeField] private DiceComponent diceComponent;
     [SerializeField] private ShipMovement shipMovement;
+    [SerializeField] private ShipWeapon shipWeapon;
 
     public void SetMyTurn(bool value)
     {
@@ -36,6 +38,11 @@ public class TurnPlayerController : MonoBehaviour
         if (shipMovement == null)
         {
             shipMovement = GetComponent<ShipMovement>();
+        }
+
+        if (shipWeapon == null)
+        {
+            shipWeapon = GetComponent<ShipWeapon>();
         }
     }
 
@@ -79,24 +86,25 @@ public class TurnPlayerController : MonoBehaviour
 
     private void RollMovementPhase()
     {
-        if (diceComponent == null)
-        {
-            Debug.Log("diceComponent missing on player " + playerID);
-            return;
-        }
+        //if (diceComponent == null)
+        //{
+        //    Debug.Log("diceComponent missing on player " + playerID);
+        //    return;
+        //}
 
-        int moveRoll = diceComponent.RollD6();
-        TurnManager.Instance.SetMovementRoll(moveRoll);
+        //int moveRoll = diceComponent.RollD6();
+        //TurnManager.Instance.SetMovementRoll(moveRoll);
 
-        int totalMove = TurnManager.Instance.GetTotalMovement();
+        //int totalMove = TurnManager.Instance.GetTotalMovement();
 
         if (shipMovement != null)
         {
-            shipMovement.avaliableTileDistance = totalMove;
+            //shipMovement.avaliableTileDistance = totalMove;
+            shipMovement.EnterMovePhase(true);
         }
 
-        Debug.Log("Player " + playerID + " rolled a " + moveRoll + " for movement.");
-        Debug.Log("Player " + playerID + " has a total movement of " + totalMove + ".");
+        //Debug.Log("Player " + playerID + " rolled a " + moveRoll + " for movement.");
+        //Debug.Log("Player " + playerID + " has a total movement of " + totalMove + ".");
 
         TurnManager.Instance.NextPhase();
     }
@@ -110,15 +118,15 @@ public class TurnPlayerController : MonoBehaviour
             return;
         }
 
-        if (shipMovement.avaliableTileDistance <= 0)
-        {
+        //if (shipMovement.avaliableTileDistance <= 0)
+        //{
             Debug.Log("Player " + playerID + " finished moving.");
             TurnManager.Instance.NextPhase();
-        }
-        else
-        {
-            Debug.Log("Player " + playerID + " still has " + shipMovement.avaliableTileDistance + " movement left.");
-        }
+        //}
+        //else
+        //{
+        //    Debug.Log("Player " + playerID + " still has " + shipMovement.avaliableTileDistance + " movement left.");
+        //}
     }
 
     private void HandleMovePhaseAutoProgress()
@@ -142,17 +150,19 @@ public class TurnPlayerController : MonoBehaviour
 
     private void RollAttackPhase()
     {
-        if (diceComponent == null)
-        {
-            Debug.Log("diceComponent missing on player " + playerID);
-            return;
-        }
+        //if (diceComponent == null)
+        //{
+        //    Debug.Log("diceComponent missing on player " + playerID);
+        //    return;
+        //}
 
-        int attackRoll = diceComponent.RollD6();
-        TurnManager.Instance.SetAttackRoll(attackRoll);
+        //int attackRoll = diceComponent.RollD6();
+        //TurnManager.Instance.SetAttackRoll(attackRoll);
 
-        Debug.Log("Player " + playerID + " rolled a " + attackRoll + " for attack.");
-        Debug.Log("Player " + playerID + " has a total attack of " + TurnManager.Instance.GetTotalAttack() + ".");
+        //Debug.Log("Player " + playerID + " rolled a " + attackRoll + " for attack.");
+        //Debug.Log("Player " + playerID + " has a total attack of " + TurnManager.Instance.GetTotalAttack() + ".");
+
+        shipWeapon.EnterAttackPhase();
 
         TurnManager.Instance.NextPhase();
     }
@@ -160,6 +170,7 @@ public class TurnPlayerController : MonoBehaviour
     private void FinishAttackPhase()
     {
         // For now, just end the turn after rolling attack
+
         Debug.Log("Player " + playerID + " finished attacking.");
         TurnManager.Instance.NextPhase();
     }
