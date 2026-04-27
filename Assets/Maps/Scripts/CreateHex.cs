@@ -85,6 +85,7 @@ public class CreateHex : MonoBehaviour
                 }
             }
         }
+
         TileType GetTileType(int x, int z)
         {
             float r = Random.value;
