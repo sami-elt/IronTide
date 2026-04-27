@@ -75,8 +75,10 @@ public class GenerateMap : MonoBehaviour
                 bool inCenter = IsInCenter(x, z);
                 bool inSafeZone = IsInSafeZone(x, z);
 
-                //  HINDER LOGIK 
                
+
+                //  HINDER LOGIK 
+
 
                 if (inSafeZone)
                 {
@@ -93,9 +95,18 @@ public class GenerateMap : MonoBehaviour
                     else
                         prefab = waterPrefab;
                 }
+                //if (!inSafeZone)
+                //{
+                //    float rand = Random.value;
+
+                //    if (rand > 0.97f)
+                //        SpawnObstacle(rockPrefab, pos);
+
+                //    //else if (rand > 0.85f)
+                //    //    SpawnObstacle(hillPrefab, pos);
+                //}
 
                 Instantiate(prefab, pos, Quaternion.identity, transform);
-                
             }
         }
         
@@ -120,6 +131,20 @@ public class GenerateMap : MonoBehaviour
                 return true;
         }
         return false;
+    }
+
+    void SpawnObstacle(GameObject prefab, Vector3 basePos)
+    {
+        float height = 0.4f;
+
+        Vector3 offset = new Vector3(0, height, 0);
+
+        Quaternion rot = Quaternion.Euler(0, Random.Range(0, 360), 0);
+
+        GameObject obj = Instantiate(prefab, basePos + offset, rot, transform);
+
+        // 🔥 viktig: random scale
+        obj.transform.localScale *= Random.Range(0.8f, 1.2f);
     }
 
     Vector3 GetClosestTile(Vector3 target)

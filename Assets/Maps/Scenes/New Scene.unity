@@ -492,10 +492,10 @@ MonoBehaviour:
   radius: 10
   hexSize: 1
   waterPrefab: {fileID: 1448183548141105987, guid: 7bbf86add4209474c97ad27d990d3481, type: 3}
-  rockPrefab: {fileID: 8318852798768373249, guid: 5a4160f8723d1584e970d3cc5f3b0f3d, type: 3}
-  hillPrefab: {fileID: 8944545742752766772, guid: 12aaf84adcb5d88488dbdb71c13e8bc0, type: 3}
+  rockPrefab: {fileID: 3008977382173054919, guid: f025ddc7d34c1b942a0d0f6420ca0307, type: 3}
+  hillPrefab: {fileID: 709235362745707184, guid: 374e7b335af0c5049a26dd7fd2ac6002, type: 3}
   zonePrefab: {fileID: 851940027801791030, guid: 78c0b74ec896900429b205de44faaaf8, type: 3}
-  noiseScale: 0.4
+  noiseScale: 0.2
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
