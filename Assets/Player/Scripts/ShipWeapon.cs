@@ -30,14 +30,26 @@ public class ShipWeapon : MonoBehaviour
     {
         if (target != null)
         {
+            //skapa skottet
+            if (bulletObject != null)
+            {
+                // Skapar prefab på skeppets position
+                GameObject newBullet = Instantiate(bulletObject, transform.position, Quaternion.identity);
+
+            
+                WeaponProjectiles projScript = newBullet.GetComponent<WeaponProjectiles>();
+
+                // Kollar om det finns script
+                if (projScript != null)
+                {
+                    projScript.Shoot(target.transform);
+                }
+            }
+
+          
             target.Hurt(ship.shipInfo.GetWeaponDamage() - damageReduction);
             target = null;
             HasAttacked = true;
-
-            //Vector3 bulletPosition = transform.position;
-            //Quaternion bulletRotation = Quaternion.FromToRotation(Vector3.forward, Vector3.Normalize(target.transform.position - bulletPosition));
-            //Instantiate(bulletObject, bulletPosition, bulletRotation);
-            
         }
 
     }
