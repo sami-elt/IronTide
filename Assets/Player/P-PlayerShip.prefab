@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 4174277555462946843}
   - component: {fileID: 4504841130291987600}
   - component: {fileID: -3308494960007981533}
+  - component: {fileID: 6511011773060550837}
   m_Layer: 3
   m_Name: P-PlayerShip
   m_TagString: Untagged
@@ -72,8 +73,6 @@ MonoBehaviour:
   weaponEnabled: 0
   engineEnabled: 0
   armorEnabled: 0
-  health: 0
-  maxHealth: 10
 --- !u!114 &5909001594479038979
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -117,6 +116,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShipController
   ship: {fileID: 0}
+  activeIndicator: {fileID: 0}
 --- !u!114 &4174277555462946843
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -187,6 +187,21 @@ MonoBehaviour:
   diceComponent: {fileID: 0}
   shipMovement: {fileID: 0}
   shipWeapon: {fileID: 0}
+--- !u!114 &6511011773060550837
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 693427283123718945}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0ed08e7ac835ce45a747547fc5068c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShipReachVisuals
+  ship: {fileID: 0}
+  reachableVisual: {fileID: 2323039463109383914, guid: 38c135c828391904eb298636f7765868, type: 3}
+  enemyVisual: {fileID: 2323039463109383914, guid: fc816f1758e8a464b9df2ec2ac87952f, type: 3}
 --- !u!1 &6292613071403146322
 GameObject:
   m_ObjectHideFlags: 0
