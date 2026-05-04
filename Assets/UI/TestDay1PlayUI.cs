@@ -64,7 +64,7 @@ public class TestDay1PlayUI : MonoBehaviour
                     break;
 
                 case TurnPhase.RollAttack:
-                    phaseIndicator.SetText($"Press m to continue to attack phase");
+                    phaseIndicator.SetText($"Press m to move again or a to attack");
                     break;
 
                 case TurnPhase.Attack:
