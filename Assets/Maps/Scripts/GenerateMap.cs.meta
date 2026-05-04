@@ -1,2 +1,15 @@
 fileFormatVersion: 2
 guid: e95d7a98ecdb08447b770fb1cf484452
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - waterPrefab: {fileID: 1448183548141105987, guid: 7bbf86add4209474c97ad27d990d3481, type: 3}
+  - rockPrefab: {fileID: 3506294749796821811, guid: bd9113df4024557478da8283940583c8, type: 3}
+  - hillPrefab: {fileID: 3153400372265611219, guid: d7986ef901370494abd95da4cbe3420d, type: 3}
+  - zonePrefab: {fileID: 851940027801791030, guid: 78c0b74ec896900429b205de44faaaf8, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

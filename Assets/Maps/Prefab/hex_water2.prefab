@@ -176,7 +176,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 98b41cc1407c58f4c86a4ab5b8d847f5, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: b9baa854fb852504dbcc2839b9d10e8c, type: 2}
+      objectReference: {fileID: 2100000, guid: 924b17aa0491eba42882a161e00ab356, type: 2}
     - target: {fileID: 919132149155446097, guid: 98b41cc1407c58f4c86a4ab5b8d847f5, type: 3}
       propertyPath: m_Name
       value: hex_water2
