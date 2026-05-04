@@ -7,7 +7,11 @@ public class TurnManager : MonoBehaviour
     public TurnPlayerController[] Players;
     public int CurrentPlayerIndex = 0;
 
-     public TurnPhase currentPhase;
+    public TurnPhase currentPhase;
+
+    public int MovesUsedthisTurn { get; private set; }
+    public bool HasAttackedThisTurn { get; private set; }
+
 
      // Dice results
      private int movementRoll;
@@ -49,7 +53,10 @@ public class TurnManager : MonoBehaviour
         attackRoll = 0;
         totalMovement = 0;
         totalAttack = 0;
-        
+
+        MovesUsedthisTurn = 0;
+        HasAttackedThisTurn = false;
+
         //Start first phase
         currentPhase = TurnPhase.RollMovement;
 
@@ -142,6 +149,38 @@ public class TurnManager : MonoBehaviour
     public int GetTotalAttack()
     {
         return totalAttack;
+    }
+
+    public void StartMovePhase()
+    {
+        currentPhase = TurnPhase.Move;
+        Debug.Log("Move phase has started");
+    }
+
+    public void FinishMoveAction()
+    {
+        MovesUsedthisTurn++;
+
+        if (MovesUsedthisTurn >= 2)
+        {
+            EndTurn();
+            return;
+        }
+
+        currentPhase = TurnPhase.RollAttack;
+        Debug.Log("Choose second action: press M for move or A for attack");
+    }
+
+    public void StartAttackPhase()
+    {
+        currentPhase = TurnPhase.Attack;
+        Debug.Log("Attack phase has started");
+    }
+
+    public void FinishAttackAction()
+    {
+        HasAttackedThisTurn = true;
+        EndTurn();
     }
 
 }
