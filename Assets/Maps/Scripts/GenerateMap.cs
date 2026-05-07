@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 
+[ExecuteAlways]
 public class GenerateMap : MonoBehaviour
 {
     [Header("Map")]
@@ -15,6 +16,7 @@ public class GenerateMap : MonoBehaviour
     Vector2Int[] spawnPoints;
     public Vector3[] spawnWorldPositions;
 
+    public int playerCount = 2; // ändra senare via UI
     void Start()
     {
         SetupSpawnPoints();
@@ -23,15 +25,49 @@ public class GenerateMap : MonoBehaviour
         SpawnPlayerStarts();
     }
 
+    Vector2Int[] allSpawnPoints = new Vector2Int[]
+{
+    new Vector2Int(-5, 10),
+     new Vector2Int(5, -10),
+    new Vector2Int(10, 0),
+    new Vector2Int(-10, 0)
+
+};
+
+
+    //void SetupSpawnPoints()
+    //{
+    //    spawnPoints = new Vector2Int[playerCount];
+
+    //    for (int i = 0; i < playerCount; i++)
+    //    {
+    //        int index = Mathf.RoundToInt(i * (allSpawnPoints.Length / (float)playerCount));
+    //        spawnPoints[i] = allSpawnPoints[index];
+    //    }
+    //}
     void SetupSpawnPoints()
     {
-        spawnPoints = new Vector2Int[]
+        if (playerCount == 2)
         {
-            new Vector2Int(-5, 10),
-            new Vector2Int(-10, 0),
-            new Vector2Int(10, 0),
-            new Vector2Int(5, -10)
-        };
+            spawnPoints = new Vector2Int[]
+            {
+            allSpawnPoints[0],
+            allSpawnPoints[1] // 🔥 mittemot varandra
+            };
+        }
+        else if (playerCount == 3)
+        {
+            spawnPoints = new Vector2Int[]
+            {
+            allSpawnPoints[0],
+            allSpawnPoints[1],
+            allSpawnPoints[2]
+            };
+        }
+        else // 4 players
+        {
+            spawnPoints = allSpawnPoints;
+        }
     }
 
     void Generate()
