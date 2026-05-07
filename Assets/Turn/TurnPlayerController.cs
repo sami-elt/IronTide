@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class TurnPlayerController : MonoBehaviour
@@ -53,10 +54,16 @@ public class TurnPlayerController : MonoBehaviour
             return;
         }
         HandleMovePhaseAutoProgress();
+        HandleAttackPhaseAutoProgress();
 
         if (Input.GetKeyDown(KeyCode.M))
         {
-            HandlePhase();
+            HandleMoveKey();
+        }
+
+        if (Input.GetKeyDown(KeyCode.A))
+        {
+            HandleAttackKey();
         }
     }
 
@@ -114,14 +121,19 @@ public class TurnPlayerController : MonoBehaviour
         if (shipMovement == null)
         {
             Debug.Log("shipMovement missing on player " + playerID);
-            TurnManager.Instance.NextPhase();
+            TurnManager.Instance.FinishMoveAction();
             return;
+        }
+
+        if (shipMovement.Moving)
+        {
+            shipMovement.SkipMove();
         }
 
         //if (shipMovement.avaliableTileDistance <= 0)
         //{
             Debug.Log("Player " + playerID + " finished moving.");
-            TurnManager.Instance.NextPhase();
+            TurnManager.Instance.FinishMoveAction();
         //}
         //else
         //{
@@ -141,10 +153,15 @@ public class TurnPlayerController : MonoBehaviour
             return;
         }
 
+        if (shipMovement.Moving)
+        {
+            return;
+        }
+
         if (shipMovement.avaliableTileDistance <= 0)
         {
             Debug.Log("Player " + playerID + " finished moving.");
-            TurnManager.Instance.NextPhase();
+            TurnManager.Instance.FinishMoveAction();
         }
     }
 
@@ -173,5 +190,86 @@ public class TurnPlayerController : MonoBehaviour
 
         Debug.Log("Player " + playerID + " finished attacking.");
         TurnManager.Instance.NextPhase();
+    }
+
+    private void HandleMoveKey()
+    {
+        var phase = TurnManager.Instance.currentPhase;
+
+        switch (phase)
+        {
+            case TurnPhase.RollMovement:
+                StartMoveAction();
+                break;
+
+            case TurnPhase.Move:
+                TryFinishMovePhase();
+                break;
+
+            case TurnPhase.RollAttack:
+                StartMoveAction();
+                break;
+        }
+    }
+
+    private void HandleAttackKey()
+    {
+        if (TurnManager.Instance.currentPhase != TurnPhase.RollAttack)
+        {
+            return;
+        }
+
+        if (shipWeapon == null)
+        {
+            Debug.Log("shipWeapon missing on player " + playerID);
+            return;
+        }
+
+        StartAttackAction();
+    }
+
+    private void StartMoveAction()
+    {
+        if (shipMovement == null)
+        {
+            Debug.Log("shipMovement missing on player " + playerID);
+            return;
+        }
+
+        shipMovement.EnterMovePhase(true);
+        TurnManager.Instance.StartMovePhase();
+    }
+
+    private void StartAttackAction()
+    {
+        if (shipWeapon == null)
+        {
+            Debug.Log("shipWeapon missing on player " + playerID);
+            return;
+        }
+
+        shipWeapon.EnterAttackPhase();
+        TurnManager.Instance.StartAttackPhase();
+    }
+
+    private void HandleAttackPhaseAutoProgress()
+    {
+        if (TurnManager.Instance.currentPhase != TurnPhase.Attack)
+        {
+            return;
+        }
+
+        if (shipWeapon == null)
+        {
+            return;
+        }
+
+        if (shipWeapon.HasAttacked)
+        {
+            Debug.Log("Player " + playerID + " finished attacking.");
+            TurnManager.Instance.FinishAttackAction();
+        }
+
+       
     }
 }
