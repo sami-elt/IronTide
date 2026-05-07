@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem.HID;
 
 public class ShipReachVisuals : MonoBehaviour
 {
@@ -29,7 +31,7 @@ public class ShipReachVisuals : MonoBehaviour
         }
 
         TurnPhase phase = TurnManager.Instance.currentPhase;
-        
+
         if (phase == TurnPhase.RollMovement || phase == TurnPhase.RollAttack)
         {
             if (visualsDrawn == true)
@@ -55,12 +57,15 @@ public class ShipReachVisuals : MonoBehaviour
         if (currentTileDistance > 0 && !visualsDrawn)
         {
             previousTileDistance = currentTileDistance;
-            positions = new(ship.shipMovement.ReachableTileMoveCosts.Keys);
+            Dictionary<Vector3, int> moveCosts = ship.shipMovement.ReachableTileMoveCosts;
+            positions = new(moveCosts.Keys);
             ClearVisuals();
 
             for (int i = 0; i < positions.Count; i++)
             {
                 GameObject visual = Instantiate(reachableVisual, positions[i], Quaternion.identity);
+                TMP_Text visualText = visual.GetComponentInChildren<TMP_Text>();
+                visualText.text = moveCosts[positions[i]].ToString();
                 visuals.Add(visual);
 
                 visualsDrawn = true;
@@ -77,13 +82,22 @@ public class ShipReachVisuals : MonoBehaviour
         bool hasAttacked = ship.shipWeapon.HasAttacked;
         if (!hasAttacked && !visualsDrawn)
         {
-            positions = new(ship.shipWeapon.ReachableTargetsDamageReduction.Keys);
+            Dictionary<Vector3, int> damageReductions = ship.shipWeapon.ReachableTargetsDamageReduction;
+            positions = new(damageReductions.Keys);
             ClearVisuals();
 
             for (int i = 0; i < positions.Count; i++)
             {
                 GameObject visual = Instantiate(enemyVisual, positions[i], Quaternion.identity);
-                visuals.Add(visual);
+
+                TMP_Text visualText = visual.GetComponentInChildren<TMP_Text>();
+                int damageReduction = damageReductions[positions[i]];
+                if (damageReduction == 0)
+                    visualText.text = "+-0";
+                else
+                    visualText.text = $"-{damageReduction}";
+
+                    visuals.Add(visual);
             }
             visualsDrawn = true;
         }
