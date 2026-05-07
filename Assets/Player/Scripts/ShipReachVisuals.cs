@@ -82,7 +82,7 @@ public class ShipReachVisuals : MonoBehaviour
         bool hasAttacked = ship.shipWeapon.HasAttacked;
         if (!hasAttacked && !visualsDrawn)
         {
-            Dictionary<Vector3, int> damageReductions = ship.shipWeapon.ReachableTargetsDamageReduction;
+            Dictionary<Vector3, int> damageReductions = ship.shipWeapon.ReachablePositionsDamageModifiers;
             positions = new(damageReductions.Keys);
             ClearVisuals();
 
