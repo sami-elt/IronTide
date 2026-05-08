@@ -20,7 +20,7 @@ public class ShipInfo : MonoBehaviour
 
     public bool Sunk { get; private set; }
 
-    private readonly int defaultWeaponRange = 6;
+    private readonly int defaultWeaponRange = 4;
 
     private DiceComponent dice;
 
@@ -230,18 +230,39 @@ public class ShipInfo : MonoBehaviour
     {
         if (WeaponModule != null && WeaponModule.Id != "")
         {
-            return defaultWeaponRange;
+            int range = defaultWeaponRange;
+
+            switch (WeaponModule.Archetype)
+            {
+                case IronTideModuleArchetype.LongRangeWeapon:
+                    range = 6;
+                    break;
+
+                case IronTideModuleArchetype.MediumRangeWeapon:
+                    range = 4;
+                    break;
+
+                case IronTideModuleArchetype.ShortRangeWeapon:
+                    range = 4;
+                    break;
+            }
+
+            return range;
         }
         else
         {
-            return 6; //*REPLACE WITH* Weapon range;
+            return defaultWeaponRange;
         }
 
     }
 
     public int GetDistanceDamageModifier(int distance)
     {
-        if (WeaponModule.Archetype == IronTideModuleArchetype.ShortRangeWeapon)
+        if (WeaponModule == null)
+        {
+            return 0;
+        }
+        else if (WeaponModule.Archetype == IronTideModuleArchetype.ShortRangeWeapon)
         {
             return ShortRangeModifiers[distance];
         }
