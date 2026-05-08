@@ -82,8 +82,8 @@ public class ShipReachVisuals : MonoBehaviour
         bool hasAttacked = ship.shipWeapon.HasAttacked;
         if (!hasAttacked && !visualsDrawn)
         {
-            Dictionary<Vector3, int> damageReductions = ship.shipWeapon.ReachablePositionsDamageModifiers;
-            positions = new(damageReductions.Keys);
+            Dictionary<Vector3, int> damageModifiers = ship.shipWeapon.ReachablePositionsDamageModifiers;
+            positions = new(damageModifiers.Keys);
             ClearVisuals();
 
             for (int i = 0; i < positions.Count; i++)
@@ -91,11 +91,11 @@ public class ShipReachVisuals : MonoBehaviour
                 GameObject visual = Instantiate(enemyVisual, positions[i], Quaternion.identity);
 
                 TMP_Text visualText = visual.GetComponentInChildren<TMP_Text>();
-                int damageReduction = damageReductions[positions[i]];
-                if (damageReduction == 0)
-                    visualText.text = "+-0";
+                int damageModifier = damageModifiers[positions[i]];
+                if (damageModifier == 0)
+                    visualText.text = "";
                 else
-                    visualText.text = $"-{damageReduction}";
+                    visualText.text = $"{damageModifier}";
 
                     visuals.Add(visual);
             }
