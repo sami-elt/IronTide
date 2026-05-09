@@ -11,6 +11,7 @@ public class ShipWeapon : MonoBehaviour
     public bool HasAttacked { get; private set; }
 
     public Dictionary<Vector3, int> ReachablePositionsDamageModifiers = new();
+    public Dictionary<Vector3, int> ReachableTargetsDamageModifiers = new();
 
     [SerializeField] GameObject bulletObject;
 
@@ -50,8 +51,8 @@ public class ShipWeapon : MonoBehaviour
         }
     }
 
-    //Goes through the straight paths the player can take and saves the position and reduced damage of possible targets.
-    private void FindReachableTargets()
+    //Goes through the straight paths the player can take and saves the position and damage modifiers of possible targets.
+    public void FindReachableTargets()
     {
         ReachablePositionsDamageModifiers.Clear();
 
@@ -92,6 +93,7 @@ public class ShipWeapon : MonoBehaviour
                 if (shipComponent != null)
                 {    
                     ReachablePositionsDamageModifiers.TryAdd(shipComponent.transform.position, obstacleDamageModifier + distanceDamageModifier);
+                    ReachableTargetsDamageModifiers.TryAdd(shipComponent.transform.position, obstacleDamageModifier + distanceDamageModifier);
                 }
                 else if(tileIsWalkable)
                 {
