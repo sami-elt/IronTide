@@ -41,6 +41,7 @@ public class ShipMovement : MonoBehaviour
     {
         avaliableTileDistance = ship.shipInfo.GetMoveDistance(addBonus);
         FindReachableTiles();
+        ship.shipWeapon.FindReachableTargets();
     }
 
 
@@ -78,6 +79,7 @@ public class ShipMovement : MonoBehaviour
         moveProgress = 1;
         transform.position = endPosition;
         FindReachableTiles();
+        ship.shipWeapon.FindReachableTargets();
     }
 
     private void Move()
@@ -89,6 +91,7 @@ public class ShipMovement : MonoBehaviour
         {
             Moving = false;
             FindReachableTiles();
+            ship.shipWeapon.FindReachableTargets();
         }
 
     }
