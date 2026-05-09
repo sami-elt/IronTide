@@ -12,10 +12,12 @@ public class ShipReachVisuals : MonoBehaviour
 
     private List<GameObject> visuals = new();
     private List<Vector3> positions = new();
-
     private bool visualsDrawn;
 
-    private int previousTileDistance;
+    private List<GameObject> extraVisuals = new();
+    private List<Vector3> extraPositions = new();
+    private bool extraVisualsDrawn;
+
 
     private void Start()
     {
@@ -37,6 +39,7 @@ public class ShipReachVisuals : MonoBehaviour
             if (visualsDrawn == true)
             {
                 visualsDrawn = false;
+                visualsDrawn = false;
             }
             ClearVisuals();
         }
@@ -44,63 +47,122 @@ public class ShipReachVisuals : MonoBehaviour
 
 
         if (phase == TurnPhase.Move)
-            ShowWalkable();
+        {
+            UpdateMovePhaseVisual();
+        }
+
 
         if (phase == TurnPhase.Attack)
-            ShowHitable();
+        {
+            UpdateAttackPhaseVisual();
+        }
+
 
     }
 
-    private void ShowWalkable()
+    private void UpdateMovePhaseVisual()
     {
+        bool moving = ship.shipMovement.Moving;
         int currentTileDistance = ship.shipMovement.avaliableTileDistance;
-        if (currentTileDistance > 0 && !visualsDrawn)
+        if (currentTileDistance > 0 && !moving && !visualsDrawn)
         {
-            previousTileDistance = currentTileDistance;
-            Dictionary<Vector3, int> moveCosts = ship.shipMovement.ReachableTileMoveCosts;
-            positions = new(moveCosts.Keys);
-            ClearVisuals();
-
-            for (int i = 0; i < positions.Count; i++)
-            {
-                GameObject visual = Instantiate(reachableVisual, positions[i], Quaternion.identity);
-                TMP_Text visualText = visual.GetComponentInChildren<TMP_Text>();
-                visualText.text = moveCosts[positions[i]].ToString();
-                visuals.Add(visual);
-
-                visualsDrawn = true;
-            }
+            ShowWalkable();
+            ShowHittable(false);
+            visualsDrawn = true;
         }
-        else if (currentTileDistance != previousTileDistance && visualsDrawn)
+        else if (moving && visualsDrawn)
         {
             visualsDrawn = false;
+            ClearVisuals();
         }
     }
 
-    private void ShowHitable()
+    private void UpdateAttackPhaseVisual()
     {
         bool hasAttacked = ship.shipWeapon.HasAttacked;
         if (!hasAttacked && !visualsDrawn)
         {
-            Dictionary<Vector3, int> damageReductions = ship.shipWeapon.ReachableTargetsDamageReduction;
-            positions = new(damageReductions.Keys);
+            ShowHittable();
+        }
+        else if (hasAttacked && visualsDrawn)
+        {
+            visualsDrawn = false;
+            ClearVisuals();
+        }
+    }
+
+    public void UpdateExtraVisual()
+    {
+        //Add logic for displaying and clearing extra visuals, such as showing reachable tiles while a certain key is held
+    }
+
+    private void ShowWalkable(bool clearVisuals = true)
+    {
+        if (clearVisuals)
             ClearVisuals();
 
-            for (int i = 0; i < positions.Count; i++)
-            {
-                GameObject visual = Instantiate(enemyVisual, positions[i], Quaternion.identity);
+        Dictionary<Vector3, int> moveCosts = ship.shipMovement.ReachableTileMoveCosts;
+        positions = new(moveCosts.Keys);
 
-                TMP_Text visualText = visual.GetComponentInChildren<TMP_Text>();
-                int damageReduction = damageReductions[positions[i]];
-                if (damageReduction == 0)
-                    visualText.text = "+-0";
-                else
-                    visualText.text = $"-{damageReduction}";
-
-                    visuals.Add(visual);
-            }
+        for (int i = 0; i < positions.Count; i++)
+        {
+            GameObject visual = Instantiate(reachableVisual, positions[i], Quaternion.identity);
+            TMP_Text visualText = visual.GetComponentInChildren<TMP_Text>();
+            visualText.text = moveCosts[positions[i]].ToString();
+            visuals.Add(visual);
             visualsDrawn = true;
         }
+        
+    }
+
+    private void ShowReachable(bool clearVisuals = true)
+    {
+        if (clearVisuals)
+            ClearVisuals();
+
+        Dictionary<Vector3, int> damageModifiers = ship.shipWeapon.ReachablePositionsDamageModifiers;
+        positions = new(damageModifiers.Keys);
+
+        for (int i = 0; i < positions.Count; i++)
+        {
+            GameObject visual = Instantiate(enemyVisual, positions[i], Quaternion.identity);
+
+            TMP_Text visualText = visual.GetComponentInChildren<TMP_Text>();
+            int damageModifier = damageModifiers[positions[i]];
+            if (damageModifier == 0)
+                visualText.text = "";
+            else
+                visualText.text = $"{damageModifier}";
+
+            visuals.Add(visual);
+            visualsDrawn = true;
+        }
+        
+    }
+
+    private void ShowHittable(bool clearVisuals = true)
+    {
+        if (clearVisuals)
+            ClearVisuals();
+
+        Dictionary<Vector3, int> damageModifiers = ship.shipWeapon.ReachableTargetsDamageModifiers;
+        positions = new(damageModifiers.Keys);
+
+        for (int i = 0; i < positions.Count; i++)
+        {
+            GameObject visual = Instantiate(enemyVisual, positions[i], Quaternion.identity);
+
+            TMP_Text visualText = visual.GetComponentInChildren<TMP_Text>();
+            int damageModifier = damageModifiers[positions[i]];
+            if (damageModifier == 0)
+                visualText.text = "";
+            else
+                visualText.text = $"{damageModifier}";
+
+            visuals.Add(visual);
+            visualsDrawn = true;
+        }
+        
     }
 
     private void ClearVisuals()
@@ -113,5 +175,17 @@ public class ShipReachVisuals : MonoBehaviour
             Destroy(g);
         }
         visuals.Clear();
+    }
+
+    private void ClearExtraVisuals()
+    {
+        if (extraVisuals.Count == 0)
+            return;
+
+        foreach (GameObject g in extraVisuals)
+        {
+            Destroy(g);
+        }
+        extraVisuals.Clear();
     }
 }

@@ -101,14 +101,14 @@ public class ShipController : MonoBehaviour
         }
 
         hitPos = component.transform.position;
-        if (!ship.shipWeapon.ReachableTargetsDamageReduction.TryGetValue(hitPos, out int damageReduction))
+        if (!ship.shipWeapon.ReachablePositionsDamageModifiers.TryGetValue(hitPos, out int damageModifier))
         {
             Debug.Log("Player is not reachable");
             return;
         }
 
         ship.shipWeapon.SelectTarget(hitInfo.collider.gameObject);
-        ship.shipWeapon.Attack(damageReduction);
+        ship.shipWeapon.Attack(damageModifier);
     }
 
 
