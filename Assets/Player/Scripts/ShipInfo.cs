@@ -1,6 +1,8 @@
 using UnityEngine;
 using IronTide.BasicCards;
 using NueGames.NueDeck.Scripts.NueExtentions;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 public class ShipInfo : MonoBehaviour
 {
@@ -18,7 +20,7 @@ public class ShipInfo : MonoBehaviour
 
     public bool Sunk { get; private set; }
 
-    private readonly int defaultWeaponRange = 6;
+    private readonly int defaultWeaponRange = 4;
 
     private DiceComponent dice;
 
@@ -228,16 +230,69 @@ public class ShipInfo : MonoBehaviour
     {
         if (WeaponModule != null && WeaponModule.Id != "")
         {
-            return defaultWeaponRange;
+            int range = defaultWeaponRange;
+
+            switch (WeaponModule.Archetype)
+            {
+                case IronTideModuleArchetype.LongRangeWeapon:
+                    range = 6;
+                    break;
+
+                case IronTideModuleArchetype.MediumRangeWeapon:
+                    range = 4;
+                    break;
+
+                case IronTideModuleArchetype.ShortRangeWeapon:
+                    range = 4;
+                    break;
+            }
+
+            return range;
         }
         else
         {
-            return 6; //*REPLACE WITH* Weapon range;
+            return defaultWeaponRange;
         }
 
     }
 
-    public int GetMoveDistance(bool addBonus = true)
+    public int GetDistanceDamageModifier(int distance)
+    {
+        if (WeaponModule == null)
+        {
+            return 0;
+        }
+        else if (WeaponModule.Archetype == IronTideModuleArchetype.ShortRangeWeapon)
+        {
+            return ShortRangeModifiers[distance];
+        }
+        else if (WeaponModule.Archetype == IronTideModuleArchetype.LongRangeWeapon)
+        {
+            return LongRangeModifiers[distance];
+        }
+        else return 0;
+    }
+
+    //Gathered as { Distance, Modifier }
+    public static Dictionary<int, int> ShortRangeModifiers { get; } = new Dictionary<int, int>
+    {
+        { 1, 2 },
+        { 2, 0 },
+        { 3, -1 },
+        { 4, -2 }
+    };
+
+    public static Dictionary<int, int> LongRangeModifiers { get; } = new Dictionary<int, int>
+    {
+        { 1, 0 },
+        { 2, 0 },
+        { 3, 0 },
+        { 4, 0 },
+        { 5, 1 },
+        { 6, 2 }
+    };
+
+    public int GetMoveDistance(bool addBonus)
     {
 
         DiceComponent myDice = GetComponent<DiceComponent>();
@@ -269,4 +324,5 @@ public class ShipInfo : MonoBehaviour
 
         return armor;
     }
+
 }

@@ -10,7 +10,8 @@ public class ShipWeapon : MonoBehaviour
 
     public bool HasAttacked { get; private set; }
 
-    public Dictionary<Vector3, int> ReachableTargetsDamageReduction = new();
+    public Dictionary<Vector3, int> ReachablePositionsDamageModifiers = new();
+    public Dictionary<Vector3, int> ReachableTargetsDamageModifiers = new();
 
     [SerializeField] GameObject bulletObject;
 
@@ -26,14 +27,14 @@ public class ShipWeapon : MonoBehaviour
         FindReachableTargets();
     }
 
-    public void Attack(int damageReduction)
+    public void Attack(int damageModifier)
     {
         if (target != null)
         {
             //skapa skottet
             if (bulletObject != null)
             {
-                // Skapar prefab på skeppets position
+                // Skapar prefab pï¿½ skeppets position
                 GameObject newBullet = Instantiate(bulletObject, transform.position, Quaternion.identity);
 
             
@@ -47,7 +48,8 @@ public class ShipWeapon : MonoBehaviour
             }
 
           
-            target.Hurt(ship.shipInfo.GetWeaponDamage() - damageReduction);
+            
+            target.Hurt(ship.shipInfo.GetWeaponDamage() + damageModifier);
             target = null;
             HasAttacked = true;
         }
@@ -62,17 +64,17 @@ public class ShipWeapon : MonoBehaviour
         }
     }
 
-    //Goes through the straight paths the player can take and saves the position and reduced damage of possible targets.
-    private void FindReachableTargets()
+    //Goes through the straight paths the player can take and saves the position and damage modifiers of possible targets.
+    public void FindReachableTargets()
     {
-        ReachableTargetsDamageReduction.Clear();
+        ReachablePositionsDamageModifiers.Clear();
 
         for (int side = 0; side < 6; side++)
         {
             Vector3 origin = transform.position;
             Vector3 direction = Quaternion.AngleAxis(30 + side * 60, Vector3.up) * Vector3.forward;
             float tileSize = ship.shipMovement.distanceBetweenTiles;
-            int damageReduction = 0;
+            int obstacleDamageModifier = 0;
 
             //Debug.Log("side: " + side);
 
@@ -99,17 +101,24 @@ public class ShipWeapon : MonoBehaviour
                 bool usingLongRange = ship.shipInfo.WeaponModule != null && ship.shipInfo.WeaponModule.Archetype == IronTideModuleArchetype.LongRangeWeapon;
                 bool tileIsWalkable = tileComponent != null && tileComponent.isWalkable;
 
+                int distanceDamageModifier = ship.shipInfo.GetDistanceDamageModifier(step + 1);
+
                 if (shipComponent != null)
+                {    
+                    ReachablePositionsDamageModifiers.TryAdd(shipComponent.transform.position, obstacleDamageModifier + distanceDamageModifier);
+                    ReachableTargetsDamageModifiers.TryAdd(shipComponent.transform.position, obstacleDamageModifier + distanceDamageModifier);
+                }
+                else if(tileIsWalkable)
                 {
-                    ReachableTargetsDamageReduction.TryAdd(shipComponent.transform.position, damageReduction);
+                    ReachablePositionsDamageModifiers.TryAdd(tileComponent.transform.position, obstacleDamageModifier + distanceDamageModifier);
                 }
                 else if (usingLongRange && !tileIsWalkable)
                 {
-                    damageReduction += 2;
+                    obstacleDamageModifier -= 2;
                 }
-                else if(!tileIsWalkable)
+                else if (!tileIsWalkable)
                 {
-                    //Debug.LogWarning("Broke because of hitting an blocking tile");
+                    //Debug.LogWarning("Broke because of hitting a blocking tile");
                     break;
                 }
 
@@ -118,3 +127,5 @@ public class ShipWeapon : MonoBehaviour
         }
     }
 }
+
+
