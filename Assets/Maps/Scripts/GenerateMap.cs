@@ -1,6 +1,6 @@
-﻿using UnityEngine;
+﻿using NueGames.NueDeck.Scripts.Managers;
+using UnityEngine;
 
-[ExecuteAlways]
 public class GenerateMap : MonoBehaviour
 {
     [Header("Map")]
@@ -13,58 +13,56 @@ public class GenerateMap : MonoBehaviour
     public GameObject hillPrefab;
     public GameObject spawnPointPrefab;
 
+    public int playerCount = 2;
+
     Vector2Int[] spawnPoints;
     public Vector3[] spawnWorldPositions;
 
-    public int playerCount = 2; // ändra senare via UI
+    Vector2Int[] allSpawnPoints = new Vector2Int[]
+    {
+        new Vector2Int(-5, 10),
+        new Vector2Int(5, -10),
+        new Vector2Int(10, 0),
+        new Vector2Int(-10, 0)
+    };
+
     void Start()
+    {
+        GenerateFullMap();
+    }
+
+    // 🔥 KÖR ALLT I RÄTT ORDNING
+    public void GenerateFullMap()
     {
         SetupSpawnPoints();
         ClearMap();
         Generate();
         SpawnPlayerStarts();
+
+        // 🔥 säg till andra system att map är klar
+        FindFirstObjectByType<GameManagerTest>()?.OnMapReady();
     }
 
-    Vector2Int[] allSpawnPoints = new Vector2Int[]
-{
-    new Vector2Int(-5, 10),
-     new Vector2Int(5, -10),
-    new Vector2Int(10, 0),
-    new Vector2Int(-10, 0)
-
-};
-
-
-    //void SetupSpawnPoints()
-    //{
-    //    spawnPoints = new Vector2Int[playerCount];
-
-    //    for (int i = 0; i < playerCount; i++)
-    //    {
-    //        int index = Mathf.RoundToInt(i * (allSpawnPoints.Length / (float)playerCount));
-    //        spawnPoints[i] = allSpawnPoints[index];
-    //    }
-    //}
     void SetupSpawnPoints()
     {
         if (playerCount == 2)
         {
             spawnPoints = new Vector2Int[]
             {
-            allSpawnPoints[0],
-            allSpawnPoints[1] // 🔥 mittemot varandra
+                allSpawnPoints[0],
+                allSpawnPoints[1]
             };
         }
         else if (playerCount == 3)
         {
             spawnPoints = new Vector2Int[]
             {
-            allSpawnPoints[0],
-            allSpawnPoints[1],
-            allSpawnPoints[2]
+                allSpawnPoints[0],
+                allSpawnPoints[1],
+                allSpawnPoints[2]
             };
         }
-        else // 4 players
+        else
         {
             spawnPoints = allSpawnPoints;
         }
@@ -73,7 +71,6 @@ public class GenerateMap : MonoBehaviour
     void Generate()
     {
         float spacing = 1.05f;
-
         for (int x = -radius; x <= radius; x++)
         {
             for (int z = -radius; z <= radius; z++)
@@ -87,11 +84,7 @@ public class GenerateMap : MonoBehaviour
 
                 GameObject prefab;
 
-                bool isSpawn = IsSpawnPoint(x, z);
-                bool inSafeZone = IsInSafeZone(x, z);
-
-                // 🔥 GARANTI: inga hinder nära spawn
-                if (isSpawn || inSafeZone)
+                if (IsSpawnPoint(x, z) || IsInSafeZone(x, z))
                 {
                     prefab = waterPrefab;
                 }
@@ -126,12 +119,9 @@ public class GenerateMap : MonoBehaviour
     {
         foreach (var sp in spawnPoints)
         {
-            float dist = Vector2.Distance(
-                new Vector2(x, z),
-                new Vector2(sp.x, sp.y)
-            );
+            float dist = Vector2.Distance(new Vector2(x, z), new Vector2(sp.x, sp.y));
 
-            if (dist < 3f) // 🔥 justera denna om du vill större fri yta
+            if (dist < 3f)
                 return true;
         }
         return false;
@@ -140,7 +130,6 @@ public class GenerateMap : MonoBehaviour
     Vector3 HexToWorld(int x, int z)
     {
         float spacing = 1.05f;
-
         float xPos = hexSize * Mathf.Sqrt(3f) * (x + z * 0.5f);
         float zPos = hexSize * 1.5f * z;
 
@@ -158,9 +147,7 @@ public class GenerateMap : MonoBehaviour
             Vector3 pos = HexToWorld(coord.x, coord.y);
             spawnWorldPositions[i] = pos;
 
-            Vector3 spawnPos = pos + Vector3.up * 0.2f;
-
-            Instantiate(spawnPointPrefab, spawnPos, Quaternion.identity, transform);
+            Instantiate(spawnPointPrefab, pos + Vector3.up * 0.2f, Quaternion.identity, transform);
         }
     }
 
