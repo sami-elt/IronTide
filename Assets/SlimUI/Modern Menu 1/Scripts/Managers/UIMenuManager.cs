@@ -20,7 +20,9 @@ namespace SlimUI.ModernMenu{
         public GameObject exitMenu;
         [Tooltip("Optional 4th Menu")]
         public GameObject extrasMenu;
-        public GameObject playerSetupPanel;
+        public GameObject playerSetupCanvas;
+        public GameObject setupWindow;
+        public PlayerSetupUI playerSetupUI;
 
         public enum Theme {custom1, custom2, custom3};
         [Header("THEME SETTINGS")]
@@ -262,17 +264,18 @@ namespace SlimUI.ModernMenu{
 			#endif
 		}
 
-        public void OpenPlayerSetup()
+        public void OpenPlayerSetup(int playerCount)
         {
-            playerSetupPanel.SetActive(true);   // ✅ först
+            Animator anim = playerSetupCanvas.GetComponent<Animator>();
+            anim.Play("WindowPopUpBig", 0, 0f);
 
-            Animator anim = playerSetupPanel.GetComponent<Animator>();
-            anim.Play("WindowPopUpBig", 0, 0f); // ✅ sen animation
+            playMenu.SetActive(false);
+            mainCanvas.SetActive(false);
+            playerSetupCanvas.SetActive(true);
 
-            playMenu.SetActive(false);          // ✅ stäng bara UI-delar
-            firstMenu.SetActive(false);
+            // 🔥 Visa rätt antal slots
+            playerSetupUI.ShowPlayers(playerCount);
         }
-
         // Load Bar synching animation
         IEnumerator LoadAsynchronously(string sceneName){ // scene name is just the name of the current scene being loaded
 			AsyncOperation operation = SceneManager.LoadSceneAsync(sceneName);
