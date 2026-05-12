@@ -12,6 +12,8 @@ public class ShipWeapon : MonoBehaviour
 
     public Dictionary<Vector3, int> ReachablePositionsDamageModifiers = new();
     public Dictionary<Vector3, int> ReachableTargetsDamageModifiers = new();
+    public Dictionary<Vector3, int> ReachableTargetsDistance = new();
+    public Dictionary<Vector3, int> ReachableTargetsCoverModifiers = new();
 
     [SerializeField] GameObject bulletObject;
 
@@ -49,10 +51,14 @@ public class ShipWeapon : MonoBehaviour
 
           
             
-            int rawDamage = ship.shipInfo.GetWeaponDamage() + damageModifier;
-            int dealtDamage = Mathf.Max(0, rawDamage - target.GetArmor());
+            Vector3 targetPosition = target.transform.position;
+            ReachableTargetsDistance.TryGetValue(targetPosition, out int distance);
+            ReachableTargetsCoverModifiers.TryGetValue(targetPosition, out int coverModifier);
+
+            int rangeModifier = damageModifier - coverModifier;
+            int rawDamage = ship.shipInfo.GetWeaponDamage(target) + damageModifier;
+            int dealtDamage = target.Hurt(rawDamage, rangeModifier, coverModifier);
             TurnManager.BroadcastAttackRolled(rawDamage);
-            target.Hurt(rawDamage);
             TurnManager.BroadcastDamageDealt(dealtDamage);
             target = null;
             HasAttacked = true;
@@ -73,6 +79,8 @@ public class ShipWeapon : MonoBehaviour
     {
         ReachablePositionsDamageModifiers.Clear();
         ReachableTargetsDamageModifiers.Clear();
+        ReachableTargetsDistance.Clear();
+        ReachableTargetsCoverModifiers.Clear();
 
         for (int side = 0; side < 6; side++)
         {
@@ -104,6 +112,7 @@ public class ShipWeapon : MonoBehaviour
                 hitInfo.collider.TryGetComponent(out Ship shipComponent);
 
                 bool usingLongRange = ship.shipInfo.WeaponModule != null && ship.shipInfo.WeaponModule.Archetype == IronTideModuleArchetype.LongRangeWeapon;
+                bool ignoresRocks = ship.shipInfo.HasActivePassive(ship.shipInfo.WeaponModule, "mortar");
                 bool tileIsWalkable = tileComponent != null && tileComponent.isWalkable;
 
                 int distanceDamageModifier = ship.shipInfo.GetDistanceDamageModifier(step + 1);
@@ -112,6 +121,8 @@ public class ShipWeapon : MonoBehaviour
                 {    
                     ReachablePositionsDamageModifiers.TryAdd(shipComponent.transform.position, obstacleDamageModifier + distanceDamageModifier);
                     ReachableTargetsDamageModifiers.TryAdd(shipComponent.transform.position, obstacleDamageModifier + distanceDamageModifier);
+                    ReachableTargetsDistance.TryAdd(shipComponent.transform.position, step + 1);
+                    ReachableTargetsCoverModifiers.TryAdd(shipComponent.transform.position, obstacleDamageModifier);
                 }
                 else if(tileIsWalkable)
                 {
@@ -119,7 +130,8 @@ public class ShipWeapon : MonoBehaviour
                 }
                 else if (usingLongRange && !tileIsWalkable)
                 {
-                    obstacleDamageModifier -= 2;
+                    if (!ignoresRocks)
+                        obstacleDamageModifier -= 2;
                 }
                 else if (!tileIsWalkable)
                 {
@@ -132,4 +144,3 @@ public class ShipWeapon : MonoBehaviour
         }
     }
 }
-
