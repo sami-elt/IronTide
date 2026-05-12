@@ -253,5 +253,31 @@ namespace IronTide.BasicCards
         [SerializeField] private List<IronTideModuleCardEntry> cards = new List<IronTideModuleCardEntry>();
 
         public List<IronTideModuleCardEntry> Cards => cards;
+
+        public IronTideModuleCardEntry FindById(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+                return null;
+
+            foreach (IronTideModuleCardEntry card in cards)
+            {
+                if (card != null && card.Id == id)
+                    return card;
+            }
+
+            return null;
+        }
+
+        public List<IronTideModuleCardEntry> GetTier1Cards(BasicModuleType slotType)
+        {
+            var results = new List<IronTideModuleCardEntry>();
+            foreach (IronTideModuleCardEntry card in cards)
+            {
+                if (card != null && card.IsValid && card.Tier == IronTideCardTier.Tier1 && card.SlotType == slotType)
+                    results.Add(card);
+            }
+
+            return results;
+        }
     }
 }

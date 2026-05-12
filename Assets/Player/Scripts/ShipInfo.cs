@@ -4,6 +4,15 @@ using System.Collections.Generic;
 
 public class ShipInfo : MonoBehaviour
 {
+    public const int HealthPerModule = 10;
+
+    public struct WeaponDamageRoll
+    {
+        public int DiceTotal;
+        public int BonusTotal;
+        public int TotalDamage;
+    }
+
     public IronTideModuleCardEntry WeaponModule { get; private set; }
     [SerializeField] private bool weaponEnabled;
     public bool WeaponEnabled => weaponEnabled;
@@ -19,7 +28,7 @@ public class ShipInfo : MonoBehaviour
     public event System.Action OnModuleStateChanged;
 
     public int Health { get; private set; }
-    public int MaxHealth { get; } = 10;
+    public int MaxHealth => GetActiveModuleAmount() * HealthPerModule;
 
     public bool Sunk { get; private set; }
 
@@ -38,18 +47,14 @@ public class ShipInfo : MonoBehaviour
     //Reset void to be called at start of round
     public void ResetValues()
     {
-        Health = MaxHealth;
         cheatDeathUsed = false;
-        SetSunk(false);
 
-        if (WeaponModule != null && WeaponModule.IsValid)
-            weaponEnabled = true;
+        weaponEnabled = WeaponModule != null && WeaponModule.IsValid;
+        engineEnabled = EngineModule != null && EngineModule.IsValid;
+        armorEnabled = ArmorModule != null && ArmorModule.IsValid;
 
-        if (EngineModule != null && EngineModule.IsValid)
-            engineEnabled = true;
-
-        if (ArmorModule != null && ArmorModule.IsValid)
-            armorEnabled = true;
+        Health = MaxHealth;
+        SetSunk(Health <= 0);
 
         OnModuleStateChanged?.Invoke();
     }
@@ -62,36 +67,47 @@ public class ShipInfo : MonoBehaviour
     public int Hurt(int damage, int rangeModifier, int coverModifier)
     {
         int totalDamage = Mathf.Max(0, damage - GetDamageReduction(rangeModifier, coverModifier));
-        if (totalDamage > 0)
-        {
-            Health -= totalDamage;
-        }
+        if (totalDamage <= 0 || Sunk)
+            return 0;
 
-        if (ShouldCheatDeath(totalDamage))
+        int damageToNextModuleBreak = GetDamageToNextModuleBreak();
+        int appliedDamage = Mathf.Min(totalDamage, damageToNextModuleBreak);
+        Health = Mathf.Max(0, Health - appliedDamage);
+
+        if (ShouldCheatDeath(appliedDamage))
         {
-            Health = 1;
+            Health = Mathf.Min(1, MaxHealth);
             cheatDeathUsed = true;
             OnModuleStateChanged?.Invoke();
-            return totalDamage;
+            return appliedDamage;
         }
 
-        if (Health <= 0)
+        if (Health % HealthPerModule == 0)
         {
-
             DestroyModule();
 
             if (GetActiveModuleAmount() > 0)
             {
-                Health = MaxHealth;
+                Health = Mathf.Min(Health, MaxHealth);
             }
             else
             {
+                Health = 0;
                 SetSunk(true);
             }
-
         }
 
-        return totalDamage;
+        OnModuleStateChanged?.Invoke();
+        return appliedDamage;
+    }
+
+    private int GetDamageToNextModuleBreak()
+    {
+        if (Health <= 0)
+            return 0;
+
+        int previousLine = ((Health - 1) / HealthPerModule) * HealthPerModule;
+        return Mathf.Max(1, Health - previousLine);
     }
 
     private void DestroyModule()
@@ -193,6 +209,7 @@ public class ShipInfo : MonoBehaviour
         {
             WeaponModule = weaponModule;
             weaponEnabled = weaponModule.IsValid;
+            RefreshAfterModuleAssigned();
             OnModuleStateChanged?.Invoke();
             return;
         }
@@ -217,6 +234,7 @@ public class ShipInfo : MonoBehaviour
         {
             EngineModule = engineModule;
             engineEnabled = engineModule.IsValid;
+            RefreshAfterModuleAssigned();
             OnModuleStateChanged?.Invoke();
             return;
         }
@@ -241,6 +259,7 @@ public class ShipInfo : MonoBehaviour
         {
             ArmorModule = armorModule;
             armorEnabled = armorModule.IsValid;
+            RefreshAfterModuleAssigned();
             OnModuleStateChanged?.Invoke();
             return;
         }
@@ -265,14 +284,70 @@ public class ShipInfo : MonoBehaviour
         return amount;
     }
 
+    private void RefreshAfterModuleAssigned()
+    {
+        if (MaxHealth <= 0)
+            return;
+
+        if (Sunk)
+            SetSunk(false);
+
+        if (Health <= 0)
+            Health = MaxHealth;
+        else if (Health > MaxHealth)
+            Health = MaxHealth;
+    }
+
     public int GetWeaponDamage()
     {
         return GetWeaponDamage(null);
     }
 
+    public void GetWeaponDamageRange(out int minDamage, out int maxDamage)
+    {
+        if (WeaponModule != null && WeaponModule.IsValid && WeaponModule.UsesDice)
+        {
+            minDamage = WeaponModule.DiceCount;
+            maxDamage = WeaponModule.DiceCount * WeaponModule.DiceSides;
+
+            if (weaponEnabled)
+            {
+                minDamage += WeaponModule.BaseModifier;
+                maxDamage += WeaponModule.BaseModifier;
+
+                if (WeaponModule.PassiveKey == "perfect_shot_t1" ||
+                    WeaponModule.PassiveKey == "perfect_shot_t2" ||
+                    WeaponModule.PassiveKey == "lucky")
+                {
+                    maxDamage += WeaponModule.DiceSides;
+                }
+            }
+        }
+        else
+        {
+            minDamage = 1;
+            maxDamage = 6;
+        }
+
+        if (HasActivePassive(WeaponModule, "marauder") && Health <= 5)
+        {
+            minDamage += 3;
+            maxDamage += 3;
+        }
+
+        minDamage = Mathf.Max(0, minDamage);
+        maxDamage = Mathf.Max(minDamage, maxDamage);
+    }
+
     public int GetWeaponDamage(ShipInfo target)
     {
-        int damage = 0;
+        return RollWeaponDamage(target).TotalDamage;
+    }
+
+    public WeaponDamageRoll RollWeaponDamage(ShipInfo target)
+    {
+        int diceDamage = 0;
+        int bonusDamage = 0;
 
         if (WeaponModule != null && WeaponModule.IsValid)
         {
@@ -281,35 +356,41 @@ public class ShipInfo : MonoBehaviour
             {
                 int roll = dice.RollDice(WeaponModule.DiceSides);
                 rolls.Add(roll);
-                damage += roll;
+                diceDamage += roll;
             }
 
             if (weaponEnabled)
-                damage += GetExtraWeaponDiceDamage(rolls);
+                bonusDamage += GetExtraWeaponDiceDamage(rolls);
 
             if (weaponEnabled)
-                damage += WeaponModule.BaseModifier;
+                bonusDamage += WeaponModule.BaseModifier;
         }
         else
         {
-            damage = dice.RollD6();
+            diceDamage = dice.RollD6();
         }
 
         if (HasActivePassive(EngineModule, "sea_begger"))
-            damage += 1;
+            bonusDamage += 1;
 
         if (HasActivePassive(WeaponModule, "marauder") && Health <= 5)
-            damage += 3;
+            bonusDamage += 3;
 
         if (target != null && IsHighestHealthTarget(target))
         {
             if (HasActivePassive(WeaponModule, "healthy_collector_t1"))
-                damage += 1;
+                bonusDamage += 1;
             else if (HasActivePassive(WeaponModule, "healthy_collector_t2"))
-                damage += 2;
+                bonusDamage += 2;
         }
 
-        return Mathf.Max(0, damage);
+        int total = Mathf.Max(0, diceDamage + bonusDamage);
+        return new WeaponDamageRoll
+        {
+            DiceTotal = diceDamage,
+            BonusTotal = bonusDamage,
+            TotalDamage = total
+        };
     }
 
     public int GetWeaponRange()
@@ -534,7 +615,7 @@ public class ShipInfo : MonoBehaviour
         if (target == null)
             return false;
 
-        ShipInfo[] allShips = FindObjectsOfType<ShipInfo>();
+        ShipInfo[] allShips = FindObjectsByType<ShipInfo>(FindObjectsSortMode.None);
         int targetScore = target.GetTotalShipHealthScore();
 
         foreach (ShipInfo shipInfo in allShips)
@@ -551,7 +632,7 @@ public class ShipInfo : MonoBehaviour
 
     private int GetTotalShipHealthScore()
     {
-        return Health + GetActiveModuleAmount() * MaxHealth;
+        return Health;
     }
 
 }

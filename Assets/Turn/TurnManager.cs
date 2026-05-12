@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class TurnManager : MonoBehaviour
 {
@@ -8,6 +9,9 @@ public class TurnManager : MonoBehaviour
     public static System.Action<int> OnMovementRolled;
     public static System.Action<int> OnAttackRolled;
     public static System.Action<int> OnDamageDealt;
+    public static System.Action<string> OnTurnFeedback;
+    public static System.Action<int, int, int, int> OnAttackResolved;
+    public static System.Action<int, int> OnAttackPrepared;
 
     public TurnPlayerController[] Players;
     public int CurrentPlayerIndex = 0;
@@ -40,6 +44,7 @@ public class TurnManager : MonoBehaviour
 
     void Start()
     {
+        ResolvePlayers();
         StartTurn();
     }
 
@@ -50,12 +55,32 @@ public class TurnManager : MonoBehaviour
 
     private void StartTurn()
     {
+        ResolvePlayers();
+        PrepareAssignedPlayers();
+
+        if (Players == null || Players.Length == 0)
+        {
+            Debug.LogWarning("TurnManager could not start because no players are assigned.");
+            return;
+        }
+
+        CurrentPlayerIndex = GetNextPlayablePlayerIndex(CurrentPlayerIndex);
+        if (CurrentPlayerIndex < 0)
+        {
+            Debug.LogWarning("TurnManager could not start because no active players are available.");
+            return;
+        }
+
         // Reset all players
         for (int i = 0; i < Players.Length; i++)
         {
-            Players[i].SetMyTurn(false);
+            if (Players[i] != null)
+                Players[i].SetMyTurn(false);
         }   
         //Active player
+        if (!Players[CurrentPlayerIndex].gameObject.activeSelf)
+            Players[CurrentPlayerIndex].gameObject.SetActive(true);
+
         Players[CurrentPlayerIndex].SetMyTurn(true);
 
         //Reset dice rolls
@@ -106,9 +131,13 @@ public class TurnManager : MonoBehaviour
 
     private void EndTurn()
     {
-        Players[CurrentPlayerIndex].SetMyTurn(false);
+        if (Players != null && CurrentPlayerIndex >= 0 && CurrentPlayerIndex < Players.Length && Players[CurrentPlayerIndex] != null)
+            Players[CurrentPlayerIndex].SetMyTurn(false);
 
         CurrentPlayerIndex++;
+
+        if (Players == null || Players.Length == 0)
+            return;
 
         if (CurrentPlayerIndex >= Players.Length)
         {
@@ -120,6 +149,9 @@ public class TurnManager : MonoBehaviour
 
     public TurnPlayerController GetCurrentPlayer()
     {
+        if (Players == null || Players.Length == 0 || CurrentPlayerIndex < 0 || CurrentPlayerIndex >= Players.Length)
+            return null;
+
         return Players[CurrentPlayerIndex];
     }
 
@@ -213,6 +245,97 @@ public class TurnManager : MonoBehaviour
     public static void BroadcastDamageDealt(int damage)
     {
         OnDamageDealt?.Invoke(damage);
+    }
+
+    public static void BroadcastTurnFeedback(string message)
+    {
+        OnTurnFeedback?.Invoke(message);
+    }
+
+    public static void BroadcastAttackResolved(int diceTotal, int bonusTotal, int damageReduction, int damageDealt)
+    {
+        OnAttackResolved?.Invoke(diceTotal, bonusTotal, damageReduction, damageDealt);
+    }
+
+    public static void BroadcastAttackPrepared(int diceTotal, int bonusTotal)
+    {
+        OnAttackPrepared?.Invoke(diceTotal, bonusTotal);
+    }
+
+    private void ResolvePlayers()
+    {
+        if (Players != null && Players.Length > 0)
+            return;
+
+        TurnPlayerController[] foundPlayers = Resources.FindObjectsOfTypeAll<TurnPlayerController>();
+        var scenePlayers = new List<TurnPlayerController>();
+        foreach (TurnPlayerController player in foundPlayers)
+        {
+            if (player == null || !player.gameObject.scene.IsValid())
+                continue;
+
+            scenePlayers.Add(player);
+        }
+
+        scenePlayers.Sort((a, b) => a.playerID.CompareTo(b.playerID));
+        Players = scenePlayers.ToArray();
+    }
+
+    private int GetNextPlayablePlayerIndex(int startIndex)
+    {
+        if (Players == null || Players.Length == 0)
+            return -1;
+
+        int index = Mathf.Clamp(startIndex, 0, Players.Length - 1);
+        int fallbackIndex = -1;
+
+        for (int i = 0; i < Players.Length; i++)
+        {
+            int candidateIndex = (index + i) % Players.Length;
+            TurnPlayerController candidate = Players[candidateIndex];
+            if (candidate == null)
+                continue;
+
+            if (fallbackIndex < 0)
+                fallbackIndex = candidateIndex;
+
+            if (!candidate.gameObject.activeInHierarchy)
+                continue;
+
+            ShipInfo info = candidate.GetComponent<ShipInfo>();
+            if (info != null && info.Sunk)
+                continue;
+
+            return candidateIndex;
+        }
+
+        return fallbackIndex;
+    }
+
+    private void PrepareAssignedPlayers()
+    {
+        if (Players == null)
+            return;
+
+        for (int i = 0; i < Players.Length; i++)
+        {
+            TurnPlayerController player = Players[i];
+            if (player == null)
+                continue;
+
+            if (!player.gameObject.activeSelf)
+                player.gameObject.SetActive(true);
+
+            ShipInfo info = player.GetComponent<ShipInfo>();
+            if (info != null && info.Sunk && HasAnyModuleAssigned(info))
+                info.ResetValues();
+        }
+    }
+
+    private bool HasAnyModuleAssigned(ShipInfo info)
+    {
+        return info != null &&
+            (info.WeaponModule != null || info.ArmorModule != null || info.EngineModule != null);
     }
 
 }

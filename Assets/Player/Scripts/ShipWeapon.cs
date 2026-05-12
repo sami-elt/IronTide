@@ -1,12 +1,15 @@
 using UnityEngine;
 using System.Collections.Generic;
 using IronTide.BasicCards;
+using TMPro;
 
 public class ShipWeapon : MonoBehaviour
 {
     [SerializeField] private Ship ship;
 
     private ShipInfo target;
+    private ShipInfo.WeaponDamageRoll preparedDamageRoll;
+    private bool hasPreparedDamageRoll;
 
     public bool HasAttacked { get; private set; }
 
@@ -26,7 +29,16 @@ public class ShipWeapon : MonoBehaviour
     public void EnterAttackPhase()
     {
         HasAttacked = false;
+        preparedDamageRoll = default;
+        hasPreparedDamageRoll = false;
         FindReachableTargets();
+
+        if (ReachableTargetsDamageModifiers.Count > 0)
+        {
+            preparedDamageRoll = ship.shipInfo.RollWeaponDamage(null);
+            hasPreparedDamageRoll = true;
+            TurnManager.BroadcastAttackPrepared(preparedDamageRoll.DiceTotal, preparedDamageRoll.BonusTotal);
+        }
     }
 
     public void Attack(int damageModifier)
@@ -55,15 +67,45 @@ public class ShipWeapon : MonoBehaviour
             ReachableTargetsDistance.TryGetValue(targetPosition, out int distance);
             ReachableTargetsCoverModifiers.TryGetValue(targetPosition, out int coverModifier);
 
+            bool targetWasSunk = target.Sunk;
             int rangeModifier = damageModifier - coverModifier;
-            int rawDamage = ship.shipInfo.GetWeaponDamage(target) + damageModifier;
+            ShipInfo.WeaponDamageRoll damageRoll = hasPreparedDamageRoll
+                ? preparedDamageRoll
+                : ship.shipInfo.RollWeaponDamage(target);
+            int totalBonus = damageRoll.BonusTotal + damageModifier;
+            int rawDamage = Mathf.Max(0, damageRoll.DiceTotal + totalBonus);
+            int damageReduction = target.GetDamageReduction(rangeModifier, coverModifier);
             int dealtDamage = target.Hurt(rawDamage, rangeModifier, coverModifier);
+            if (!targetWasSunk && target.Sunk && ship.turnPlayerController != null)
+                IronTideGameState.RecordFirstKill(ship.turnPlayerController.playerID);
+
             TurnManager.BroadcastAttackRolled(rawDamage);
             TurnManager.BroadcastDamageDealt(dealtDamage);
+            TurnManager.BroadcastAttackResolved(damageRoll.DiceTotal, totalBonus, damageReduction, dealtDamage);
+            ShowDamagePopup(target.transform.position, dealtDamage);
+            hasPreparedDamageRoll = false;
             target = null;
             HasAttacked = true;
         }
 
+    }
+
+    private void ShowDamagePopup(Vector3 targetPosition, int dealtDamage)
+    {
+        GameObject popupObject = new GameObject("Damage Popup");
+        popupObject.transform.position = targetPosition + Vector3.up * 1.8f;
+
+        TextMeshPro text = popupObject.AddComponent<TextMeshPro>();
+        text.text = $"-{dealtDamage}";
+        text.fontSize = 4f;
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = new Color(1f, 0.18f, 0.12f, 1f);
+        text.fontStyle = FontStyles.Bold;
+
+        if (Camera.main != null)
+            popupObject.transform.rotation = Quaternion.LookRotation(popupObject.transform.position - Camera.main.transform.position);
+
+        Destroy(popupObject, 1.4f);
     }
 
     public void SelectTarget(GameObject targetObject)
