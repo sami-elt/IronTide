@@ -4,6 +4,11 @@ public class TurnManager : MonoBehaviour
 {
     public static TurnManager Instance;
 
+    public static System.Action<int> OnTurnStarted;
+    public static System.Action<int> OnMovementRolled;
+    public static System.Action<int> OnAttackRolled;
+    public static System.Action<int> OnDamageDealt;
+
     public TurnPlayerController[] Players;
     public int CurrentPlayerIndex = 0;
 
@@ -38,6 +43,11 @@ public class TurnManager : MonoBehaviour
         StartTurn();
     }
 
+    public void BeginGame()
+    {
+        StartTurn();
+    }
+
     private void StartTurn()
     {
         // Reset all players
@@ -59,6 +69,7 @@ public class TurnManager : MonoBehaviour
 
         //Start first phase
         currentPhase = TurnPhase.RollMovement;
+        OnTurnStarted?.Invoke(Players[CurrentPlayerIndex].playerID);
 
         Debug.Log("Player" + Players[CurrentPlayerIndex].playerID + " turn");
         Debug.Log("Current phase: " + currentPhase);
@@ -115,6 +126,7 @@ public class TurnManager : MonoBehaviour
 
         int motorBonus = GetCurrentPlayer().motorBonus;
         totalMovement = movementRoll + motorBonus;
+        OnMovementRolled?.Invoke(totalMovement);
 
         Debug.Log("movement dice: " + movementRoll);
         Debug.Log("total movement: " + totalMovement);
@@ -126,6 +138,7 @@ public class TurnManager : MonoBehaviour
 
         int weaponBonus = GetCurrentPlayer().weaponBonus;
         totalAttack = attackRoll + weaponBonus;
+        OnAttackRolled?.Invoke(totalAttack);
 
         Debug.Log("Attack dice: " + attackRoll);
         Debug.Log("Total attack: " + totalAttack);
@@ -181,6 +194,21 @@ public class TurnManager : MonoBehaviour
     {
         HasAttackedThisTurn = true;
         EndTurn();
+    }
+
+    public static void BroadcastMovementRolled(int totalMovement)
+    {
+        OnMovementRolled?.Invoke(totalMovement);
+    }
+
+    public static void BroadcastAttackRolled(int totalAttack)
+    {
+        OnAttackRolled?.Invoke(totalAttack);
+    }
+
+    public static void BroadcastDamageDealt(int damage)
+    {
+        OnDamageDealt?.Invoke(damage);
     }
 
 }

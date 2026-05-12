@@ -20,8 +20,9 @@ namespace IronTide.BasicCards
         [Header("Shop Settings")]
         [SerializeField] private int startingGold = 10;
         [SerializeField] private int visibleShopCards = 5;
-        [SerializeField] private int visibleHighPowerCards = 4;
-        [SerializeField] private int rerollCost = 1;
+        [SerializeField] private int visibleHighPowerCards = 3;
+        [SerializeField] private int basicRerollCost = 2;
+        [SerializeField] private int advancedRerollCost = 5;
         [SerializeField] [Range(0.05f, 0.5f)] private float legendaryOfferChance = 0.22f;
 
         [Header("Window Layout")]
@@ -71,7 +72,8 @@ namespace IronTide.BasicCards
         private Canvas _shopCanvas;
         private RectTransform _shopRoot;
         private RectTransform _bodyRoot;
-        private Button _rerollButton;
+        private Button _basicRerollButton;
+        private Button _advancedRerollButton;
         private TMP_Text _goldText;
         private TMP_Text _statusText;
         private RectTransform _ownedPreviewRoot;
@@ -327,13 +329,18 @@ namespace IronTide.BasicCards
                 TextAlignmentOptions.Center, new Color(0.96f, 0.89f, 0.73f, 1f), headingFont);
 
             CreateLabel("Help", body,
-                "4 Tier 2, epic, or legendary cards appear on the upper row. 5 basic cards appear on the lower row. Legendary cards are rarer.",
+                "3 Tier 2, epic, or legendary cards appear on the upper row. 5 basic cards appear on the lower row. Legendary cards are rarer.",
                 16, FontStyles.Normal, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -92f),
                 new Vector2(980f, 38f), TextAlignmentOptions.Center, new Color(0.84f, 0.88f, 0.93f, 0.92f), bodyFont);
 
-            _rerollButton = CreateButton(body, "RerollButton", $"Reroll ({rerollCost}g)",
-                new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-110f, -54f), new Vector2(200f, 54f),
-                RerollShop, new Color(0.76f, 0.61f, 0.18f, 0.96f), headingFont,
+            _basicRerollButton = CreateButton(body, "RerollBasicButton", $"Reroll T1 ({basicRerollCost}g)",
+                new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-250f, -54f), new Vector2(230f, 54f),
+                RerollBasicShop, new Color(0.48f, 0.62f, 0.27f, 0.96f), headingFont,
+                buttonSprite, buttonHoverSprite, buttonPressedSprite);
+
+            _advancedRerollButton = CreateButton(body, "RerollAdvancedButton", $"Reroll High ({advancedRerollCost}g)",
+                new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-110f, -116f), new Vector2(230f, 54f),
+                RerollAdvancedShop, new Color(0.76f, 0.61f, 0.18f, 0.96f), headingFont,
                 buttonSprite, buttonHoverSprite, buttonPressedSprite);
 
             CreateLabel("AdvancedHeading", body, "Tier 2, Epic & Legendary Modules", 24, FontStyles.Bold,
@@ -440,17 +447,32 @@ namespace IronTide.BasicCards
             }
         }
 
-        private void RerollShop()
+        private void RerollBasicShop()
         {
-            if (CurrentGold < rerollCost)
+            if (CurrentGold < basicRerollCost)
             {
-                SetStatus("Not enough gold to reroll.");
+                SetStatus("Not enough gold to reroll Tier 1 modules.");
                 return;
             }
 
-            CurrentGold -= rerollCost;
-            RollFreshShops();
-            SetStatus($"Rerolled the shop for {rerollCost} gold.");
+            CurrentGold -= basicRerollCost;
+            RollFreshShop(_availableBasicCards, _currentBasicCards, _basicSlots.Count);
+            RefreshShopCards();
+            SetStatus($"Rerolled Tier 1 modules for {basicRerollCost} gold.");
+        }
+
+        private void RerollAdvancedShop()
+        {
+            if (CurrentGold < advancedRerollCost)
+            {
+                SetStatus("Not enough gold to reroll high-power modules.");
+                return;
+            }
+
+            CurrentGold -= advancedRerollCost;
+            RollFreshAdvancedShop();
+            RefreshShopCards();
+            SetStatus($"Rerolled high-power modules for {advancedRerollCost} gold.");
         }
 
         private void RollFreshShops()
@@ -769,11 +791,14 @@ namespace IronTide.BasicCards
 
         private void UpdateRerollButton()
         {
-            if (_rerollButton == null)
-                return;
+            if (_basicRerollButton != null)
+                _basicRerollButton.interactable = CurrentGold >= basicRerollCost && _availableBasicCards.Count > 0;
 
-            _rerollButton.interactable = CurrentGold >= rerollCost &&
-                (_availableBasicCards.Count > 0 || _availableTier2Cards.Count > 0 || _availableEpicCards.Count > 0 || _availableLegendaryCards.Count > 0);
+            if (_advancedRerollButton != null)
+            {
+                _advancedRerollButton.interactable = CurrentGold >= advancedRerollCost &&
+                    (_availableTier2Cards.Count > 0 || _availableEpicCards.Count > 0 || _availableLegendaryCards.Count > 0);
+            }
         }
 
         private static IronTideModuleCardEntry DrawRandomCard(List<IronTideModuleCardEntry> cards)
