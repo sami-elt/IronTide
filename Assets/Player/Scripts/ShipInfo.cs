@@ -1,71 +1,113 @@
 using UnityEngine;
 using IronTide.BasicCards;
-using NueGames.NueDeck.Scripts.NueExtentions;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 public class ShipInfo : MonoBehaviour
 {
+    public const int HealthPerModule = 10;
+
+    public struct WeaponDamageRoll
+    {
+        public int DiceTotal;
+        public int BonusTotal;
+        public int TotalDamage;
+    }
+
     public IronTideModuleCardEntry WeaponModule { get; private set; }
     [SerializeField] private bool weaponEnabled;
+    public bool WeaponEnabled => weaponEnabled;
 
     public IronTideModuleCardEntry EngineModule { get; private set; }
     [SerializeField] private bool engineEnabled;
+    public bool EngineEnabled => engineEnabled;
 
     public IronTideModuleCardEntry ArmorModule { get; private set; }
     [SerializeField] private bool armorEnabled;
+    public bool ArmorEnabled => armorEnabled;
+
+    public event System.Action OnModuleStateChanged;
 
     public int Health { get; private set; }
-    public int MaxHealth { get; } = 10;
+    public int MaxHealth => GetActiveModuleAmount() * HealthPerModule;
 
     public bool Sunk { get; private set; }
 
     private readonly int defaultWeaponRange = 4;
 
     private DiceComponent dice;
+    private bool cheatDeathUsed;
 
     private void Awake()
     {
-        dice = this.AddComponent<DiceComponent>();//If diceComponent is made into a singleton this will not be needed
+        dice = GetComponent<DiceComponent>();
+        if (dice == null)
+            dice = gameObject.AddComponent<DiceComponent>();//If diceComponent is made into a singleton this will not be needed
     }
 
     //Reset void to be called at start of round
     public void ResetValues()
     {
+        cheatDeathUsed = false;
+
+        weaponEnabled = WeaponModule != null && WeaponModule.IsValid;
+        engineEnabled = EngineModule != null && EngineModule.IsValid;
+        armorEnabled = ArmorModule != null && ArmorModule.IsValid;
+
         Health = MaxHealth;
-        SetSunk(false);
+        SetSunk(Health <= 0);
 
-        if (WeaponModule != null && WeaponModule.Id != "")
-            weaponEnabled = true;
-
-        if (EngineModule != null && EngineModule.Id != "")
-            engineEnabled = true;
-
-        if (ArmorModule != null && ArmorModule.Id != "")
-            armorEnabled = true;
+        OnModuleStateChanged?.Invoke();
     }
 
-    public void Hurt(int damage)
+    public int Hurt(int damage)
     {
-        int totalDamage = damage - GetArmor();
-        if (totalDamage > 0)
-            Health -= totalDamage;
+        return Hurt(damage, 0, 0);
+    }
 
-        if (Health <= 0)
+    public int Hurt(int damage, int rangeModifier, int coverModifier)
+    {
+        int totalDamage = Mathf.Max(0, damage - GetDamageReduction(rangeModifier, coverModifier));
+        if (totalDamage <= 0 || Sunk)
+            return 0;
+
+        int damageToNextModuleBreak = GetDamageToNextModuleBreak();
+        int appliedDamage = Mathf.Min(totalDamage, damageToNextModuleBreak);
+        Health = Mathf.Max(0, Health - appliedDamage);
+
+        if (ShouldCheatDeath(appliedDamage))
         {
+            Health = Mathf.Min(1, MaxHealth);
+            cheatDeathUsed = true;
+            OnModuleStateChanged?.Invoke();
+            return appliedDamage;
+        }
 
+        if (Health % HealthPerModule == 0)
+        {
             DestroyModule();
 
             if (GetActiveModuleAmount() > 0)
             {
-                Health = MaxHealth;
+                Health = Mathf.Min(Health, MaxHealth);
             }
             else
             {
+                Health = 0;
                 SetSunk(true);
             }
-
         }
+
+        OnModuleStateChanged?.Invoke();
+        return appliedDamage;
+    }
+
+    private int GetDamageToNextModuleBreak()
+    {
+        if (Health <= 0)
+            return 0;
+
+        int previousLine = ((Health - 1) / HealthPerModule) * HealthPerModule;
+        return Mathf.Max(1, Health - previousLine);
     }
 
     private void DestroyModule()
@@ -92,27 +134,53 @@ public class ShipInfo : MonoBehaviour
         else
         {
             int destroyRoll = dice.RollD4();
+            bool moduleDestroyed = false;
 
             if (destroyRoll == 1 && weaponEnabled)
             {
                 weaponEnabled = false;
+                moduleDestroyed = true;
             }
-            else if (destroyRoll == 2 && engineEnabled)
-            {
-                engineEnabled = false;
-            }
-            else if (destroyRoll == 3 && armorEnabled)
+            else if (destroyRoll == 2 && armorEnabled)
             {
                 armorEnabled = false;
+                moduleDestroyed = true;
             }
-            else
+            else if (destroyRoll == 3 && engineEnabled)
             {
-                //Allow for choice by attacker of destroyed module out of the current ones active
-                //For now it will just destroy the weapon!!!
+                engineEnabled = false;
+                moduleDestroyed = true;
+            }
 
-                weaponEnabled = false;
+            if (!moduleDestroyed)
+            {
+                DestroyRandomActiveModule();
             }
         }
+
+        OnModuleStateChanged?.Invoke();
+    }
+
+    private void DestroyRandomActiveModule()
+    {
+        var activeSlots = new List<int>(3);
+        if (weaponEnabled)
+            activeSlots.Add(1);
+        if (armorEnabled)
+            activeSlots.Add(2);
+        if (engineEnabled)
+            activeSlots.Add(3);
+
+        if (activeSlots.Count == 0)
+            return;
+
+        int selectedSlot = activeSlots[Random.Range(0, activeSlots.Count)];
+        if (selectedSlot == 1)
+            weaponEnabled = false;
+        else if (selectedSlot == 2)
+            armorEnabled = false;
+        else
+            engineEnabled = false;
     }
 
     private void SetSunk(bool value)
@@ -124,14 +192,15 @@ public class ShipInfo : MonoBehaviour
 
     public void SetWeaponModule(IronTideModuleCardEntry weaponModule)
     {
-        IronTideModuleArchetype archetype = weaponModule.Archetype;
-
         if (weaponModule == null)
         {
             WeaponModule = null;
+            weaponEnabled = false;
+            OnModuleStateChanged?.Invoke();
             return;
         }
 
+        IronTideModuleArchetype archetype = weaponModule.Archetype;
         bool isWeapon = archetype == IronTideModuleArchetype.LongRangeWeapon ||
             archetype == IronTideModuleArchetype.MediumRangeWeapon ||
             archetype == IronTideModuleArchetype.ShortRangeWeapon;
@@ -139,6 +208,9 @@ public class ShipInfo : MonoBehaviour
         if (isWeapon)
         {
             WeaponModule = weaponModule;
+            weaponEnabled = weaponModule.IsValid;
+            RefreshAfterModuleAssigned();
+            OnModuleStateChanged?.Invoke();
             return;
         }
 
@@ -147,19 +219,23 @@ public class ShipInfo : MonoBehaviour
 
     public void SetEngineModule(IronTideModuleCardEntry engineModule)
     {
-        IronTideModuleArchetype archetype = engineModule.Archetype;
-
         if (engineModule == null)
         {
             EngineModule = null;
+            engineEnabled = false;
+            OnModuleStateChanged?.Invoke();
             return;
         }
 
+        IronTideModuleArchetype archetype = engineModule.Archetype;
         bool isEngine = archetype == IronTideModuleArchetype.Engine;
 
         if (isEngine)
         {
             EngineModule = engineModule;
+            engineEnabled = engineModule.IsValid;
+            RefreshAfterModuleAssigned();
+            OnModuleStateChanged?.Invoke();
             return;
         }
 
@@ -168,19 +244,23 @@ public class ShipInfo : MonoBehaviour
 
     public void SetArmorModule(IronTideModuleCardEntry armorModule)
     {
-        IronTideModuleArchetype archetype = armorModule.Archetype;
-
         if (armorModule == null)
         {
             ArmorModule = null;
+            armorEnabled = false;
+            OnModuleStateChanged?.Invoke();
             return;
         }
 
+        IronTideModuleArchetype archetype = armorModule.Archetype;
         bool isArmor = archetype == IronTideModuleArchetype.Armor;
 
         if (isArmor)
         {
             ArmorModule = armorModule;
+            armorEnabled = armorModule.IsValid;
+            RefreshAfterModuleAssigned();
+            OnModuleStateChanged?.Invoke();
             return;
         }
 
@@ -204,31 +284,118 @@ public class ShipInfo : MonoBehaviour
         return amount;
     }
 
+    private void RefreshAfterModuleAssigned()
+    {
+        if (MaxHealth <= 0)
+            return;
+
+        if (Sunk)
+            SetSunk(false);
+
+        if (Health <= 0)
+            Health = MaxHealth;
+        else if (Health > MaxHealth)
+            Health = MaxHealth;
+    }
+
     public int GetWeaponDamage()
     {
-        int damage = 0;
+        return GetWeaponDamage(null);
+    }
 
-        if (WeaponModule != null && WeaponModule.Id != "")
+    public void GetWeaponDamageRange(out int minDamage, out int maxDamage)
+    {
+        if (WeaponModule != null && WeaponModule.IsValid && WeaponModule.UsesDice)
         {
-            for (int i = 0; i < WeaponModule.DiceCount; i++)
-            {
-                damage += dice.RollDice(WeaponModule.DiceSides);
-            }
+            minDamage = WeaponModule.DiceCount;
+            maxDamage = WeaponModule.DiceCount * WeaponModule.DiceSides;
 
             if (weaponEnabled)
-                damage += WeaponModule.BaseModifier;
+            {
+                minDamage += WeaponModule.BaseModifier;
+                maxDamage += WeaponModule.BaseModifier;
+
+                if (WeaponModule.PassiveKey == "perfect_shot_t1" ||
+                    WeaponModule.PassiveKey == "perfect_shot_t2" ||
+                    WeaponModule.PassiveKey == "lucky")
+                {
+                    maxDamage += WeaponModule.DiceSides;
+                }
+            }
         }
         else
         {
-            damage = dice.RollD6();
+            minDamage = 1;
+            maxDamage = 6;
         }
 
-        return damage;
+        if (HasActivePassive(WeaponModule, "marauder") && Health <= 5)
+        {
+            minDamage += 3;
+            maxDamage += 3;
+        }
+
+        minDamage = Mathf.Max(0, minDamage);
+        maxDamage = Mathf.Max(minDamage, maxDamage);
+    }
+
+    public int GetWeaponDamage(ShipInfo target)
+    {
+        return RollWeaponDamage(target).TotalDamage;
+    }
+
+    public WeaponDamageRoll RollWeaponDamage(ShipInfo target)
+    {
+        int diceDamage = 0;
+        int bonusDamage = 0;
+
+        if (WeaponModule != null && WeaponModule.IsValid)
+        {
+            var rolls = new List<int>();
+            for (int i = 0; i < WeaponModule.DiceCount; i++)
+            {
+                int roll = dice.RollDice(WeaponModule.DiceSides);
+                rolls.Add(roll);
+                diceDamage += roll;
+            }
+
+            if (weaponEnabled)
+                bonusDamage += GetExtraWeaponDiceDamage(rolls);
+
+            if (weaponEnabled)
+                bonusDamage += WeaponModule.BaseModifier;
+        }
+        else
+        {
+            diceDamage = dice.RollD6();
+        }
+
+        if (HasActivePassive(EngineModule, "sea_begger"))
+            bonusDamage += 1;
+
+        if (HasActivePassive(WeaponModule, "marauder") && Health <= 5)
+            bonusDamage += 3;
+
+        if (target != null && IsHighestHealthTarget(target))
+        {
+            if (HasActivePassive(WeaponModule, "healthy_collector_t1"))
+                bonusDamage += 1;
+            else if (HasActivePassive(WeaponModule, "healthy_collector_t2"))
+                bonusDamage += 2;
+        }
+
+        int total = Mathf.Max(0, diceDamage + bonusDamage);
+        return new WeaponDamageRoll
+        {
+            DiceTotal = diceDamage,
+            BonusTotal = bonusDamage,
+            TotalDamage = total
+        };
     }
 
     public int GetWeaponRange()
     {
-        if (WeaponModule != null && WeaponModule.Id != "")
+        if (WeaponModule != null && WeaponModule.IsValid)
         {
             int range = defaultWeaponRange;
 
@@ -247,6 +414,12 @@ public class ShipInfo : MonoBehaviour
                     break;
             }
 
+            if (weaponEnabled && WeaponModule.PassiveKey == "long_shot")
+                range = 7;
+
+            if (weaponEnabled && WeaponModule.PassiveKey == "sea_horse")
+                range = 2;
+
             return range;
         }
         else
@@ -258,19 +431,24 @@ public class ShipInfo : MonoBehaviour
 
     public int GetDistanceDamageModifier(int distance)
     {
-        if (WeaponModule == null)
+        if (WeaponModule == null || !WeaponModule.IsValid)
         {
             return 0;
         }
-        else if (WeaponModule.Archetype == IronTideModuleArchetype.ShortRangeWeapon)
+
+        if (WeaponModule.Archetype == IronTideModuleArchetype.ShortRangeWeapon &&
+            ShortRangeModifiers.TryGetValue(distance, out int shortRangeModifier))
         {
-            return ShortRangeModifiers[distance];
+            return shortRangeModifier;
         }
-        else if (WeaponModule.Archetype == IronTideModuleArchetype.LongRangeWeapon)
+
+        if (WeaponModule.Archetype == IronTideModuleArchetype.LongRangeWeapon &&
+            LongRangeModifiers.TryGetValue(distance, out int longRangeModifier))
         {
-            return LongRangeModifiers[distance];
+            return longRangeModifier;
         }
-        else return 0;
+
+        return 0;
     }
 
     //Gathered as { Distance, Modifier }
@@ -294,23 +472,30 @@ public class ShipInfo : MonoBehaviour
 
     public int GetMoveDistance(bool addBonus)
     {
-
-        DiceComponent myDice = GetComponent<DiceComponent>();
-
-        if (myDice != null)
+        DiceComponent myDice = dice != null ? dice : GetComponent<DiceComponent>();
+        if (myDice == null)
         {
-            int value = myDice.RollD6();
-
-            Debug.Log(gameObject.name + "rullade " + value);
-            
-            return value;
-        }
-        else
-        {
-            Debug.Log("saknar dice");
+            Debug.LogWarning($"{gameObject.name} is missing a DiceComponent.");
             return 0;
         }
 
+        if (HasActivePassive(ArmorModule, "king_of_the_sea"))
+        {
+            Debug.Log($"{gameObject.name} movement fixed to 2 by King of the Sea.");
+            return 2;
+        }
+
+        int value = RollEngineDice(myDice);
+        bool secondMove = TurnManager.Instance != null && TurnManager.Instance.MovesUsedthisTurn > 0;
+        bool canUseBonus = addBonus && (!secondMove || HasActivePassive(EngineModule, "momentum"));
+
+        int bonus = canUseBonus && engineEnabled && EngineModule != null && EngineModule.IsValid
+            ? EngineModule.BaseModifier
+            : 0;
+
+        int total = Mathf.Max(0, value + bonus);
+        Debug.Log($"{gameObject.name} rolled {value} for movement. Engine bonus {bonus}. Total {total}.");
+        return total;
     }
 
     public int GetArmor()
@@ -323,6 +508,131 @@ public class ShipInfo : MonoBehaviour
         }
 
         return armor;
+    }
+
+    public int GetDamageReduction(int rangeModifier, int coverModifier)
+    {
+        int reduction = GetArmor();
+
+        if (HasActivePassive(ArmorModule, "supplies") && Health == MaxHealth)
+            reduction += 2;
+
+        if (HasActivePassive(ArmorModule, "lookout") && rangeModifier > 0)
+            reduction += 1;
+
+        if (HasActivePassive(EngineModule, "sneaky") && coverModifier < 0)
+            reduction += Mathf.Abs(coverModifier) / 2;
+
+        return Mathf.Max(0, reduction);
+    }
+
+    public void ApplyStartTurnEffects()
+    {
+        if (HasActivePassive(ArmorModule, "scrappy_t1"))
+            Heal(1);
+    }
+
+    public void Heal(int amount)
+    {
+        if (amount <= 0 || Sunk)
+            return;
+
+        Health = Mathf.Min(MaxHealth, Health + amount);
+        OnModuleStateChanged?.Invoke();
+    }
+
+    public bool HasActivePassive(IronTideModuleCardEntry card, string passiveKey)
+    {
+        if (card == null || !card.IsValid || string.IsNullOrWhiteSpace(passiveKey))
+            return false;
+
+        if (card == WeaponModule && !weaponEnabled)
+            return false;
+
+        if (card == ArmorModule && !armorEnabled)
+            return false;
+
+        if (card == EngineModule && !engineEnabled)
+            return false;
+
+        return card.PassiveKey == passiveKey;
+    }
+
+    private bool ShouldCheatDeath(int damageTaken)
+    {
+        return damageTaken > 0 && Health <= 0 && HasActivePassive(ArmorModule, "cheat_death") && !cheatDeathUsed;
+    }
+
+    private int RollEngineDice(DiceComponent myDice)
+    {
+        if (EngineModule == null || !EngineModule.IsValid || !EngineModule.UsesDice)
+            return myDice.RollD6();
+
+        int total = 0;
+        for (int i = 0; i < EngineModule.DiceCount; i++)
+            total += myDice.RollDice(EngineModule.DiceSides);
+
+        return total;
+    }
+
+    private int GetExtraWeaponDiceDamage(List<int> rolls)
+    {
+        int extraDamage = 0;
+
+        if (rolls.Count >= 2 && (HasActivePassive(WeaponModule, "perfect_shot_t1") || HasActivePassive(WeaponModule, "perfect_shot_t2")))
+        {
+            bool allSame = true;
+            for (int i = 1; i < rolls.Count; i++)
+            {
+                if (rolls[i] != rolls[0])
+                {
+                    allSame = false;
+                    break;
+                }
+            }
+
+            if (allSame)
+                extraDamage += dice.RollDice(WeaponModule.DiceSides);
+        }
+
+        if (HasActivePassive(WeaponModule, "lucky") && rolls.Count > 0)
+        {
+            for (int i = 0; i < rolls.Count; i++)
+            {
+                if (rolls[i] % 2 == 1)
+                {
+                    extraDamage += dice.RollDice(WeaponModule.DiceSides);
+                    break;
+                }
+            }
+        }
+
+        return extraDamage;
+    }
+
+    private bool IsHighestHealthTarget(ShipInfo target)
+    {
+        if (target == null)
+            return false;
+
+        ShipInfo[] allShips = FindObjectsByType<ShipInfo>(FindObjectsSortMode.None);
+        int targetScore = target.GetTotalShipHealthScore();
+
+        foreach (ShipInfo shipInfo in allShips)
+        {
+            if (shipInfo == null || shipInfo == this || shipInfo.Sunk)
+                continue;
+
+            if (shipInfo.GetTotalShipHealthScore() > targetScore)
+                return false;
+        }
+
+        return true;
+    }
+
+    private int GetTotalShipHealthScore()
+    {
+        return Health;
     }
 
 }

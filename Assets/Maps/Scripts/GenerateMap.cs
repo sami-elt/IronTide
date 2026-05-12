@@ -70,7 +70,6 @@ public class GenerateMap : MonoBehaviour
 
     void Generate()
     {
-        float spacing = 1.05f;
         for (int x = -radius; x <= radius; x++)
         {
             for (int z = -radius; z <= radius; z++)

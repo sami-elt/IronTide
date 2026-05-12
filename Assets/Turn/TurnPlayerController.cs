@@ -179,9 +179,7 @@ public class TurnPlayerController : MonoBehaviour
         //Debug.Log("Player " + playerID + " rolled a " + attackRoll + " for attack.");
         //Debug.Log("Player " + playerID + " has a total attack of " + TurnManager.Instance.GetTotalAttack() + ".");
 
-        shipWeapon.EnterAttackPhase();
-
-        TurnManager.Instance.NextPhase();
+        TryStartAttackAction();
     }
 
     private void FinishAttackPhase()
@@ -225,7 +223,7 @@ public class TurnPlayerController : MonoBehaviour
             return;
         }
 
-        StartAttackAction();
+        TryStartAttackAction();
     }
 
     private void StartMoveAction()
@@ -240,16 +238,28 @@ public class TurnPlayerController : MonoBehaviour
         TurnManager.Instance.StartMovePhase();
     }
 
-    private void StartAttackAction()
+    private bool TryStartAttackAction()
     {
         if (shipWeapon == null)
         {
             Debug.Log("shipWeapon missing on player " + playerID);
-            return;
+            return false;
         }
 
         shipWeapon.EnterAttackPhase();
+        int targetCount = shipWeapon.ReachableTargetsDamageModifiers.Count;
+        if (targetCount <= 0)
+        {
+            TurnManager.BroadcastTurnFeedback("No enemies in range. Press M to move instead.");
+            Debug.Log("Player " + playerID + " cannot attack because no enemies are in range.");
+            return false;
+        }
+
         TurnManager.Instance.StartAttackPhase();
+        TurnManager.BroadcastTurnFeedback(targetCount == 1
+            ? "Attack ready: 1 enemy in range."
+            : "Attack ready: " + targetCount + " enemies in range.");
+        return true;
     }
 
     private void HandleAttackPhaseAutoProgress()
