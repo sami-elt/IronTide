@@ -494,7 +494,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GenerateMap
   radius: 10
-  hexSize: 0.97
+  hexSize: 1
   waterPrefab: {fileID: 1448183548141105987, guid: 7bbf86add4209474c97ad27d990d3481, type: 3}
   rockPrefab: {fileID: 3153400372265611219, guid: d7986ef901370494abd95da4cbe3420d, type: 3}
   hillPrefab: {fileID: 3506294749796821811, guid: bd9113df4024557478da8283940583c8, type: 3}

@@ -23,7 +23,7 @@ namespace SlimUI.ModernMenu{
         public GameObject playerSetupCanvas;
         public GameObject setupWindow;
         public PlayerSetupUI playerSetupUI;
-
+        public GameObject tutorialPanel;
         public enum Theme {custom1, custom2, custom3};
         [Header("THEME SETTINGS")]
         public Theme theme;
@@ -278,6 +278,16 @@ namespace SlimUI.ModernMenu{
 
             // 🔥 Visa rätt antal slots
             playerSetupUI.ShowPlayers(playerCount);
+        }
+
+        public void OpenTutorial()
+        {
+            tutorialPanel.SetActive(true);
+        }
+
+        public void CloseTutorial()
+        {
+            tutorialPanel.SetActive(false);
         }
         // Load Bar synching animation
         IEnumerator LoadAsynchronously(string sceneName){ // scene name is just the name of the current scene being loaded
