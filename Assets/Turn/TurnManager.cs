@@ -69,6 +69,10 @@ public class TurnManager : MonoBehaviour
 
         //Start first phase
         currentPhase = TurnPhase.RollMovement;
+        ShipInfo currentShipInfo = Players[CurrentPlayerIndex].GetComponent<ShipInfo>();
+        if (currentShipInfo != null)
+            currentShipInfo.ApplyStartTurnEffects();
+
         OnTurnStarted?.Invoke(Players[CurrentPlayerIndex].playerID);
 
         Debug.Log("Player" + Players[CurrentPlayerIndex].playerID + " turn");
