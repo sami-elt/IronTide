@@ -134,10 +134,13 @@ namespace SlimUI.ModernMenu{
 		}
 
 		public void ReturnMenu(){
-			playMenu.SetActive(false);
+            playMenu.SetActive(false);
 			if(extrasMenu) extrasMenu.SetActive(false);
 			exitMenu.SetActive(false);
-			mainMenu.SetActive(true);
+			playerSetupCanvas.SetActive(false);
+			mainCanvas.SetActive(true);
+            mainMenu.SetActive(true);
+			
 		}
 
 		public void LoadScene(string scene){

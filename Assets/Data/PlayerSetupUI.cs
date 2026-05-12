@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEngine.SceneManagement;
 public class PlayerSetupUI : MonoBehaviour
 {
     public PlayerSlotUI[] slots;
@@ -88,8 +88,11 @@ public class PlayerSetupUI : MonoBehaviour
             );
         }
     }
-    public void TestClick()
+  
+    public void StartGame()
     {
-        Debug.Log("BUTTON CLICK WORKS");
+        List<PlayerData> players = GetPlayers();
+        GameManagerT.Instance.SetPlayers(players);
+        SceneManager.LoadScene("GameMap");
     }
 }
