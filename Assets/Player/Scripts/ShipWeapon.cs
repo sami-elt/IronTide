@@ -49,7 +49,11 @@ public class ShipWeapon : MonoBehaviour
 
           
             
-            target.Hurt(ship.shipInfo.GetWeaponDamage() + damageModifier);
+            int rawDamage = ship.shipInfo.GetWeaponDamage() + damageModifier;
+            int dealtDamage = Mathf.Max(0, rawDamage - target.GetArmor());
+            TurnManager.BroadcastAttackRolled(rawDamage);
+            target.Hurt(rawDamage);
+            TurnManager.BroadcastDamageDealt(dealtDamage);
             target = null;
             HasAttacked = true;
         }
@@ -68,6 +72,7 @@ public class ShipWeapon : MonoBehaviour
     public void FindReachableTargets()
     {
         ReachablePositionsDamageModifiers.Clear();
+        ReachableTargetsDamageModifiers.Clear();
 
         for (int side = 0; side < 6; side++)
         {
@@ -127,5 +132,4 @@ public class ShipWeapon : MonoBehaviour
         }
     }
 }
-
 
