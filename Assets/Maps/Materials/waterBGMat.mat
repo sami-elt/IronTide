@@ -38,7 +38,7 @@ Material:
     - _WaveScale: 3
     m_Colors:
     - _BaseColor: {r: 0.05, g: 0.25, b: 0.45, a: 1}
-    - _Color: {r: 0.10760052, g: 0.28710002, b: 0.735849, a: 0.25490198}
+    - _Color: {r: 0.2, g: 0.2, b: 0.2, a: 1}
     - _EmissionColor: {r: 0.016820932, g: 0.016820932, b: 0.16981131, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

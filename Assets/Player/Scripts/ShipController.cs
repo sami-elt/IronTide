@@ -9,10 +9,6 @@ public class ShipController : MonoBehaviour
 
     public GameObject activeIndicator;
 
-    private float interactWait = 0.2f;
-    private float nextInteract = 0f;
-
-
     private void Start()
     {
         ship = GetComponent<Ship>();

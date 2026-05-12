@@ -3,6 +3,7 @@ using NueGames.NueDeck.Scripts.Managers;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem.UI;
@@ -20,8 +21,9 @@ namespace IronTide.BasicCards
         [Header("Shop Settings")]
         [SerializeField] private int startingGold = 10;
         [SerializeField] private int visibleShopCards = 5;
-        [SerializeField] private int visibleHighPowerCards = 4;
-        [SerializeField] private int rerollCost = 1;
+        [SerializeField] private int visibleHighPowerCards = 3;
+        [SerializeField] private int basicRerollCost = 2;
+        [SerializeField] private int advancedRerollCost = 5;
         [SerializeField] [Range(0.05f, 0.5f)] private float legendaryOfferChance = 0.22f;
 
         [Header("Window Layout")]
@@ -54,6 +56,8 @@ namespace IronTide.BasicCards
         [SerializeField] private float ownedCardOffsetY = -4f;
         [SerializeField] private Vector2 ownedPreviewCardSize = new Vector2(214f, 304f);
         [SerializeField] private float ownedPreviewOffsetY = 214f;
+        [SerializeField] private Vector2 shopPreviewCardSize = new Vector2(214f, 312f);
+        [SerializeField] private float shopPreviewScale = 1.65f;
 
         private readonly List<IronTideModuleCardEntry> _availableBasicCards = new List<IronTideModuleCardEntry>();
         private readonly List<IronTideModuleCardEntry> _availableTier2Cards = new List<IronTideModuleCardEntry>();
@@ -71,29 +75,34 @@ namespace IronTide.BasicCards
         private Canvas _shopCanvas;
         private RectTransform _shopRoot;
         private RectTransform _bodyRoot;
-        private Button _rerollButton;
+        private Button _basicRerollButton;
+        private Button _advancedRerollButton;
+        private Button _nextPlayerButton;
+        private Button _startGameButton;
         private TMP_Text _goldText;
         private TMP_Text _statusText;
+        private TMP_Text _activePlayerText;
         private RectTransform _ownedPreviewRoot;
         private RectTransform _ownedPreviewCardRoot;
         private IronTideModuleCardView _ownedPreviewCard;
         private IronTideModuleCardEntry _previewedOwnedCard;
+        private RectTransform _shopPreviewRoot;
+        private RectTransform _shopPreviewCardRoot;
+        private IronTideModuleCardView _shopPreviewCard;
+        private IronTideModuleCardEntry _previewedShopCard;
         private int _fallbackGold;
+        private int _activePlayerIndex;
 
         private void Awake()
         {
             if (targetCamera == null)
                 targetCamera = Camera.main;
 
-            if (targetCamera == null)
-            {
-                Debug.LogError("BasicCardShopController requires a camera.");
-                enabled = false;
-                return;
-            }
-
             ResolveTemplateRoot();
             CacheCardPools();
+            if (!enabled)
+                return;
+
             ResolveVisualAssets();
             EnsureEventSystem();
             BuildShopWindow();
@@ -103,11 +112,14 @@ namespace IronTide.BasicCards
 
         public void StartShoppingPhase()
         {
+            int playerCount = IronTideGameState.Players.Count > 0 ? IronTideGameState.Players.Count : 2;
+            IronTideGameState.EnsurePlayers(playerCount);
+            EnsureDirectShopGold();
+            ReserveSavedLoadouts();
+            _activePlayerIndex = 0;
             HideOwnedCardPreview();
             RollFreshShops();
-            RefreshOwnedCards();
-            UpdateGoldText();
-            SetStatus("Shop ready.");
+            ShowActivePlayer();
         }
 
         public List<IronTideModuleCardEntry> GetEpicRewardChoices(int count)
@@ -143,6 +155,7 @@ namespace IronTide.BasicCards
             RemoveFromCurrentRows(rewardCard);
             _equippedCards[rewardCard.SlotType] = rewardCard;
             RefreshOwnedCards();
+            SaveCurrentPlayerLoadout();
             SetStatus($"Equipped reward card {rewardCard.DisplayName}.");
             return true;
         }
@@ -299,6 +312,25 @@ namespace IronTide.BasicCards
 
         private void BuildShopWindow()
         {
+            windowSize = new Vector2(1920f, 1080f);
+            windowPosition = Vector3.zero;
+            windowScale = Vector3.one;
+
+            Vector2 fullScreenSize = windowSize;
+            Vector2 bodySize = fullScreenSize - new Vector2(32f, 32f);
+
+            highPowerRowY = 210f;
+            shopRowY = -132f;
+            ownedRowY = -418f;
+            shopSlotSpacing = 286f;
+            slotSize = new Vector2(238f, 348f);
+            cardSize = new Vector2(214f, 312f);
+            cardOffsetY = 14f;
+            ownedSlotSize = new Vector2(190f, 126f);
+            ownedCardSize = new Vector2(98f, 94f);
+            equippedSlotSpacing = 240f;
+            float equippedCenterX = -300f;
+
             var canvasObject = new GameObject("Basic Shop Window");
             canvasObject.transform.SetParent(transform, false);
             canvasObject.transform.localPosition = windowPosition;
@@ -306,34 +338,47 @@ namespace IronTide.BasicCards
             canvasObject.transform.localScale = windowScale;
 
             _shopCanvas = canvasObject.AddComponent<Canvas>();
-            _shopCanvas.renderMode = RenderMode.WorldSpace;
-            _shopCanvas.worldCamera = targetCamera;
+            _shopCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
             _shopCanvas.overrideSorting = true;
             _shopCanvas.sortingOrder = 200;
+
+            var scaler = canvasObject.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = fullScreenSize;
+            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+            scaler.matchWidthOrHeight = 0.5f;
 
             canvasObject.AddComponent<GraphicRaycaster>();
 
             _shopRoot = canvasObject.GetComponent<RectTransform>();
-            _shopRoot.sizeDelta = windowSize;
+            _shopRoot.anchorMin = Vector2.zero;
+            _shopRoot.anchorMax = Vector2.one;
+            _shopRoot.offsetMin = Vector2.zero;
+            _shopRoot.offsetMax = Vector2.zero;
+            _shopRoot.sizeDelta = Vector2.zero;
 
-            var border = CreatePanel("Border", _shopRoot, windowSize, new Color(0.26f, 0.22f, 0.17f, 0.96f),
-                windowFrameSprite, Image.Type.Sliced);
-            var body = CreatePanel("Body", border, windowSize - new Vector2(34f, 34f), new Color(0.12f, 0.18f, 0.24f, 0.9f),
-                windowBodySprite, Image.Type.Sliced);
+            var border = CreatePanel("Border", _shopRoot, fullScreenSize, new Color(0.03f, 0.05f, 0.08f, 1f));
+            StretchToParent(border, 0f);
+            var body = CreatePanel("Body", border, bodySize, new Color(0.07f, 0.11f, 0.16f, 1f));
+            StretchToParent(body, 16f);
             _bodyRoot = body;
 
             CreateLabel("Title", body, "Shopping Phase", 36, FontStyles.Bold,
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -42f), new Vector2(700f, 50f),
                 TextAlignmentOptions.Center, new Color(0.96f, 0.89f, 0.73f, 1f), headingFont);
 
-            CreateLabel("Help", body,
-                "4 Tier 2, epic, or legendary cards appear on the upper row. 5 basic cards appear on the lower row. Legendary cards are rarer.",
-                16, FontStyles.Normal, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -92f),
-                new Vector2(980f, 38f), TextAlignmentOptions.Center, new Color(0.84f, 0.88f, 0.93f, 0.92f), bodyFont);
+            _activePlayerText = CreateLabel("ActivePlayer", body, string.Empty, 24, FontStyles.Bold,
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(32f, -54f), new Vector2(320f, 44f),
+                TextAlignmentOptions.Left, new Color(0.96f, 0.89f, 0.73f, 1f), headingFont);
 
-            _rerollButton = CreateButton(body, "RerollButton", $"Reroll ({rerollCost}g)",
-                new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-110f, -54f), new Vector2(200f, 54f),
-                RerollShop, new Color(0.76f, 0.61f, 0.18f, 0.96f), headingFont,
+            _basicRerollButton = CreateButton(body, "RerollBasicButton", $"Reroll T1 ({basicRerollCost}g)",
+                new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-310f, -58f), new Vector2(250f, 58f),
+                RerollBasicShop, new Color(0.48f, 0.62f, 0.27f, 0.96f), headingFont,
+                buttonSprite, buttonHoverSprite, buttonPressedSprite);
+
+            _advancedRerollButton = CreateButton(body, "RerollAdvancedButton", $"Reroll High ({advancedRerollCost}g)",
+                new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-310f, -126f), new Vector2(250f, 58f),
+                RerollAdvancedShop, new Color(0.76f, 0.61f, 0.18f, 0.96f), headingFont,
                 buttonSprite, buttonHoverSprite, buttonPressedSprite);
 
             CreateLabel("AdvancedHeading", body, "Tier 2, Epic & Legendary Modules", 24, FontStyles.Bold,
@@ -348,28 +393,38 @@ namespace IronTide.BasicCards
 
             CreateLabel("OwnedHeading", body, "Equipped Modules", 24, FontStyles.Bold,
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0f, ownedRowY + ownedSlotSize.y * 0.5f + 42f), new Vector2(360f, 30f),
+                new Vector2(equippedCenterX, ownedRowY + ownedSlotSize.y * 0.5f + 42f), new Vector2(360f, 30f),
                 TextAlignmentOptions.Center, new Color(0.96f, 0.89f, 0.73f, 1f), headingFont);
 
             _statusText = CreateLabel("Status", body, string.Empty, 20, FontStyles.Normal,
-                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(28f, 28f), new Vector2(780f, 54f),
+                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(32f, 46f), new Vector2(820f, 58f),
                 TextAlignmentOptions.Left, new Color(0.96f, 0.84f, 0.57f, 1f), bodyFont);
 
             _goldText = CreateLabel("Gold", body, string.Empty, 24, FontStyles.Bold,
-                new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-28f, 28f), new Vector2(240f, 40f),
+                new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-92f, 46f), new Vector2(220f, 46f),
                 TextAlignmentOptions.Right, new Color(0.99f, 0.87f, 0.46f, 1f), headingFont);
+
+            _nextPlayerButton = CreateButton(body, "NextPlayerButton", "Next Player",
+                new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-590f, 48f), new Vector2(220f, 60f),
+                NextPlayer, new Color(0.25f, 0.43f, 0.62f, 0.96f), headingFont,
+                buttonSprite, buttonHoverSprite, buttonPressedSprite);
+
+            _startGameButton = CreateButton(body, "StartGameButton", "Start Game 2",
+                new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-340f, 48f), new Vector2(250f, 60f),
+                FinishShoppingAndLoadGame2, new Color(0.62f, 0.29f, 0.20f, 0.96f), headingFont,
+                buttonSprite, buttonHoverSprite, buttonPressedSprite);
 
             BuildShopRow(body, _advancedSlots, visibleHighPowerCards, highPowerRowY);
             BuildShopRow(body, _basicSlots, visibleShopCards, shopRowY);
 
             _ownedSlots[BasicModuleType.Weapon] = CreateCardSlot(body, "WeaponSlot",
-                new Vector2(-equippedSlotSpacing, ownedRowY), true, BasicModuleType.Weapon,
+                new Vector2(equippedCenterX - equippedSlotSpacing, ownedRowY), true, BasicModuleType.Weapon,
                 ownedSlotSize, ownedCardSize, ownedCardOffsetY, headingFont, bodyFont, buttonSprite, buttonSprite, true);
             _ownedSlots[BasicModuleType.Armor] = CreateCardSlot(body, "ArmorSlot",
-                new Vector2(0f, ownedRowY), true, BasicModuleType.Armor,
+                new Vector2(equippedCenterX, ownedRowY), true, BasicModuleType.Armor,
                 ownedSlotSize, ownedCardSize, ownedCardOffsetY, headingFont, bodyFont, buttonSprite, buttonSprite, true);
             _ownedSlots[BasicModuleType.Engine] = CreateCardSlot(body, "EngineSlot",
-                new Vector2(equippedSlotSpacing, ownedRowY), true, BasicModuleType.Engine,
+                new Vector2(equippedCenterX + equippedSlotSpacing, ownedRowY), true, BasicModuleType.Engine,
                 ownedSlotSize, ownedCardSize, ownedCardOffsetY, headingFont, bodyFont, buttonSprite, buttonSprite, true);
 
             _ownedPreviewRoot = CreatePanel("OwnedPreview", body, ownedPreviewCardSize + new Vector2(18f, 18f),
@@ -384,6 +439,21 @@ namespace IronTide.BasicCards
             _ownedPreviewCardRoot.pivot = new Vector2(0.5f, 0.5f);
             _ownedPreviewCardRoot.anchoredPosition = Vector2.zero;
             _ownedPreviewCardRoot.sizeDelta = ownedPreviewCardSize;
+
+            var shopPreviewSize = (shopPreviewCardSize * shopPreviewScale) + new Vector2(28f, 28f);
+            _shopPreviewRoot = CreatePanel("ShopCardPreview", body, shopPreviewSize,
+                new Color(0.02f, 0.03f, 0.05f, 0.98f), buttonSprite, Image.Type.Sliced);
+            _shopPreviewRoot.gameObject.SetActive(false);
+            _shopPreviewRoot.SetAsLastSibling();
+
+            _shopPreviewCardRoot = new GameObject("ShopPreviewCardRoot", typeof(RectTransform)).GetComponent<RectTransform>();
+            _shopPreviewCardRoot.SetParent(_shopPreviewRoot, false);
+            _shopPreviewCardRoot.anchorMin = new Vector2(0.5f, 0.5f);
+            _shopPreviewCardRoot.anchorMax = new Vector2(0.5f, 0.5f);
+            _shopPreviewCardRoot.pivot = new Vector2(0.5f, 0.5f);
+            _shopPreviewCardRoot.anchoredPosition = Vector2.zero;
+            _shopPreviewCardRoot.sizeDelta = shopPreviewCardSize;
+            _shopPreviewCardRoot.localScale = Vector3.one * shopPreviewScale;
         }
 
         private void BuildShopRow(RectTransform body, List<CardSlotView> slots, int count, float rowY)
@@ -402,18 +472,7 @@ namespace IronTide.BasicCards
 
         private void InitializeGold()
         {
-            if (GameManager.Instance != null && GameManager.Instance.PersistentGameplayData != null)
-            {
-                if (GameManager.Instance.PersistentGameplayData.CurrentGold <= 0)
-                    GameManager.Instance.PersistentGameplayData.CurrentGold = startingGold;
-
-                _fallbackGold = GameManager.Instance.PersistentGameplayData.CurrentGold;
-            }
-            else
-            {
-                _fallbackGold = startingGold;
-            }
-
+            _fallbackGold = startingGold;
             UpdateGoldText();
         }
 
@@ -421,8 +480,9 @@ namespace IronTide.BasicCards
         {
             get
             {
-                if (GameManager.Instance != null && GameManager.Instance.PersistentGameplayData != null)
-                    return GameManager.Instance.PersistentGameplayData.CurrentGold;
+                var player = ActivePlayer;
+                if (player != null)
+                    return player.Gold;
 
                 return _fallbackGold;
             }
@@ -430,8 +490,9 @@ namespace IronTide.BasicCards
             {
                 _fallbackGold = value;
 
-                if (GameManager.Instance != null && GameManager.Instance.PersistentGameplayData != null)
-                    GameManager.Instance.PersistentGameplayData.CurrentGold = value;
+                var player = ActivePlayer;
+                if (player != null)
+                    player.Gold = value;
 
                 if (UIManager.Instance != null && UIManager.Instance.InformationCanvas != null)
                     UIManager.Instance.InformationCanvas.SetGoldText(value);
@@ -440,17 +501,131 @@ namespace IronTide.BasicCards
             }
         }
 
-        private void RerollShop()
+        private IronTidePlayerState ActivePlayer => IronTideGameState.GetPlayer(_activePlayerIndex);
+
+        private void EnsureDirectShopGold()
         {
-            if (CurrentGold < rerollCost)
+            if (IronTideGameState.HasSavedLoadouts)
+                return;
+
+            foreach (IronTidePlayerState player in IronTideGameState.Players)
             {
-                SetStatus("Not enough gold to reroll.");
+                if (player != null && player.Gold <= 0)
+                    player.Gold = startingGold;
+            }
+        }
+
+        private void ReserveSavedLoadouts()
+        {
+            foreach (IronTidePlayerState player in IronTideGameState.Players)
+            {
+                if (player == null)
+                    continue;
+
+                RemoveFromAvailablePool(cardLibrary.FindById(player.WeaponModuleId));
+                RemoveFromAvailablePool(cardLibrary.FindById(player.ArmorModuleId));
+                RemoveFromAvailablePool(cardLibrary.FindById(player.EngineModuleId));
+            }
+        }
+
+        private void ShowActivePlayer()
+        {
+            LoadPlayerLoadout(ActivePlayer);
+            RefreshOwnedCards();
+            UpdateGoldText();
+
+            int displayIndex = _activePlayerIndex + 1;
+            int playerCount = Mathf.Max(1, IronTideGameState.Players.Count);
+
+            if (_activePlayerText != null)
+                _activePlayerText.text = $"Player {displayIndex}/{playerCount}";
+
+            if (_activePlayerIndex >= playerCount - 1)
+                SetStatus($"Player {displayIndex} shopping. Press Start Game 2 when done.");
+            else
+                SetStatus($"Player {displayIndex} shopping. Buy, sell, or press Next Player.");
+
+            UpdateRerollButton();
+        }
+
+        private void LoadPlayerLoadout(IronTidePlayerState player)
+        {
+            _equippedCards.Clear();
+
+            if (player == null || cardLibrary == null)
+                return;
+
+            AddEquippedCard(cardLibrary.FindById(player.WeaponModuleId));
+            AddEquippedCard(cardLibrary.FindById(player.ArmorModuleId));
+            AddEquippedCard(cardLibrary.FindById(player.EngineModuleId));
+        }
+
+        private void AddEquippedCard(IronTideModuleCardEntry card)
+        {
+            if (card == null)
+                return;
+
+            _equippedCards[card.SlotType] = card;
+        }
+
+        private void SaveCurrentPlayerLoadout()
+        {
+            _equippedCards.TryGetValue(BasicModuleType.Weapon, out var weapon);
+            _equippedCards.TryGetValue(BasicModuleType.Armor, out var armor);
+            _equippedCards.TryGetValue(BasicModuleType.Engine, out var engine);
+            IronTideGameState.UpdatePlayerLoadout(_activePlayerIndex, weapon, armor, engine);
+        }
+
+        private void NextPlayer()
+        {
+            SaveCurrentPlayerLoadout();
+
+            int playerCount = IronTideGameState.Players.Count;
+            if (_activePlayerIndex >= playerCount - 1)
+            {
+                SetStatus("All players are ready. Press Start Game 2.");
+                UpdateRerollButton();
                 return;
             }
 
-            CurrentGold -= rerollCost;
-            RollFreshShops();
-            SetStatus($"Rerolled the shop for {rerollCost} gold.");
+            _activePlayerIndex++;
+            HideOwnedCardPreview();
+            ShowActivePlayer();
+        }
+
+        private void FinishShoppingAndLoadGame2()
+        {
+            SaveCurrentPlayerLoadout();
+            IronTideGameState.CompleteShopping();
+            SceneManager.LoadScene(IronTideGameState.CombatSceneName);
+        }
+
+        private void RerollBasicShop()
+        {
+            if (CurrentGold < basicRerollCost)
+            {
+                SetStatus("Not enough gold to reroll Tier 1 modules.");
+                return;
+            }
+
+            CurrentGold -= basicRerollCost;
+            RollFreshShop(_availableBasicCards, _currentBasicCards, _basicSlots.Count);
+            RefreshShopCards();
+            SetStatus($"Rerolled Tier 1 modules for {basicRerollCost} gold.");
+        }
+
+        private void RerollAdvancedShop()
+        {
+            if (CurrentGold < advancedRerollCost)
+            {
+                SetStatus("Not enough gold to reroll high-power modules.");
+                return;
+            }
+
+            CurrentGold -= advancedRerollCost;
+            RollFreshAdvancedShop();
+            RefreshShopCards();
+            SetStatus($"Rerolled high-power modules for {advancedRerollCost} gold.");
         }
 
         private void RollFreshShops()
@@ -503,6 +678,7 @@ namespace IronTide.BasicCards
 
         private void RefreshShopCards()
         {
+            HideShopCardPreview();
             RefreshSlotList(_advancedSlots, _currentAdvancedCards, CardInteractionMode.Shop);
             RefreshSlotList(_basicSlots, _currentBasicCards, CardInteractionMode.Shop);
             UpdateRerollButton();
@@ -592,9 +768,9 @@ namespace IronTide.BasicCards
             if (sourceCard == null)
                 return;
 
-            if (_equippedCards.ContainsKey(sourceCard.SlotType))
+            if (_equippedCards.TryGetValue(sourceCard.SlotType, out var equippedCard) && equippedCard != null)
             {
-                SetStatus($"Your {GetModuleLabel(sourceCard.SlotType).ToLowerInvariant()} slot is already filled.");
+                SetStatus($"{GetModuleLabel(sourceCard.SlotType)} slot is occupied. Sell {equippedCard.DisplayName} first.");
                 return;
             }
 
@@ -605,6 +781,7 @@ namespace IronTide.BasicCards
             }
 
             CurrentGold -= sourceCard.BuyCost;
+
             _equippedCards[sourceCard.SlotType] = sourceCard;
 
             RemoveFromAvailablePool(sourceCard);
@@ -613,6 +790,8 @@ namespace IronTide.BasicCards
 
             RefreshOwnedCards();
             RefreshShopCards();
+            SaveCurrentPlayerLoadout();
+
             SetStatus($"Bought {sourceCard.DisplayName}.");
         }
 
@@ -634,11 +813,15 @@ namespace IronTide.BasicCards
 
             RefreshOwnedCards();
             UpdateRerollButton();
+            SaveCurrentPlayerLoadout();
             SetStatus($"Sold {sourceCard.DisplayName} for {sourceCard.SellValue} gold.");
         }
 
         private void RemoveFromAvailablePool(IronTideModuleCardEntry card)
         {
+            if (card == null)
+                return;
+
             if (card.AppearsInBasicShop)
             {
                 _availableBasicCards.Remove(card);
@@ -663,6 +846,9 @@ namespace IronTide.BasicCards
 
         private void ReturnToOriginPool(IronTideModuleCardEntry card)
         {
+            if (card == null)
+                return;
+
             if (card.AppearsInBasicShop)
             {
                 if (!_availableBasicCards.Contains(card))
@@ -769,11 +955,22 @@ namespace IronTide.BasicCards
 
         private void UpdateRerollButton()
         {
-            if (_rerollButton == null)
-                return;
+            if (_basicRerollButton != null)
+                _basicRerollButton.interactable = CurrentGold >= basicRerollCost && _availableBasicCards.Count > 0;
 
-            _rerollButton.interactable = CurrentGold >= rerollCost &&
-                (_availableBasicCards.Count > 0 || _availableTier2Cards.Count > 0 || _availableEpicCards.Count > 0 || _availableLegendaryCards.Count > 0);
+            if (_advancedRerollButton != null)
+            {
+                _advancedRerollButton.interactable = CurrentGold >= advancedRerollCost &&
+                    (_availableTier2Cards.Count > 0 || _availableEpicCards.Count > 0 || _availableLegendaryCards.Count > 0);
+            }
+
+            int playerCount = IronTideGameState.Players.Count;
+
+            if (_nextPlayerButton != null)
+                _nextPlayerButton.interactable = playerCount > 1 && _activePlayerIndex < playerCount - 1;
+
+            if (_startGameButton != null)
+                _startGameButton.interactable = playerCount > 0 && _activePlayerIndex >= playerCount - 1;
         }
 
         private static IronTideModuleCardEntry DrawRandomCard(List<IronTideModuleCardEntry> cards)
@@ -839,6 +1036,100 @@ namespace IronTide.BasicCards
             _previewedOwnedCard = null;
         }
 
+        internal void ShowShopCardPreview(IronTideModuleCardEntry sourceCard)
+        {
+            if (sourceCard == null || _shopPreviewRoot == null || _shopPreviewCardRoot == null)
+                return;
+
+            _shopPreviewRoot.anchoredPosition = GetShopPreviewPosition(sourceCard);
+            _shopPreviewRoot.gameObject.SetActive(true);
+            _shopPreviewRoot.SetAsLastSibling();
+
+            if (_previewedShopCard == sourceCard && _shopPreviewCard != null)
+                return;
+
+            ClearShopPreviewCard();
+
+            var previewObject = new GameObject($"{sourceCard.DisplayName}_ShopPreview",
+                typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(IronTideModuleCardView));
+            previewObject.transform.SetParent(_shopPreviewCardRoot, false);
+
+            var rectTransform = previewObject.GetComponent<RectTransform>();
+            rectTransform.anchorMin = Vector2.zero;
+            rectTransform.anchorMax = Vector2.one;
+            rectTransform.offsetMin = Vector2.zero;
+            rectTransform.offsetMax = Vector2.zero;
+            rectTransform.localScale = Vector3.one;
+            rectTransform.localRotation = Quaternion.identity;
+
+            var previewImage = previewObject.GetComponent<Image>();
+            previewImage.raycastTarget = false;
+
+            _shopPreviewCard = previewObject.GetComponent<IronTideModuleCardView>();
+            _shopPreviewCard.Initialize(this, sourceCard, CardInteractionMode.Preview, CardVisualMode.Standard);
+            previewObject.GetComponent<Image>().raycastTarget = false;
+            _previewedShopCard = sourceCard;
+        }
+
+        internal void HideShopCardPreview(IronTideModuleCardEntry sourceCard = null)
+        {
+            if (sourceCard != null && _previewedShopCard != sourceCard)
+                return;
+
+            if (_shopPreviewRoot != null)
+                _shopPreviewRoot.gameObject.SetActive(false);
+
+            ClearShopPreviewCard();
+            _previewedShopCard = null;
+        }
+
+        private Vector2 GetShopPreviewPosition(IronTideModuleCardEntry sourceCard)
+        {
+            var slot = FindShopSlot(sourceCard);
+            var previewSize = (shopPreviewCardSize * shopPreviewScale) + new Vector2(28f, 28f);
+            var bodySize = windowSize - new Vector2(34f, 34f);
+            var halfBody = bodySize * 0.5f;
+            var halfPreview = previewSize * 0.5f;
+            var inset = 28f;
+
+            var previewPosition = new Vector2(650f, -34f);
+            if (slot != null)
+            {
+                float side = slot.Root.anchoredPosition.x >= 0f ? -1f : 1f;
+                previewPosition.x = slot.Root.anchoredPosition.x + side * 360f;
+                previewPosition.y = slot.Root.anchoredPosition.y + 18f;
+            }
+
+            previewPosition.x = Mathf.Clamp(previewPosition.x,
+                -halfBody.x + halfPreview.x + inset,
+                halfBody.x - halfPreview.x - inset);
+            previewPosition.y = Mathf.Clamp(previewPosition.y,
+                -halfBody.y + halfPreview.y + inset,
+                halfBody.y - halfPreview.y - inset);
+
+            return previewPosition;
+        }
+
+        private CardSlotView FindShopSlot(IronTideModuleCardEntry sourceCard)
+        {
+            var slot = FindShopSlot(_advancedSlots, sourceCard);
+            if (slot != null)
+                return slot;
+
+            return FindShopSlot(_basicSlots, sourceCard);
+        }
+
+        private static CardSlotView FindShopSlot(List<CardSlotView> slots, IronTideModuleCardEntry sourceCard)
+        {
+            foreach (var slot in slots)
+            {
+                if (slot.ActiveCard != null && slot.ActiveCard.Card == sourceCard)
+                    return slot;
+            }
+
+            return null;
+        }
+
         private Vector2 GetOwnedPreviewPosition(CardSlotView slot, BasicModuleType slotType)
         {
             var previewSize = ownedPreviewCardSize + new Vector2(18f, 18f);
@@ -883,6 +1174,15 @@ namespace IronTide.BasicCards
 
             Destroy(_ownedPreviewCard.gameObject);
             _ownedPreviewCard = null;
+        }
+
+        private void ClearShopPreviewCard()
+        {
+            if (_shopPreviewCard == null)
+                return;
+
+            Destroy(_shopPreviewCard.gameObject);
+            _shopPreviewCard = null;
         }
 
         private static string GetModuleLabel(BasicModuleType moduleType)
@@ -931,6 +1231,17 @@ namespace IronTide.BasicCards
             return rect;
         }
 
+        private static void StretchToParent(RectTransform rect, float padding)
+        {
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.offsetMin = new Vector2(padding, padding);
+            rect.offsetMax = new Vector2(-padding, -padding);
+            rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = Vector2.zero;
+        }
+
         private static TMP_Text CreateLabel(string name, RectTransform parent, string text, float fontSize,
             FontStyles fontStyle, Vector2 anchorMin, Vector2 anchorMax, Vector2 anchoredPosition, Vector2 size,
             TextAlignmentOptions alignment, Color color, TMP_FontAsset font = null)
@@ -953,7 +1264,10 @@ namespace IronTide.BasicCards
             label.color = color;
             if (font != null)
                 label.font = font;
-            label.enableWordWrapping = true;
+            label.textWrappingMode = TextWrappingModes.Normal;
+            label.enableAutoSizing = true;
+            label.fontSizeMin = Mathf.Max(10f, fontSize * 0.62f);
+            label.fontSizeMax = fontSize;
             label.overflowMode = TextOverflowModes.Overflow;
             label.raycastTarget = false;
 
@@ -1066,7 +1380,7 @@ namespace IronTide.BasicCards
                 priceLabel = CreateLabel("Price", priceFrameRect, string.Empty, 18, FontStyles.Bold,
                     Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero,
                     TextAlignmentOptions.Center, new Color(1f, 0.92f, 0.7f, 1f), headingFont);
-                priceLabel.enableWordWrapping = false;
+                priceLabel.textWrappingMode = TextWrappingModes.NoWrap;
             }
 
             if (ownedSlot)
