@@ -2,7 +2,12 @@ using System.Collections.Generic;
 using IronTide.BasicCards;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem.UI;
+#endif
 
 public class TestDay1PlayUI : MonoBehaviour
 {
@@ -24,30 +29,47 @@ public class TestDay1PlayUI : MonoBehaviour
     private TextMeshProUGUI sidebarPhase;
     private TextMeshProUGUI sidebarMovement;
     private TextMeshProUGUI sidebarWeapon;
+    private TextMeshProUGUI sidebarAttack;
     private TextMeshProUGUI sidebarArmor;
     private TextMeshProUGUI sidebarLastAction;
+    private RectTransform moduleTooltip;
+    private TextMeshProUGUI tooltipTitle;
+    private TextMeshProUGUI tooltipMeta;
+    private TextMeshProUGUI tooltipStats;
+    private TextMeshProUGUI tooltipPassive;
+    private ModuleSlotHud hoveredSlot;
 
     private bool gameOver;
     private int winnerNumber;
+    private bool transitionStarted;
     private string lastActionText = "Waiting for first move.";
+    private string attackText = "Attack not rolled.";
+    private string previousAttackText = string.Empty;
 
     private static readonly Color PanelColor = new Color(0.05f, 0.08f, 0.13f, 0.92f);
     private static readonly Color HeaderColor = new Color(0.10f, 0.16f, 0.25f, 0.96f);
     private static readonly Color GoldColor = new Color(0.95f, 0.78f, 0.32f, 1f);
     private static readonly Color TextColor = new Color(0.92f, 0.96f, 1f, 1f);
     private static readonly Color MutedTextColor = new Color(0.62f, 0.70f, 0.78f, 1f);
-    private static readonly Color ActiveModuleColor = new Color(0.12f, 0.22f, 0.34f, 0.98f);
+    private static readonly Color WeaponModuleColor = new Color(0.23f, 0.12f, 0.10f, 0.98f);
+    private static readonly Color ArmorModuleColor = new Color(0.15f, 0.18f, 0.22f, 0.98f);
+    private static readonly Color EngineModuleColor = new Color(0.08f, 0.19f, 0.19f, 0.98f);
     private static readonly Color BrokenModuleColor = new Color(0.31f, 0.07f, 0.07f, 0.98f);
-    private static readonly Color EmptyModuleColor = new Color(0.10f, 0.10f, 0.11f, 0.86f);
+    private static readonly Color EmptyModuleColor = new Color(0.07f, 0.09f, 0.12f, 0.86f);
+    private static readonly Color TooltipColor = new Color(0.04f, 0.06f, 0.09f, 0.98f);
     private static readonly Color HpHealthyColor = new Color(0.22f, 0.78f, 0.32f, 1f);
     private static readonly Color HpDangerColor = new Color(0.95f, 0.24f, 0.20f, 1f);
+    private static readonly Color HpDividerColor = new Color(0.98f, 0.96f, 0.86f, 0.95f);
+    private const string GoldHex = "#F2C84B";
+    private const string MoveHex = "#89D8FF";
+    private const string TextHex = "#EAF2FF";
+    private const string MutedHex = "#A6B6C9";
 
     private void Awake()
     {
         ResolveModuleLibrary();
-
-        if (autoDealStarterModules)
-            DealStarterModules();
+        ResolveShipReferences();
+        SetupPlayerModules();
     }
 
     private void Start()
@@ -59,6 +81,9 @@ public class TestDay1PlayUI : MonoBehaviour
         TurnManager.OnMovementRolled += HandleMovementRolled;
         TurnManager.OnAttackRolled += HandleAttackRolled;
         TurnManager.OnDamageDealt += HandleDamageDealt;
+        TurnManager.OnTurnFeedback += HandleTurnFeedback;
+        TurnManager.OnAttackResolved += HandleAttackResolved;
+        TurnManager.OnAttackPrepared += HandleAttackPrepared;
 
         foreach (Ship ship in ships)
         {
@@ -75,6 +100,9 @@ public class TestDay1PlayUI : MonoBehaviour
         TurnManager.OnMovementRolled -= HandleMovementRolled;
         TurnManager.OnAttackRolled -= HandleAttackRolled;
         TurnManager.OnDamageDealt -= HandleDamageDealt;
+        TurnManager.OnTurnFeedback -= HandleTurnFeedback;
+        TurnManager.OnAttackResolved -= HandleAttackResolved;
+        TurnManager.OnAttackPrepared -= HandleAttackPrepared;
 
         foreach (Ship ship in ships)
         {
@@ -106,7 +134,78 @@ public class TestDay1PlayUI : MonoBehaviour
 #endif
     }
 
-    private void DealStarterModules()
+    private void ResolveShipReferences()
+    {
+        foreach (Ship ship in ships)
+        {
+            if (ship == null)
+                continue;
+
+            if (ship.shipInfo == null)
+                ship.shipInfo = ship.GetComponent<ShipInfo>();
+            if (ship.shipMovement == null)
+                ship.shipMovement = ship.GetComponent<ShipMovement>();
+            if (ship.shipWeapon == null)
+                ship.shipWeapon = ship.GetComponent<ShipWeapon>();
+            if (ship.turnPlayerController == null)
+                ship.turnPlayerController = ship.GetComponent<TurnPlayerController>();
+        }
+    }
+
+    private void SetupPlayerModules()
+    {
+        IronTideGameState.EnsurePlayers(ships.Count);
+
+        if (ShouldRestoreSavedModules())
+        {
+            RestoreSavedModules();
+            if (IronTideGameState.ShouldOpenShopAfterCombat && autoDealStarterModules)
+                DealStarterWeapons();
+            return;
+        }
+
+        if (autoDealStarterModules)
+            DealStarterWeapons();
+    }
+
+    private bool ShouldRestoreSavedModules()
+    {
+        if (!IronTideGameState.HasSavedLoadouts)
+            return false;
+
+        if (!IronTideGameState.ShouldOpenShopAfterCombat)
+            return true;
+
+        for (int i = 0; i < IronTideGameState.Players.Count; i++)
+        {
+            IronTidePlayerState player = IronTideGameState.GetPlayer(i);
+            if (player != null && IsValidSavedWeapon(player.WeaponModuleId))
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool IsValidSavedWeapon(string moduleId)
+    {
+        if (moduleLibrary == null)
+            return false;
+
+        IronTideModuleCardEntry card = moduleLibrary.FindById(moduleId);
+        return card != null && card.IsValid && card.SlotType == BasicModuleType.Weapon;
+    }
+
+    private void RestoreSavedModules()
+    {
+        for (int i = 0; i < ships.Count; i++)
+        {
+            Ship ship = ships[i];
+            IronTidePlayerState player = IronTideGameState.GetPlayer(i);
+            IronTideGameState.ApplyLoadoutToShip(ship, player, moduleLibrary);
+        }
+    }
+
+    private void DealStarterWeapons()
     {
         if (moduleLibrary == null)
         {
@@ -114,9 +213,9 @@ public class TestDay1PlayUI : MonoBehaviour
             return;
         }
 
-        var weapons = Shuffled(GetTier1(BasicModuleType.Weapon));
-        var armors = Shuffled(GetTier1(BasicModuleType.Armor));
-        var engines = Shuffled(GetTier1(BasicModuleType.Engine));
+        var weapons = Shuffled(moduleLibrary.GetTier1Cards(BasicModuleType.Weapon));
+        RemoveAlreadyEquippedWeapons(weapons);
+        int weaponIndex = 0;
 
         for (int i = 0; i < ships.Count; i++)
         {
@@ -125,30 +224,60 @@ public class TestDay1PlayUI : MonoBehaviour
                 continue;
 
             ShipInfo info = ship.shipInfo;
-            if (info.WeaponModule == null && i < weapons.Count)
-                info.SetWeaponModule(weapons[i]);
-            if (info.ArmorModule == null && i < armors.Count)
-                info.SetArmorModule(armors[i]);
-            if (info.EngineModule == null && i < engines.Count)
-                info.SetEngineModule(engines[i]);
+            if ((info.WeaponModule == null || !info.WeaponModule.IsValid) && weaponIndex < weapons.Count)
+            {
+                info.SetWeaponModule(weapons[weaponIndex]);
+                weaponIndex++;
+            }
+
+            info.SetArmorModule(null);
+            info.SetEngineModule(null);
 
             info.ResetValues();
         }
+
+        IronTideGameState.SaveLoadouts(ships);
     }
 
-    private List<IronTideModuleCardEntry> GetTier1(BasicModuleType slotType)
+    private void RemoveAlreadyEquippedWeapons(List<IronTideModuleCardEntry> weapons)
     {
-        var results = new List<IronTideModuleCardEntry>();
-        if (moduleLibrary == null)
-            return results;
-
-        foreach (IronTideModuleCardEntry card in moduleLibrary.Cards)
+        for (int i = weapons.Count - 1; i >= 0; i--)
         {
-            if (card != null && card.IsValid && card.Tier == IronTideCardTier.Tier1 && card.SlotType == slotType)
-                results.Add(card);
+            IronTideModuleCardEntry weapon = weapons[i];
+            if (weapon == null)
+                continue;
+
+            foreach (Ship ship in ships)
+            {
+                if (ship == null || ship.shipInfo == null || ship.shipInfo.WeaponModule != weapon)
+                    continue;
+
+                weapons.RemoveAt(i);
+                break;
+            }
+        }
+    }
+
+    private void EnsureEventSystem()
+    {
+        var eventSystem = EventSystem.current;
+        if (eventSystem == null)
+        {
+            var eventSystemObject = new GameObject("EventSystem");
+            eventSystem = eventSystemObject.AddComponent<EventSystem>();
         }
 
-        return results;
+#if ENABLE_INPUT_SYSTEM
+        if (eventSystem.GetComponent<InputSystemUIInputModule>() == null)
+            eventSystem.gameObject.AddComponent<InputSystemUIInputModule>();
+
+        var standaloneInputModule = eventSystem.GetComponent<StandaloneInputModule>();
+        if (standaloneInputModule != null)
+            Destroy(standaloneInputModule);
+#else
+        if (eventSystem.GetComponent<StandaloneInputModule>() == null)
+            eventSystem.gameObject.AddComponent<StandaloneInputModule>();
+#endif
     }
 
     private static List<IronTideModuleCardEntry> Shuffled(List<IronTideModuleCardEntry> source)
@@ -184,6 +313,19 @@ public class TestDay1PlayUI : MonoBehaviour
             turnIndicator.gameObject.SetActive(false);
         if (phaseIndicator != null)
             phaseIndicator.gameObject.SetActive(false);
+
+        if (winIndicator != null)
+            winIndicator.gameObject.SetActive(false);
+
+        TextMeshProUGUI[] labels = GetComponentsInChildren<TextMeshProUGUI>(true);
+        foreach (TextMeshProUGUI label in labels)
+        {
+            if (label == null || string.IsNullOrWhiteSpace(label.text))
+                continue;
+
+            if (label.text.Contains("Press M to proceed"))
+                label.gameObject.SetActive(false);
+        }
     }
 
     private void BuildHud()
@@ -206,56 +348,38 @@ public class TestDay1PlayUI : MonoBehaviour
         if (GetComponent<GraphicRaycaster>() == null)
             gameObject.AddComponent<GraphicRaycaster>();
 
+        EnsureEventSystem();
         BuildSidebar(transform);
-        BuildModuleStrip(transform);
+        BuildModuleTooltip(transform);
     }
 
     private void BuildSidebar(Transform parent)
     {
         RectTransform sidebar = CreatePanel("Playtest Sidebar", parent, PanelColor);
-        sidebar.anchorMin = new Vector2(0f, 0.16f);
+        sidebar.anchorMin = new Vector2(0f, 0f);
         sidebar.anchorMax = new Vector2(0f, 1f);
         sidebar.pivot = new Vector2(0f, 0.5f);
         sidebar.offsetMin = new Vector2(0f, 0f);
-        sidebar.offsetMax = new Vector2(340f, 0f);
+        sidebar.offsetMax = new Vector2(390f, 0f);
 
         var layout = sidebar.gameObject.AddComponent<VerticalLayoutGroup>();
-        layout.padding = new RectOffset(14, 14, 14, 14);
-        layout.spacing = 10;
+        layout.padding = new RectOffset(16, 16, 16, 12);
+        layout.spacing = 7;
         layout.childForceExpandWidth = true;
         layout.childForceExpandHeight = false;
 
-        sidebarTitle = CreateLabel(sidebar, "Current Player", 20f, FontStyles.Bold, GoldColor, TextAlignmentOptions.Left);
+        sidebarTitle = CreateLabel(sidebar, "Current Player", 22f, FontStyles.Bold, GoldColor, TextAlignmentOptions.Left);
         sidebarTitle.gameObject.AddComponent<LayoutElement>().preferredHeight = 32f;
 
         sidebarPhase = CreateInfoLine(sidebar, "Phase: -");
         sidebarMovement = CreateInfoLine(sidebar, "Move: -");
         sidebarWeapon = CreateInfoLine(sidebar, "Weapon: -");
+        sidebarAttack = CreateInfoLine(sidebar, "Attack: -");
         sidebarArmor = CreateInfoLine(sidebar, "Armor: -");
         sidebarLastAction = CreateInfoLine(sidebar, lastActionText);
-    }
 
-    private TextMeshProUGUI CreateInfoLine(RectTransform parent, string text)
-    {
-        TextMeshProUGUI label = CreateLabel(parent, text, 16f, FontStyles.Normal, TextColor, TextAlignmentOptions.Left);
-        label.gameObject.AddComponent<LayoutElement>().preferredHeight = 40f;
-        return label;
-    }
-
-    private void BuildModuleStrip(Transform parent)
-    {
-        RectTransform strip = CreatePanel("Ship Module Strip", parent, PanelColor);
-        strip.anchorMin = new Vector2(0f, 0f);
-        strip.anchorMax = new Vector2(1f, 0f);
-        strip.pivot = new Vector2(0.5f, 0f);
-        strip.offsetMin = new Vector2(0f, 0f);
-        strip.offsetMax = new Vector2(0f, 156f);
-
-        var layout = strip.gameObject.AddComponent<HorizontalLayoutGroup>();
-        layout.padding = new RectOffset(14, 14, 12, 12);
-        layout.spacing = 12;
-        layout.childForceExpandWidth = true;
-        layout.childForceExpandHeight = true;
+        TextMeshProUGUI modulesHeader = CreateLabel(sidebar, "Ship Modules", 17f, FontStyles.Bold, GoldColor, TextAlignmentOptions.Left);
+        modulesHeader.gameObject.AddComponent<LayoutElement>().preferredHeight = 22f;
 
         playerPanels.Clear();
         foreach (Ship ship in ships)
@@ -263,24 +387,51 @@ public class TestDay1PlayUI : MonoBehaviour
             if (ship == null)
                 continue;
 
-            playerPanels.Add(BuildPlayerPanel(strip, ship));
+            playerPanels.Add(BuildPlayerPanel(sidebar, ship));
         }
+    }
+
+    private TextMeshProUGUI CreateInfoLine(RectTransform parent, string text)
+    {
+        TextMeshProUGUI label = CreateLabel(parent, text, 16f, FontStyles.Normal, TextColor, TextAlignmentOptions.Left);
+        label.richText = true;
+        label.gameObject.AddComponent<LayoutElement>().preferredHeight = 31f;
+        return label;
+    }
+
+    private RectTransform CreateModuleRow(RectTransform parent)
+    {
+        RectTransform row = CreatePanel("Module Row", parent, new Color(0f, 0f, 0f, 0f));
+        LayoutElement rowLayout = row.gameObject.AddComponent<LayoutElement>();
+        rowLayout.preferredHeight = 58f;
+        rowLayout.flexibleHeight = 0f;
+
+        var layout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+        layout.spacing = 6;
+        layout.childForceExpandWidth = true;
+        layout.childForceExpandHeight = false;
+        layout.childControlHeight = true;
+        layout.childAlignment = TextAnchor.UpperLeft;
+        return row;
     }
 
     private PlayerHudPanel BuildPlayerPanel(RectTransform parent, Ship ship)
     {
         RectTransform panel = CreatePanel("Player Module Panel", parent, HeaderColor);
-        panel.gameObject.AddComponent<LayoutElement>().preferredWidth = 560f;
+        LayoutElement panelLayout = panel.gameObject.AddComponent<LayoutElement>();
+        panelLayout.preferredHeight = 116f;
+        panelLayout.flexibleHeight = 0f;
 
         var verticalLayout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
-        verticalLayout.padding = new RectOffset(10, 10, 8, 8);
-        verticalLayout.spacing = 8;
+        verticalLayout.padding = new RectOffset(9, 9, 7, 7);
+        verticalLayout.spacing = 4;
         verticalLayout.childForceExpandWidth = true;
         verticalLayout.childForceExpandHeight = false;
+        verticalLayout.childControlHeight = true;
 
         int playerNumber = ship.turnPlayerController != null ? ship.turnPlayerController.playerID + 1 : playerPanels.Count + 1;
-        TextMeshProUGUI title = CreateLabel(panel, $"Player {playerNumber}", 17f, FontStyles.Bold, GoldColor, TextAlignmentOptions.Left);
-        title.gameObject.AddComponent<LayoutElement>().preferredHeight = 22f;
+        TextMeshProUGUI title = CreateLabel(panel, $"Player {playerNumber}", 16f, FontStyles.Bold, GoldColor, TextAlignmentOptions.Left);
+        title.gameObject.AddComponent<LayoutElement>().preferredHeight = 18f;
 
         RectTransform hpRoot = CreatePanel("HP Bar", panel, new Color(0.15f, 0.04f, 0.04f, 1f));
         hpRoot.gameObject.AddComponent<LayoutElement>().preferredHeight = 18f;
@@ -291,52 +442,151 @@ public class TestDay1PlayUI : MonoBehaviour
         hpFill.offsetMin = Vector2.zero;
         hpFill.offsetMax = Vector2.zero;
 
+        List<RectTransform> hpDividers = BuildHpDividers(hpRoot, 2);
+
         TextMeshProUGUI hpText = CreateLabel(hpRoot, "10/10", 12f, FontStyles.Bold, Color.white, TextAlignmentOptions.Center);
         Stretch(hpText.rectTransform);
 
-        RectTransform cards = CreatePanel("Module Cards", panel, new Color(0f, 0f, 0f, 0f));
-        cards.gameObject.AddComponent<LayoutElement>().preferredHeight = 72f;
-
-        var cardLayout = cards.gameObject.AddComponent<HorizontalLayoutGroup>();
-        cardLayout.spacing = 8;
-        cardLayout.childForceExpandWidth = true;
-        cardLayout.childForceExpandHeight = true;
+        RectTransform cards = CreateModuleRow(panel);
 
         return new PlayerHudPanel
         {
             Ship = ship,
             HpFill = hpFill,
+            HpDividers = hpDividers,
             HpText = hpText,
-            WeaponSlot = BuildModuleSlot(cards, "WEAPON"),
-            ArmorSlot = BuildModuleSlot(cards, "ARMOR"),
-            EngineSlot = BuildModuleSlot(cards, "ENGINE")
+            WeaponSlot = BuildModuleSlot(cards, "WEAPON", WeaponModuleColor),
+            ArmorSlot = BuildModuleSlot(cards, "ARMOR", ArmorModuleColor),
+            EngineSlot = BuildModuleSlot(cards, "ENGINE", EngineModuleColor)
         };
     }
 
-    private ModuleSlotHud BuildModuleSlot(RectTransform parent, string label)
+    private List<RectTransform> BuildHpDividers(RectTransform hpRoot, int count)
+    {
+        var dividers = new List<RectTransform>(count);
+        for (int i = 0; i < count; i++)
+        {
+            RectTransform divider = CreatePanel("HP Divider", hpRoot, HpDividerColor);
+            divider.anchorMin = new Vector2(0.5f, 0f);
+            divider.anchorMax = new Vector2(0.5f, 1f);
+            divider.pivot = new Vector2(0.5f, 0.5f);
+            divider.sizeDelta = new Vector2(3f, 0f);
+            divider.anchoredPosition = Vector2.zero;
+            divider.gameObject.SetActive(false);
+            dividers.Add(divider);
+        }
+
+        return dividers;
+    }
+
+    private ModuleSlotHud BuildModuleSlot(RectTransform parent, string label, Color activeColor)
     {
         RectTransform root = CreatePanel(label, parent, EmptyModuleColor);
+        LayoutElement slotLayout = root.gameObject.AddComponent<LayoutElement>();
+        slotLayout.minHeight = 54f;
+        slotLayout.preferredHeight = 54f;
+        slotLayout.flexibleHeight = 0f;
+        root.GetComponent<Image>().raycastTarget = true;
+
         var layout = root.gameObject.AddComponent<VerticalLayoutGroup>();
-        layout.padding = new RectOffset(8, 8, 5, 5);
-        layout.spacing = 1;
+        layout.padding = new RectOffset(6, 6, 4, 4);
+        layout.spacing = 0;
         layout.childForceExpandWidth = true;
         layout.childForceExpandHeight = false;
+        layout.childControlHeight = true;
 
-        TextMeshProUGUI header = CreateLabel(root, label, 11f, FontStyles.Bold, GoldColor, TextAlignmentOptions.Left);
-        header.gameObject.AddComponent<LayoutElement>().preferredHeight = 15f;
+        TextMeshProUGUI header = CreateLabel(root, label, 10f, FontStyles.Bold, GoldColor, TextAlignmentOptions.Left);
+        header.gameObject.AddComponent<LayoutElement>().preferredHeight = 12f;
 
         TextMeshProUGUI name = CreateLabel(root, "-", 13f, FontStyles.Bold, TextColor, TextAlignmentOptions.Left);
-        name.gameObject.AddComponent<LayoutElement>().preferredHeight = 20f;
+        name.gameObject.AddComponent<LayoutElement>().preferredHeight = 19f;
 
-        TextMeshProUGUI detail = CreateLabel(root, "-", 11f, FontStyles.Normal, MutedTextColor, TextAlignmentOptions.Left);
-        detail.gameObject.AddComponent<LayoutElement>().preferredHeight = 28f;
+        TextMeshProUGUI detail = CreateLabel(root, "-", 11f, FontStyles.Bold, MutedTextColor, TextAlignmentOptions.Left);
+        detail.gameObject.AddComponent<LayoutElement>().preferredHeight = 14f;
 
-        return new ModuleSlotHud
+        var slot = new ModuleSlotHud
         {
+            Root = root,
             Background = root.GetComponent<Image>(),
+            ActiveColor = activeColor,
             Name = name,
             Detail = detail
         };
+
+        InstallModuleHover(slot);
+        return slot;
+    }
+
+    private void InstallModuleHover(ModuleSlotHud slot)
+    {
+        var trigger = slot.Root.gameObject.AddComponent<EventTrigger>();
+
+        var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+        enter.callback.AddListener(_ => ShowModuleTooltip(slot));
+        trigger.triggers.Add(enter);
+
+        var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
+        exit.callback.AddListener(_ => HideModuleTooltip(slot));
+        trigger.triggers.Add(exit);
+    }
+
+    private void BuildModuleTooltip(Transform parent)
+    {
+        moduleTooltip = CreatePanel("Module Tooltip", parent, TooltipColor);
+        moduleTooltip.anchorMin = new Vector2(0f, 0.5f);
+        moduleTooltip.anchorMax = new Vector2(0f, 0.5f);
+        moduleTooltip.pivot = new Vector2(0f, 0.5f);
+        moduleTooltip.sizeDelta = new Vector2(520f, 238f);
+        moduleTooltip.anchoredPosition = new Vector2(400f, -160f);
+
+        var layout = moduleTooltip.gameObject.AddComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(16, 16, 14, 14);
+        layout.spacing = 6;
+        layout.childForceExpandWidth = true;
+        layout.childForceExpandHeight = false;
+
+        tooltipTitle = CreateLabel(moduleTooltip, "Module", 24f, FontStyles.Bold, GoldColor, TextAlignmentOptions.Left);
+        tooltipTitle.gameObject.AddComponent<LayoutElement>().preferredHeight = 32f;
+
+        tooltipMeta = CreateLabel(moduleTooltip, "-", 16f, FontStyles.Bold, MutedTextColor, TextAlignmentOptions.Left);
+        tooltipMeta.gameObject.AddComponent<LayoutElement>().preferredHeight = 24f;
+
+        tooltipStats = CreateLabel(moduleTooltip, "-", 16f, FontStyles.Normal, TextColor, TextAlignmentOptions.Left);
+        tooltipStats.gameObject.AddComponent<LayoutElement>().preferredHeight = 58f;
+
+        tooltipPassive = CreateLabel(moduleTooltip, "-", 15f, FontStyles.Normal, TextColor, TextAlignmentOptions.Left);
+        tooltipPassive.gameObject.AddComponent<LayoutElement>().preferredHeight = 82f;
+
+        moduleTooltip.gameObject.SetActive(false);
+    }
+
+    private void ShowModuleTooltip(ModuleSlotHud slot)
+    {
+        if (slot == null || slot.Card == null || !slot.Card.IsValid || moduleTooltip == null)
+            return;
+
+        hoveredSlot = slot;
+        IronTideModuleCardEntry card = slot.Card;
+        tooltipTitle.SetText(card.DisplayName);
+        tooltipMeta.SetText($"{card.TierLabel} | {card.ArchetypeLabel} | {GetModuleBonusLabel(card)} | {(slot.ModuleEnabled ? "Active" : "Damaged")}");
+        tooltipStats.SetText(GetTooltipStats(card));
+
+        if (card.HasPassive)
+            tooltipPassive.SetText($"Passive - {card.PassiveName}: {card.PassiveDescription}");
+        else
+            tooltipPassive.SetText($"Rules: {card.BaseRulesText}");
+
+        moduleTooltip.gameObject.SetActive(true);
+    }
+
+    private void HideModuleTooltip(ModuleSlotHud slot)
+    {
+        if (hoveredSlot != slot)
+            return;
+
+        hoveredSlot = null;
+        if (moduleTooltip != null)
+            moduleTooltip.gameObject.SetActive(false);
     }
 
     private void RefreshSidebar()
@@ -347,11 +597,12 @@ public class TestDay1PlayUI : MonoBehaviour
 
         int playerNumber = currentShip.turnPlayerController != null ? currentShip.turnPlayerController.playerID + 1 : 1;
         sidebarTitle.SetText($"Player {playerNumber}'s Turn");
-        sidebarPhase.SetText($"Phase: {GetPhaseLabel()}");
-        sidebarMovement.SetText($"Move: {currentShip.shipMovement.avaliableTileDistance} tiles left");
-        sidebarWeapon.SetText($"Weapon: {GetCardName(currentShip.shipInfo.WeaponModule)} | Range {currentShip.shipInfo.GetWeaponRange()}");
-        sidebarArmor.SetText($"Armor: {currentShip.shipInfo.GetArmor()}");
-        sidebarLastAction.SetText(lastActionText);
+        sidebarPhase.SetText(FormatInfoLine("PHASE", GetPhaseLabel(), GoldHex));
+        sidebarMovement.SetText(FormatInfoLine("MOVE", $"{currentShip.shipMovement.avaliableTileDistance} tiles left", MoveHex));
+        sidebarWeapon.SetText(FormatInfoLine("WEAPON", $"{GetCardName(currentShip.shipInfo.WeaponModule)} | Range {currentShip.shipInfo.GetWeaponRange()}", TextHex));
+        sidebarAttack.SetText(FormatInfoLine("ATTACK", GetAttackLabel(currentShip), GoldHex));
+        sidebarArmor.SetText(FormatInfoLine("ARMOR", currentShip.shipInfo.GetArmor().ToString(), MutedHex));
+        sidebarLastAction.SetText(FormatInfoLine("LAST", lastActionText, GoldHex));
     }
 
     private Ship GetCurrentShip()
@@ -400,12 +651,37 @@ public class TestDay1PlayUI : MonoBehaviour
         ShipInfo info = panel.Ship.shipInfo;
         float hpRatio = info.MaxHealth > 0 ? Mathf.Clamp01((float)info.Health / info.MaxHealth) : 0f;
         panel.HpFill.anchorMax = new Vector2(hpRatio, 1f);
-        panel.HpFill.GetComponent<Image>().color = info.Health <= 3 ? HpDangerColor : HpHealthyColor;
+        panel.HpFill.GetComponent<Image>().color = info.Health <= 3 || info.GetActiveModuleAmount() <= 1
+            ? HpDangerColor
+            : HpHealthyColor;
         panel.HpText.SetText($"{info.Health}/{info.MaxHealth}");
+        RefreshHpDividers(panel, info.MaxHealth);
 
         RefreshModuleSlot(panel.WeaponSlot, info.WeaponModule, info.WeaponEnabled);
         RefreshModuleSlot(panel.ArmorSlot, info.ArmorModule, info.ArmorEnabled);
         RefreshModuleSlot(panel.EngineSlot, info.EngineModule, info.EngineEnabled);
+    }
+
+    private void RefreshHpDividers(PlayerHudPanel panel, int maxHealth)
+    {
+        if (panel.HpDividers == null)
+            return;
+
+        int dividerCount = Mathf.Max(0, (maxHealth / ShipInfo.HealthPerModule) - 1);
+        for (int i = 0; i < panel.HpDividers.Count; i++)
+        {
+            RectTransform divider = panel.HpDividers[i];
+            bool show = i < dividerCount && maxHealth > 0;
+            divider.gameObject.SetActive(show);
+
+            if (!show)
+                continue;
+
+            float x = (float)((i + 1) * ShipInfo.HealthPerModule) / maxHealth;
+            divider.anchorMin = new Vector2(x, 0f);
+            divider.anchorMax = new Vector2(x, 1f);
+            divider.anchoredPosition = Vector2.zero;
+        }
     }
 
     private void RefreshModuleSlot(ModuleSlotHud slot, IronTideModuleCardEntry card, bool enabled)
@@ -413,20 +689,44 @@ public class TestDay1PlayUI : MonoBehaviour
         if (slot == null)
             return;
 
+        slot.Card = card;
+        slot.ModuleEnabled = enabled;
+
         if (card == null || !card.IsValid)
         {
             slot.Background.color = EmptyModuleColor;
             slot.Name.SetText("Empty");
-            slot.Detail.SetText("No card equipped");
+            slot.Detail.SetText("No card");
+
+            if (hoveredSlot == slot)
+                HideModuleTooltip(slot);
+
             return;
         }
 
-        slot.Background.color = enabled ? ActiveModuleColor : BrokenModuleColor;
+        slot.Background.color = enabled ? slot.ActiveColor : BrokenModuleColor;
         slot.Name.SetText(card.DisplayName);
+        slot.Detail.SetText(enabled ? GetModuleBonusLabel(card) : "Damaged");
 
-        string dice = card.UsesDice ? $"{card.DiceCount}xD{card.DiceSides}" : "No dice";
-        string passive = card.HasPassive ? card.PassiveName : "No passive";
-        slot.Detail.SetText($"{card.ModifierLabel} | {dice}\n{(enabled ? passive : "Damaged")}");
+        if (hoveredSlot == slot)
+            ShowModuleTooltip(slot);
+    }
+
+    private static string GetModuleBonusLabel(IronTideModuleCardEntry card)
+    {
+        if (card == null || !card.IsValid)
+            return string.Empty;
+
+        string modifier = card.ModifierLabel;
+        switch (card.SlotType)
+        {
+            case BasicModuleType.Armor:
+                return $"{modifier} armor";
+            case BasicModuleType.Engine:
+                return Mathf.Abs(card.BaseModifier) == 1 ? $"{modifier} tile" : $"{modifier} tiles";
+            default:
+                return $"{modifier} damage";
+        }
     }
 
     private void UpdateWinState()
@@ -454,12 +754,32 @@ public class TestDay1PlayUI : MonoBehaviour
                 winIndicator.SetText($"Player {winnerNumber} won!");
                 winIndicator.gameObject.SetActive(true);
             }
+
+            FinishRound(winnerNumber - 1);
         }
+    }
+
+    private void FinishRound(int winnerPlayerId)
+    {
+        if (transitionStarted)
+            return;
+
+        IronTideGameState.SaveLoadouts(ships);
+
+        if (!IronTideGameState.ShouldOpenShopAfterCombat)
+            return;
+
+        transitionStarted = true;
+        IronTideGameState.AwardShopGold(winnerPlayerId);
+        SceneManager.LoadScene(IronTideGameState.ShoppingSceneName);
     }
 
     private void HandleTurnStarted(int playerId)
     {
         lastActionText = "New turn started.";
+        attackText = string.IsNullOrWhiteSpace(previousAttackText)
+            ? "Attack not rolled."
+            : previousAttackText;
     }
 
     private void HandleMovementRolled(int total)
@@ -469,7 +789,7 @@ public class TestDay1PlayUI : MonoBehaviour
 
     private void HandleAttackRolled(int total)
     {
-        lastActionText = $"Attack rolled: {total} raw damage.";
+        lastActionText = $"Attack total: {total}.";
     }
 
     private void HandleDamageDealt(int damage)
@@ -477,9 +797,95 @@ public class TestDay1PlayUI : MonoBehaviour
         lastActionText = $"Damage dealt after armor: {damage}.";
     }
 
+    private void HandleTurnFeedback(string message)
+    {
+        if (!string.IsNullOrWhiteSpace(message))
+            lastActionText = message;
+    }
+
+    private void HandleAttackResolved(int diceTotal, int bonusTotal, int damageReduction, int damageDealt)
+    {
+        attackText = $"Roll {diceTotal} {FormatSignedNumber(bonusTotal)} | Enemy armor {damageReduction} | Damage {damageDealt}";
+        previousAttackText = attackText;
+        lastActionText = attackText;
+    }
+
+    private void HandleAttackPrepared(int diceTotal, int bonusTotal)
+    {
+        attackText = $"Roll {diceTotal} {FormatSignedNumber(bonusTotal)} | choose target";
+        lastActionText = attackText;
+    }
+
     private static string GetCardName(IronTideModuleCardEntry card)
     {
         return card != null && card.IsValid ? card.DisplayName : "None";
+    }
+
+    private static string GetTooltipStats(IronTideModuleCardEntry card)
+    {
+        string dice = card.UsesDice ? $"{card.DiceCount}xD{card.DiceSides}" : "No dice";
+        string economy = $"Buy {card.BuyCost}g | Sell {card.SellValue}g";
+
+        if (card.SlotType == BasicModuleType.Weapon)
+        {
+            string damage = GetCardDamageRangeLabel(card);
+            return $"Damage {damage}\nDice {dice} | Bonus {card.ModifierLabel} | {economy}";
+        }
+
+        if (card.SlotType == BasicModuleType.Armor)
+            return $"Armor {card.ModifierLabel}\nEach active module adds +10 HP | {economy}";
+
+        string tileWord = Mathf.Abs(card.BaseModifier) == 1 ? "tile" : "tiles";
+        return $"Movement {card.ModifierLabel} {tileWord}\nMove roll {dice} + engine bonus | {economy}";
+    }
+
+    private static string GetCardDamageRangeLabel(IronTideModuleCardEntry card)
+    {
+        if (card == null || !card.IsValid || !card.UsesDice)
+            return "1-6";
+
+        int minDamage = card.DiceCount + card.BaseModifier;
+        int maxDamage = card.DiceCount * card.DiceSides + card.BaseModifier;
+
+        if (card.PassiveKey == "perfect_shot_t1" ||
+            card.PassiveKey == "perfect_shot_t2" ||
+            card.PassiveKey == "lucky")
+        {
+            maxDamage += card.DiceSides;
+        }
+
+        minDamage = Mathf.Max(0, minDamage);
+        maxDamage = Mathf.Max(minDamage, maxDamage);
+
+        return minDamage == maxDamage ? minDamage.ToString() : $"{minDamage}-{maxDamage}";
+    }
+
+    private string GetAttackLabel(Ship ship)
+    {
+        if (ship == null || ship.shipInfo == null)
+            return "-";
+
+        if (!string.IsNullOrWhiteSpace(attackText) && attackText != "Attack not rolled.")
+            return attackText;
+
+        if (TurnManager.Instance != null && TurnManager.Instance.currentPhase == TurnPhase.Attack && ship.shipWeapon != null)
+        {
+            int targetCount = ship.shipWeapon.ReachableTargetsDamageModifiers.Count;
+            string targetText = targetCount == 1 ? "1 target" : $"{targetCount} targets";
+            return $"Choose target | {targetText}";
+        }
+
+        return "Press A when a target is in range.";
+    }
+
+    private static string FormatInfoLine(string label, string value, string valueColor)
+    {
+        return $"<color={GoldHex}><b>{label}</b></color>  <color={valueColor}>{value}</color>";
+    }
+
+    private static string FormatSignedNumber(int value)
+    {
+        return value >= 0 ? $"+{value}" : value.ToString();
     }
 
     private static RectTransform CreatePanel(string name, Transform parent, Color color)
@@ -508,9 +914,9 @@ public class TestDay1PlayUI : MonoBehaviour
         label.fontStyle = style;
         label.color = color;
         label.alignment = alignment;
-        label.enableWordWrapping = true;
+        label.textWrappingMode = TextWrappingModes.Normal;
         label.enableAutoSizing = true;
-        label.fontSizeMin = 9f;
+        label.fontSizeMin = Mathf.Min(12f, fontSize);
         label.fontSizeMax = fontSize;
         label.overflowMode = TextOverflowModes.Ellipsis;
         label.raycastTarget = false;
@@ -529,6 +935,7 @@ public class TestDay1PlayUI : MonoBehaviour
     {
         public Ship Ship;
         public RectTransform HpFill;
+        public List<RectTransform> HpDividers;
         public TextMeshProUGUI HpText;
         public ModuleSlotHud WeaponSlot;
         public ModuleSlotHud ArmorSlot;
@@ -537,7 +944,11 @@ public class TestDay1PlayUI : MonoBehaviour
 
     private sealed class ModuleSlotHud
     {
+        public RectTransform Root;
         public Image Background;
+        public Color ActiveColor;
+        public IronTideModuleCardEntry Card;
+        public bool ModuleEnabled;
         public TextMeshProUGUI Name;
         public TextMeshProUGUI Detail;
     }

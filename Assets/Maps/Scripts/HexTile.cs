@@ -25,21 +25,33 @@ public class HexTile : MonoBehaviour
 
     void OnMouseDown()
     {
-        Debug.Log("CLICKED TILE");
-
         if (!isWalkable)
             return;
 
-        PlayerController player = Object.FindFirstObjectByType<PlayerController>();
+        if (TurnManager.Instance == null || TurnManager.Instance.currentPhase != TurnPhase.Move)
+            return;
 
-        if (player == null)
+        TurnPlayerController currentPlayer = TurnManager.Instance.GetCurrentPlayer();
+        if (currentPlayer == null)
         {
-            Debug.LogError("PLAYER NOT FOUND");
+            Debug.LogWarning("No active turn player found for tile movement.");
             return;
         }
 
-        Debug.Log("MOVING PLAYER");
+        Ship ship = currentPlayer.GetComponent<Ship>();
+        if (ship == null || ship.shipMovement == null)
+        {
+            Debug.LogWarning("Active turn player has no ship movement component.");
+            return;
+        }
 
-        player.MoveTo(new Vector3(transform.position.x, 1f, transform.position.z));
+        Vector3 tilePosition = transform.position;
+        if (!ship.shipMovement.ReachableTileMoveCosts.TryGetValue(tilePosition, out int tileDistance))
+        {
+            Debug.Log("Tile is not currently reachable.");
+            return;
+        }
+
+        ship.shipMovement.StartMove(tilePosition, tileDistance);
     }
 }

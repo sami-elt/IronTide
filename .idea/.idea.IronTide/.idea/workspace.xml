@@ -2,14 +2,52 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c96f0e09-e846-4f14-b892-c84788206861" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scenes/SampleScene.unity" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scenes/SampleScene.unity.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Settings/Mobile_RPAsset.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Settings/Mobile_RPAsset.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Packages/manifest.json" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/manifest.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Packages/packages-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/packages-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.IronTide/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.IronTide/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/IronTide/BasicCards/Scripts/BasicCardShopController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/IronTide/BasicCards/Scripts/BasicCardShopController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/IronTide/BasicCards/Scripts/IronTideModuleCardLibrary.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/IronTide/BasicCards/Scripts/IronTideModuleCardLibrary.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/IronTide/BasicCards/Scripts/IronTideModuleCardView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/IronTide/BasicCards/Scripts/IronTideModuleCardView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Maps/Materials/WaterMat/OceanMat.mat" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Maps/Materials/WaterMat/OceanMat.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Maps/Materials/WaterMathex.mat" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Maps/Materials/WaterMathex.mat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Maps/Scripts/GenerateMap.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Maps/Scripts/GenerateMap.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Maps/Scripts/HexTile.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Maps/Scripts/HexTile.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Player/Scripts/ShipController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Player/Scripts/ShipController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Player/Scripts/ShipInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Player/Scripts/ShipInfo.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Player/Scripts/ShipWeapon.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Player/Scripts/ShipWeapon.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Shopping Phase.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Shopping Phase.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Data/ThemeSettings_ModernMenuUI.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Data/ThemeSettings_ModernMenuUI.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Animations/Camera/MainMenuCam.controller" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Animations/Camera/MainMenuCam.controller" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Animations/Camera/MenuCamIdle.anim" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Animations/Camera/MenuCamIdle.anim" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Animations/Camera/MenuCamPos1.anim" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Animations/Camera/MenuCamPos1.anim" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Animations/Camera/MenuCamPos2.anim" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Animations/Camera/MenuCamPos2.anim" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Animations/Elements/FlashingText.anim" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Animations/Elements/FlashingText.anim" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Animations/Elements/FlashingText.controller" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Animations/Elements/FlashingText.controller" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Animations/Elements/HighlightFade.anim" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Animations/Elements/HighlightFade.anim" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Animations/Elements/HighlightFade.controller" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Animations/Elements/HighlightFade.controller" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Animations/Panels/WindowPopUpBig.anim" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Animations/Panels/WindowPopUpBig.anim" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Animations/Panels/WindowPopUpBig.controller" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Animations/Panels/WindowPopUpBig.controller" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Animations/Panels/WindowPopUpSmall.anim" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Animations/Panels/WindowPopUpSmall.anim" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Animations/Panels/WindowPopUpSmall.controller" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Animations/Panels/WindowPopUpSmall.controller" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Audio/Mixer.mixer" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Audio/Mixer.mixer" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Fonts/LATO-BOLD SDF.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Fonts/LATO-BOLD SDF.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Fonts/LATO-LIGHT SDF.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Fonts/LATO-LIGHT SDF.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Fonts/Poppins-Bold SDF.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Fonts/Poppins-Bold SDF.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Fonts/Poppins-Light SDF.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Fonts/Poppins-Light SDF.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Fonts/RUBIK-BOLD SDF.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Fonts/RUBIK-BOLD SDF.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Fonts/RUBIK-LIGHT SDF.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Fonts/RUBIK-LIGHT SDF.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Fonts/RUBIK-MEDIUM SDF.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Fonts/RUBIK-MEDIUM SDF.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/POST_ModernMenu.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/POST_ModernMenu.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Prefabs/Buttons/Btn_MainMenu.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Prefabs/Buttons/Btn_MainMenu.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Prefabs/Canvas Templates/Canvas_DefaultMobileTemplate1.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Prefabs/Canvas Templates/Canvas_DefaultMobileTemplate1.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Prefabs/Canvas Templates/Canvas_DefaultTemplate1.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Prefabs/Canvas Templates/Canvas_DefaultTemplate1.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Scenes/Demos/Demo1Scene2.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Scenes/Demos/Demo1Scene2.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Scenes/Demos/Demo1Settings.lighting" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Scenes/Demos/Demo1Settings.lighting" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Scenes/Demos/Demo2Mobile.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Scenes/Demos/Demo2Mobile.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Scenes/README.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/SlimUI/Modern Menu 1/Scenes/README.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/TestDay1Play.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/TestDay1Play.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Turn/TurnManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Turn/TurnManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Turn/TurnPlayerController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Turn/TurnPlayerController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/UI/TestDay1PlayUI.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/UI/TestDay1PlayUI.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ProjectSettings/EditorBuildSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/EditorBuildSettings.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ProjectSettings/ProjectSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/ProjectSettings.asset" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -17,7 +55,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="11" />
+    <option name="cachedIndexableFilesCount" value="15" />
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -26,9 +64,9 @@
     <commands />
     <urls />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 1
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 1
+}</component>
   <component name="ProjectId" id="3Bl6kLtRIp6Rr46tG0nPYgSgJ39" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -39,16 +77,18 @@
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.MCP Project settings loaded": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "Elshan",
+    "nodejs_package_manager_path": "npm",
     "settings.editor.selected.configurable": "preferences.pluginManager",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
   <component name="RunManager" selected="Attach to Unity Editor.Attach to Unity Editor">
     <configuration name="Start Unity" type="RunUnityExe" factoryName="Unity Executable">
-      <option name="EXE_PATH" value="$PROJECT_DIR$/../6000.3.6f1/Unity.app/Contents/MacOS/Unity" />
+      <option name="EXE_PATH" value="$PROJECT_DIR$/../../6000.3.6f1-arm64/Unity.app/Contents/MacOS/Unity" />
       <option name="PROGRAM_PARAMETERS" value="-projectPath $PROJECT_DIR$ -debugCodeOptimization" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="PASS_PARENT_ENVS" value="1" />
@@ -58,7 +98,7 @@
       <method v="2" />
     </configuration>
     <configuration name="Unit Tests (batch mode)" type="RunUnityExe" factoryName="Unity Executable">
-      <option name="EXE_PATH" value="$PROJECT_DIR$/../6000.3.6f1/Unity.app/Contents/MacOS/Unity" />
+      <option name="EXE_PATH" value="$PROJECT_DIR$/../../6000.3.6f1-arm64/Unity.app/Contents/MacOS/Unity" />
       <option name="PROGRAM_PARAMETERS" value="-runTests -batchmode -projectPath $PROJECT_DIR$ -testResults Logs/results.xml -logFile Logs/Editor.log -testPlatform EditMode -debugCodeOptimization" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="PASS_PARENT_ENVS" value="1" />
@@ -92,6 +132,7 @@
       <option name="presentableId" value="Default" />
       <updated>1775051452012</updated>
       <workItem from="1775051453689" duration="33000" />
+      <workItem from="1778619626849" duration="75000" />
     </task>
     <servers />
   </component>
