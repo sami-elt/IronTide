@@ -18,7 +18,7 @@ public class ShipMovement : MonoBehaviour
     public Dictionary<Vector3, int> ReachableTileMoveCosts { get; private set; } = new();
     public int avaliableTileDistance;
 
-    public float distanceBetweenTiles;//Since tiles are hexagonal they do not share the same distance in all directions but keeping value to the width works well enough on the current map size.
+    public static float distanceBetweenTiles { get; } = 1.6f;//Since tiles are hexagonal they do not share the same distance in all directions but keeping value to the width works well enough on the current map size.
 
     private void Awake()
     {
