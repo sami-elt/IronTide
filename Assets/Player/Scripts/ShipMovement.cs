@@ -18,7 +18,7 @@ public class ShipMovement : MonoBehaviour
     public Dictionary<Vector3, int> ReachableTileMoveCosts { get; private set; } = new();
     public int avaliableTileDistance;
 
-    public static float distanceBetweenTiles { get; } = 1.6f;//Since tiles are hexagonal they do not share the same distance in all directions but keeping value to the width works well enough on the current map size.
+    public static float distanceBetweenTiles { get; } = 20.5f;//Since tiles are hexagonal they do not share the same distance in all directions but keeping value to the width works well enough on the current map size.
 
     private void Awake()
     {
@@ -106,7 +106,7 @@ public class ShipMovement : MonoBehaviour
         {
             Vector3 origin = transform.position;
             Vector3 direction = Quaternion.AngleAxis(30 + side * 60, Vector3.up) * Vector3.forward;
-            float tileSize = ship.shipMovement.distanceBetweenTiles;
+            float tileSize = distanceBetweenTiles;
 
             //Debug.Log("side: " + side);
 
