@@ -7,6 +7,9 @@ public sealed class IronTidePlayerState
 {
     public int PlayerId;
     public int Gold;
+    public string DisplayName;
+    public Color PlayerColor;
+    public Sprite PlayerIcon;
     public string WeaponModuleId;
     public string ArmorModuleId;
     public string EngineModuleId;
@@ -21,6 +24,13 @@ public static class IronTideGameState
     public const string CombatSceneName = "TestDay1Play";
 
     private static readonly List<IronTidePlayerState> players = new List<IronTidePlayerState>();
+    private static readonly Color[] defaultPlayerColors =
+    {
+        Color.red,
+        Color.blue,
+        Color.green,
+        Color.yellow
+    };
 
     public static IReadOnlyList<IronTidePlayerState> Players => players;
     public static int CombatRound { get; private set; } = 1;
@@ -39,7 +49,9 @@ public static class IronTideGameState
             players.Add(new IronTidePlayerState
             {
                 PlayerId = players.Count,
-                Gold = 0
+                Gold = 0,
+                DisplayName = GetDefaultPlayerName(players.Count),
+                PlayerColor = GetDefaultPlayerColor(players.Count)
             });
         }
 
@@ -47,7 +59,30 @@ public static class IronTideGameState
             players.RemoveAt(players.Count - 1);
 
         for (int i = 0; i < players.Count; i++)
+        {
             players[i].PlayerId = i;
+            ApplyPlayerDefaults(players[i]);
+        }
+    }
+
+    public static void ConfigurePlayers(IList<PlayerData> setupPlayers)
+    {
+        int playerCount = setupPlayers != null && setupPlayers.Count > 0 ? setupPlayers.Count : 1;
+        EnsurePlayers(playerCount);
+
+        for (int i = 0; i < players.Count; i++)
+        {
+            PlayerData setup = setupPlayers != null && i < setupPlayers.Count ? setupPlayers[i] : null;
+            IronTidePlayerState player = players[i];
+
+            player.DisplayName = setup != null && !string.IsNullOrWhiteSpace(setup.playerName)
+                ? setup.playerName.Trim()
+                : GetDefaultPlayerName(i);
+            player.PlayerColor = setup != null && setup.playerColor.a > 0f
+                ? setup.playerColor
+                : GetDefaultPlayerColor(i);
+            player.PlayerIcon = setup != null ? setup.icon : null;
+        }
     }
 
     public static IronTidePlayerState GetPlayer(int playerId)
@@ -56,6 +91,26 @@ public static class IronTideGameState
             return null;
 
         return players[playerId];
+    }
+
+    public static string GetPlayerDisplayName(int playerId)
+    {
+        IronTidePlayerState player = GetPlayer(playerId);
+        return player != null && !string.IsNullOrWhiteSpace(player.DisplayName)
+            ? player.DisplayName
+            : GetDefaultPlayerName(playerId);
+    }
+
+    public static Color GetPlayerColor(int playerId, Color fallback)
+    {
+        IronTidePlayerState player = GetPlayer(playerId);
+        return player != null && player.PlayerColor.a > 0f ? player.PlayerColor : fallback;
+    }
+
+    public static Sprite GetPlayerIcon(int playerId)
+    {
+        IronTidePlayerState player = GetPlayer(playerId);
+        return player != null ? player.PlayerIcon : null;
     }
 
     public static void RecordFirstKill(int killerPlayerId)
@@ -147,5 +202,30 @@ public static class IronTideGameState
     private static string GetCardId(IronTide.BasicCards.IronTideModuleCardEntry card)
     {
         return card != null && card.IsValid ? card.Id : string.Empty;
+    }
+
+    private static void ApplyPlayerDefaults(IronTidePlayerState player)
+    {
+        if (player == null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(player.DisplayName))
+            player.DisplayName = GetDefaultPlayerName(player.PlayerId);
+
+        if (player.PlayerColor.a <= 0f)
+            player.PlayerColor = GetDefaultPlayerColor(player.PlayerId);
+    }
+
+    private static string GetDefaultPlayerName(int playerId)
+    {
+        return $"Player {playerId + 1}";
+    }
+
+    private static Color GetDefaultPlayerColor(int playerId)
+    {
+        if (playerId >= 0 && playerId < defaultPlayerColors.Length)
+            return defaultPlayerColors[playerId];
+
+        return Color.white;
     }
 }

@@ -82,6 +82,7 @@ namespace IronTide.BasicCards
         private TMP_Text _goldText;
         private TMP_Text _statusText;
         private TMP_Text _activePlayerText;
+        private Image _activePlayerIcon;
         private RectTransform _ownedPreviewRoot;
         private RectTransform _ownedPreviewCardRoot;
         private IronTideModuleCardView _ownedPreviewCard;
@@ -367,8 +368,16 @@ namespace IronTide.BasicCards
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -42f), new Vector2(700f, 50f),
                 TextAlignmentOptions.Center, new Color(0.96f, 0.89f, 0.73f, 1f), headingFont);
 
+            RectTransform activePlayerIcon = CreatePanel("ActivePlayerIcon", body, new Vector2(38f, 38f),
+                Color.white);
+            activePlayerIcon.anchorMin = new Vector2(0f, 1f);
+            activePlayerIcon.anchorMax = new Vector2(0f, 1f);
+            activePlayerIcon.anchoredPosition = new Vector2(52f, -54f);
+            _activePlayerIcon = activePlayerIcon.GetComponent<Image>();
+            _activePlayerIcon.preserveAspect = true;
+
             _activePlayerText = CreateLabel("ActivePlayer", body, string.Empty, 24, FontStyles.Bold,
-                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(32f, -54f), new Vector2(320f, 44f),
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(102f, -54f), new Vector2(360f, 44f),
                 TextAlignmentOptions.Left, new Color(0.96f, 0.89f, 0.73f, 1f), headingFont);
 
             _basicRerollButton = CreateButton(body, "RerollBasicButton", $"Reroll T1 ({basicRerollCost}g)",
@@ -536,14 +545,20 @@ namespace IronTide.BasicCards
 
             int displayIndex = _activePlayerIndex + 1;
             int playerCount = Mathf.Max(1, IronTideGameState.Players.Count);
+            string playerName = IronTideGameState.GetPlayerDisplayName(_activePlayerIndex);
 
             if (_activePlayerText != null)
-                _activePlayerText.text = $"Player {displayIndex}/{playerCount}";
+            {
+                _activePlayerText.text = $"{playerName} ({displayIndex}/{playerCount})";
+                _activePlayerText.color = IronTideGameState.GetPlayerColor(_activePlayerIndex,
+                    new Color(0.96f, 0.89f, 0.73f, 1f));
+            }
+            RefreshActivePlayerIcon();
 
             if (_activePlayerIndex >= playerCount - 1)
-                SetStatus($"Player {displayIndex} shopping. Press Start Game 2 when done.");
+                SetStatus($"{playerName} shopping. Press Start Game 2 when done.");
             else
-                SetStatus($"Player {displayIndex} shopping. Buy, sell, or press Next Player.");
+                SetStatus($"{playerName} shopping. Buy, sell, or press Next Player.");
 
             UpdateRerollButton();
         }
@@ -951,6 +966,18 @@ namespace IronTide.BasicCards
                 _goldText.text = $"Gold: {CurrentGold}";
 
             UpdateRerollButton();
+        }
+
+        private void RefreshActivePlayerIcon()
+        {
+            if (_activePlayerIcon == null)
+                return;
+
+            Sprite playerIcon = IronTideGameState.GetPlayerIcon(_activePlayerIndex);
+            _activePlayerIcon.sprite = playerIcon;
+            _activePlayerIcon.color = playerIcon != null
+                ? Color.white
+                : IronTideGameState.GetPlayerColor(_activePlayerIndex, new Color(0.96f, 0.89f, 0.73f, 1f));
         }
 
         private void UpdateRerollButton()

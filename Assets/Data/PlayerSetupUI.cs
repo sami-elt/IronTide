@@ -92,7 +92,11 @@ public class PlayerSetupUI : MonoBehaviour
     public void StartGame()
     {
         List<PlayerData> players = GetPlayers();
-        GameManagerT.Instance.SetPlayers(players);
-        SceneManager.LoadScene("GameMap");
+        if (GameManagerT.Instance != null)
+            GameManagerT.Instance.SetPlayers(players);
+
+        IronTideGameState.ResetAll();
+        IronTideGameState.ConfigurePlayers(players);
+        SceneManager.LoadScene(IronTideGameState.CombatSceneName);
     }
 }

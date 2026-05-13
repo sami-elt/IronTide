@@ -429,9 +429,23 @@ public class TestDay1PlayUI : MonoBehaviour
         verticalLayout.childForceExpandHeight = false;
         verticalLayout.childControlHeight = true;
 
-        int playerNumber = ship.turnPlayerController != null ? ship.turnPlayerController.playerID + 1 : playerPanels.Count + 1;
-        TextMeshProUGUI title = CreateLabel(panel, $"Player {playerNumber}", 16f, FontStyles.Bold, GoldColor, TextAlignmentOptions.Left);
-        title.gameObject.AddComponent<LayoutElement>().preferredHeight = 18f;
+        RectTransform header = CreatePanel("Player Header", panel, new Color(0f, 0f, 0f, 0f));
+        header.gameObject.AddComponent<LayoutElement>().preferredHeight = 20f;
+
+        var headerLayout = header.gameObject.AddComponent<HorizontalLayoutGroup>();
+        headerLayout.spacing = 6;
+        headerLayout.childForceExpandWidth = false;
+        headerLayout.childForceExpandHeight = false;
+        headerLayout.childControlWidth = true;
+        headerLayout.childControlHeight = true;
+
+        int playerId = GetShipPlayerId(ship, playerPanels.Count);
+        Image icon = CreatePlayerIcon(header, playerId);
+        TextMeshProUGUI title = CreateLabel(header, IronTideGameState.GetPlayerDisplayName(playerId), 16f,
+            FontStyles.Bold, IronTideGameState.GetPlayerColor(playerId, GoldColor), TextAlignmentOptions.Left);
+        var titleLayout = title.gameObject.AddComponent<LayoutElement>();
+        titleLayout.preferredHeight = 20f;
+        titleLayout.flexibleWidth = 1f;
 
         RectTransform hpRoot = CreatePanel("HP Bar", panel, new Color(0.15f, 0.04f, 0.04f, 1f));
         hpRoot.gameObject.AddComponent<LayoutElement>().preferredHeight = 18f;
@@ -452,6 +466,8 @@ public class TestDay1PlayUI : MonoBehaviour
         return new PlayerHudPanel
         {
             Ship = ship,
+            Title = title,
+            Icon = icon,
             HpFill = hpFill,
             HpDividers = hpDividers,
             HpText = hpText,
@@ -595,8 +611,9 @@ public class TestDay1PlayUI : MonoBehaviour
         if (currentShip == null || currentShip.shipInfo == null)
             return;
 
-        int playerNumber = currentShip.turnPlayerController != null ? currentShip.turnPlayerController.playerID + 1 : 1;
-        sidebarTitle.SetText($"Player {playerNumber}'s Turn");
+        int playerId = GetShipPlayerId(currentShip, 0);
+        sidebarTitle.SetText($"{IronTideGameState.GetPlayerDisplayName(playerId)}'s Turn");
+        sidebarTitle.color = IronTideGameState.GetPlayerColor(playerId, GoldColor);
         sidebarPhase.SetText(FormatInfoLine("PHASE", GetPhaseLabel(), GoldHex));
         sidebarMovement.SetText(FormatInfoLine("MOVE", $"{currentShip.shipMovement.avaliableTileDistance} tiles left", MoveHex));
         sidebarWeapon.SetText(FormatInfoLine("WEAPON", $"{GetCardName(currentShip.shipInfo.WeaponModule)} | Range {currentShip.shipInfo.GetWeaponRange()}", TextHex));
@@ -649,6 +666,14 @@ public class TestDay1PlayUI : MonoBehaviour
             return;
 
         ShipInfo info = panel.Ship.shipInfo;
+        int playerId = GetShipPlayerId(panel.Ship, playerPanels.IndexOf(panel));
+        if (panel.Title != null)
+        {
+            panel.Title.SetText(IronTideGameState.GetPlayerDisplayName(playerId));
+            panel.Title.color = IronTideGameState.GetPlayerColor(playerId, GoldColor);
+        }
+        RefreshPlayerIcon(panel.Icon, playerId);
+
         float hpRatio = info.MaxHealth > 0 ? Mathf.Clamp01((float)info.Health / info.MaxHealth) : 0f;
         panel.HpFill.anchorMax = new Vector2(hpRatio, 1f);
         panel.HpFill.GetComponent<Image>().color = info.Health <= 3 || info.GetActiveModuleAmount() <= 1
@@ -751,7 +776,7 @@ public class TestDay1PlayUI : MonoBehaviour
             winnerNumber = winner;
             if (winIndicator != null)
             {
-                winIndicator.SetText($"Player {winnerNumber} won!");
+                winIndicator.SetText($"{IronTideGameState.GetPlayerDisplayName(winnerNumber - 1)} won!");
                 winIndicator.gameObject.SetActive(true);
             }
 
@@ -931,9 +956,45 @@ public class TestDay1PlayUI : MonoBehaviour
         rect.offsetMax = Vector2.zero;
     }
 
+    private static int GetShipPlayerId(Ship ship, int fallbackPlayerId)
+    {
+        if (ship != null && ship.turnPlayerController != null)
+            return ship.turnPlayerController.playerID;
+
+        return fallbackPlayerId;
+    }
+
+    private static Image CreatePlayerIcon(RectTransform parent, int playerId)
+    {
+        RectTransform iconRoot = CreatePanel("Player Icon", parent, new Color(1f, 1f, 1f, 0.2f));
+        var layout = iconRoot.gameObject.AddComponent<LayoutElement>();
+        layout.preferredWidth = 18f;
+        layout.preferredHeight = 18f;
+        layout.flexibleWidth = 0f;
+
+        Image icon = iconRoot.GetComponent<Image>();
+        icon.preserveAspect = true;
+        RefreshPlayerIcon(icon, playerId);
+        return icon;
+    }
+
+    private static void RefreshPlayerIcon(Image icon, int playerId)
+    {
+        if (icon == null)
+            return;
+
+        Sprite playerIcon = IronTideGameState.GetPlayerIcon(playerId);
+        icon.sprite = playerIcon;
+        icon.color = playerIcon != null
+            ? Color.white
+            : IronTideGameState.GetPlayerColor(playerId, GoldColor);
+    }
+
     private sealed class PlayerHudPanel
     {
         public Ship Ship;
+        public TextMeshProUGUI Title;
+        public Image Icon;
         public RectTransform HpFill;
         public List<RectTransform> HpDividers;
         public TextMeshProUGUI HpText;
