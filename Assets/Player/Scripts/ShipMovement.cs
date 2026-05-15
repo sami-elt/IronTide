@@ -18,7 +18,7 @@ public class ShipMovement : MonoBehaviour
     public Dictionary<Vector3, int> ReachableTileMoveCosts { get; private set; } = new();
     public int avaliableTileDistance;
 
-    public static float distanceBetweenTiles { get; } = 20.5f;//Since tiles are hexagonal they do not share the same distance in all directions but keeping value to the width works well enough on the current map size.
+    public static float distanceBetweenTiles { get; } = 1f;//Since tiles are hexagonal they do not share the same distance in all directions but keeping value to the width works well enough on the current map size.
 
     private void Awake()
     {
@@ -98,48 +98,66 @@ public class ShipMovement : MonoBehaviour
     }
 
     //Goes through the straight paths the player can take and saves the position and cost for reachable tiles.
+    //private void FindReachableTiles()
+    //{
+    //    ReachableTileMoveCosts.Clear();
+
+    //    for (int side = 0; side < 6; side++)
+    //    {
+    //        Vector3 origin = transform.position;
+    //        Vector3 direction = Quaternion.AngleAxis(30 + side * 60, Vector3.up) * Vector3.forward;
+    //        float tileSize = distanceBetweenTiles;
+
+    //        //Debug.Log("side: " + side);
+
+    //        for (int step = 0; step < ship.shipMovement.avaliableTileDistance; step++)
+    //        {
+    //            //Debug.Log("step: " + step);
+    //            Vector3 stepPos = tileSize * direction + origin;
+    //            Debug.DrawLine(origin, stepPos, Color.red, 5f);
+    //            stepPos.y += 10;
+
+    //            if (!Physics.Raycast(stepPos, Vector3.down, out RaycastHit hitInfo))
+    //            {
+    //                //Debug.LogWarning("Broke because of missed raycast");
+    //                break;
+    //            }
+
+    //            Vector3 newOrigin = hitInfo.transform.position;
+    //            origin.x = newOrigin.x;
+    //            origin.z = newOrigin.z;
+
+    //            hitInfo.collider.TryGetComponent(out HexTile tileComponent);
+    //            hitInfo.collider.TryGetComponent(out Ship shipComponent);
+
+    //            if (shipComponent == null && tileComponent != null && tileComponent.isWalkable)
+    //            {
+    //                ReachableTileMoveCosts.TryAdd(hitInfo.transform.position, step + 1);
+    //            }
+    //            else
+    //            {
+    //                //Debug.LogWarning($"Broke because of obstacle or not walkable: shipComponent: {shipComponent}, tileComponent: {tileComponent}. Cast from position {stepPos}, hit object at {hitInfo.transform.position}.");
+    //                break;
+    //            }
+    //        }
+    //        //Debug.LogWarning("Reached end of side " + side);
+    //    }
+    //}
+
     private void FindReachableTiles()
     {
         ReachableTileMoveCosts.Clear();
 
-        for (int side = 0; side < 6; side++)
+        Collider[] hits = Physics.OverlapSphere(transform.position, 3f);
+
+        foreach (Collider hit in hits)
         {
-            Vector3 origin = transform.position;
-            Vector3 direction = Quaternion.AngleAxis(30 + side * 60, Vector3.up) * Vector3.forward;
-            float tileSize = distanceBetweenTiles;
+            HexTile tile = hit.GetComponent<HexTile>();
 
-            //Debug.Log("side: " + side);
-
-            for (int step = 0; step < ship.shipMovement.avaliableTileDistance; step++)
+            if (tile != null && tile.isWalkable)
             {
-                //Debug.Log("step: " + step);
-                Vector3 stepPos = tileSize * direction + origin;
-                stepPos.y += 10;
-
-                if (!Physics.Raycast(stepPos, Vector3.down, out RaycastHit hitInfo))
-                {
-                    //Debug.LogWarning("Broke because of missed raycast");
-                    break;
-                }
-
-                Vector3 newOrigin = hitInfo.transform.position;
-                origin.x = newOrigin.x;
-                origin.z = newOrigin.z;
-
-                hitInfo.collider.TryGetComponent(out HexTile tileComponent);
-                hitInfo.collider.TryGetComponent(out Ship shipComponent);
-
-                if (shipComponent == null && tileComponent != null && tileComponent.isWalkable)
-                {
-                    ReachableTileMoveCosts.TryAdd(hitInfo.transform.position, step + 1);
-                }
-                else
-                {
-                    //Debug.LogWarning($"Broke because of obstacle or not walkable: shipComponent: {shipComponent}, tileComponent: {tileComponent}. Cast from position {stepPos}, hit object at {hitInfo.transform.position}.");
-                    break;
-                }
+                ReachableTileMoveCosts.TryAdd(tile.transform.position, 1);
             }
-            //Debug.LogWarning("Reached end of side " + side);
         }
     }
 }

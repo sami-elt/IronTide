@@ -21,7 +21,7 @@ public static class IronTideGameState
     public const int FirstKillBonus = 5;
     public const int WinnerBonus = 10;
     public const string ShoppingSceneName = "Shopping Phase";
-    public const string CombatSceneName = "TestDay1Play";
+    public const string CombatSceneName = "GameMap";
 
     private static readonly List<IronTidePlayerState> players = new List<IronTidePlayerState>();
     private static readonly Color[] defaultPlayerColors =

@@ -44,8 +44,8 @@ public class TurnManager : MonoBehaviour
 
     void Start()
     {
-        ResolvePlayers();
-        StartTurn();
+        //ResolvePlayers();
+        //StartTurn();
     }
 
     public void BeginGame()
@@ -55,8 +55,15 @@ public class TurnManager : MonoBehaviour
 
     private void StartTurn()
     {
+
         ResolvePlayers();
         PrepareAssignedPlayers();
+
+        Debug.Log(
+    "Before turn active: " +
+    Players[CurrentPlayerIndex].gameObject.activeSelf
+);
+
 
         if (Players == null || Players.Length == 0)
         {
@@ -280,6 +287,23 @@ public class TurnManager : MonoBehaviour
         scenePlayers.Sort((a, b) => a.playerID.CompareTo(b.playerID));
         Players = scenePlayers.ToArray();
     }
+
+    //private void ResolvePlayers()
+    //{
+    //    Debug.Log("Resolving players...");
+
+    //    TurnPlayerController[] foundPlayers =
+    //        FindObjectsByType<TurnPlayerController>(
+    //            FindObjectsSortMode.None);
+
+    //    foreach (var p in foundPlayers)
+    //    {
+    //        Debug.Log("FOUND PLAYER: " + p.name +
+    //                  " active: " + p.gameObject.activeSelf);
+    //    }
+
+    //    Players = foundPlayers;
+    //}
 
     private int GetNextPlayablePlayerIndex(int startIndex)
     {
