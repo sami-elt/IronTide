@@ -978,6 +978,22 @@ public class TestDay1PlayUI : MonoBehaviour
         return icon;
     }
 
+    public void RebuildUI()
+    {
+        playerPanels.Clear();
+
+        foreach (Transform child in transform)
+        {
+            Destroy(child.gameObject);
+        }
+
+        SetupPlayerModules();
+
+        BuildHud();
+
+        RefreshAllModulePanels();
+    }
+
     private static void RefreshPlayerIcon(Image icon, int playerId)
     {
         if (icon == null)

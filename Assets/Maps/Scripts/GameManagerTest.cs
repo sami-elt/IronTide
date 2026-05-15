@@ -4,7 +4,9 @@ using UnityEngine;
 public class GameManagerTest : MonoBehaviour
 {
     public GenerateMap map;
+
     public GameObject playerPrefab;
+    public IronTide.BasicCards.IronTideModuleCardLibrary moduleLibrary;
 
     List<GameObject> players = new List<GameObject>();
 
@@ -15,7 +17,11 @@ public class GameManagerTest : MonoBehaviour
 
     void SpawnPlayers()
     {
-        List<PlayerData> playerData = GameManagerT.Instance.players;
+        IReadOnlyList<IronTidePlayerState> playerData =
+            IronTideGameState.Players;
+
+        TurnPlayerController[] spawnedPlayers =
+            new TurnPlayerController[playerData.Count];
 
         for (int i = 0; i < playerData.Count; i++)
         {
@@ -26,17 +32,76 @@ public class GameManagerTest : MonoBehaviour
                 pos + Vector3.up * 0.5f,
                 Quaternion.identity
             );
-            Renderer rend = p.GetComponentInChildren<Renderer>();
+
+            // APPLY LOADOUTS
+            Ship ship = p.GetComponent<Ship>();
+
+            if (ship != null)
+            {
+                IronTideGameState.ApplyLoadoutToShip(
+                    ship,
+                    playerData[i],
+                    moduleLibrary
+                );
+                ship.shipInfo.ResetValues();
+            }
+
+            p.name = playerData[i].DisplayName;
+
+            Renderer rend =
+                p.GetComponentInChildren<Renderer>();
 
             if (rend != null)
             {
-                rend.material.color = playerData[i].playerColor;
+                rend.material.color =
+                    playerData[i].PlayerColor;
+            }
+
+            TurnPlayerController controller =
+                p.GetComponent<TurnPlayerController>();
+
+            if (controller != null)
+            {
+                controller.playerID =
+                    playerData[i].PlayerId;
+
+                spawnedPlayers[i] = controller;
             }
 
             players.Add(p);
-
-            // OPTIONAL
-            p.name = playerData[i].playerName;
         }
+
+        TurnManager.Instance.Players = spawnedPlayers;
+
+        TestDay1PlayUI ui = FindFirstObjectByType<TestDay1PlayUI>();
+
+        if (ui != null)
+        {
+            ui.ships.Clear();
+
+            foreach (TurnPlayerController player in spawnedPlayers)
+            {
+                if (player == null)
+                    continue;
+
+                Ship ship = player.GetComponent<Ship>();
+
+                if (ship != null)
+                {
+                    ui.ships.Add(ship);
+                }
+            }
+
+            Debug.Log("UI SHIPS COUNT: " + ui.ships.Count);
+
+            ui.RebuildUI();
+        }
+
+        TurnManager.Instance.BeginGame();
+
+        Debug.Log("Spawn klart");
+        Debug.Log("Update");
+        Debug.Log("Update");
+       
     }
 }
