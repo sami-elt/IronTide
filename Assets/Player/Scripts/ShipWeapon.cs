@@ -128,7 +128,7 @@ public class ShipWeapon : MonoBehaviour
         {
             Vector3 origin = transform.position;
             Vector3 direction = Quaternion.AngleAxis(30 + side * 60, Vector3.up) * Vector3.forward;
-            float tileSize = ShipMovement.distanceBetweenTiles;
+            float tileSize = ShipMovement.DistanceBetweenTiles;
             int obstacleDamageModifier = 0;
 
             //Debug.Log("side: " + side);
