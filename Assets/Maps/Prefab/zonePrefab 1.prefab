@@ -11,6 +11,8 @@ GameObject:
   - component: {fileID: 43173825654796428}
   - component: {fileID: 3978571593158803241}
   - component: {fileID: 1212117566506421219}
+  - component: {fileID: 1634188614275801093}
+  - component: {fileID: 7738313819545568563}
   m_Layer: 0
   m_Name: zonePrefab 1
   m_TagString: Untagged
@@ -91,6 +93,41 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &1634188614275801093
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 851940027801791030}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 954ba77a71b0e91449874940ff136b6d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HexTile
+  tileType: 3
+  isWalkable: 1
+--- !u!65 &7738313819545568563
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 851940027801791030}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.7320509, y: 0.07999993, z: 1.9999999}
+  m_Center: {x: -0.016090125, y: 0.10359293, z: -0.16441053}
 --- !u!1 &3571979728960234320
 GameObject:
   m_ObjectHideFlags: 0
