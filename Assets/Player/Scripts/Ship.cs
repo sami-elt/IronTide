@@ -32,16 +32,16 @@ public class Ship : MonoBehaviour
         shipController.enabled = false;
     }
 
-    private void OnDisable()
-    {
-        Disable();
-    }
+    //private void OnDisable()
+    //{
+    //    Disable();
+    //}
 
-    private void OnEnable()
-    {
-        shipInfo.enabled = true;
-        shipMovement.enabled = true;
-        shipWeapon.enabled = true;
-        shipController.enabled = true;
-    }
+    //private void OnEnable()
+    //{
+    //    shipInfo.enabled = true;
+    //    shipMovement.enabled = true;
+    //    shipWeapon.enabled = true;
+    //    shipController.enabled = true;
+    //}
 }

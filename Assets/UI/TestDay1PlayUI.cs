@@ -18,8 +18,8 @@ public class TestDay1PlayUI : MonoBehaviour
     public TextMeshProUGUI winIndicator;
     public TextMeshProUGUI phaseIndicator;
     public List<TextMeshProUGUI> healthIndicators;
-    public List<Ship> ships;
-
+    //public List<Ship> ships;
+    public List<Ship> ships = new();
     [Header("Module Test Setup")]
     [SerializeField] private IronTideModuleCardLibrary moduleLibrary;
     [SerializeField] private bool autoDealStarterModules = true;
@@ -69,7 +69,7 @@ public class TestDay1PlayUI : MonoBehaviour
     {
         ResolveModuleLibrary();
         ResolveShipReferences();
-        SetupPlayerModules();
+        //SetupPlayerModules();
     }
 
     private void Start()
@@ -976,6 +976,27 @@ public class TestDay1PlayUI : MonoBehaviour
         icon.preserveAspect = true;
         RefreshPlayerIcon(icon, playerId);
         return icon;
+    }
+
+    // Rebuild UI 
+    public void RebuildUI()
+    {
+        playerPanels.Clear();
+
+        Transform oldSidebar = transform.Find("Playtest Sidebar");
+
+        if (oldSidebar != null)
+        {
+            DestroyImmediate(oldSidebar.gameObject);
+        }
+
+        ResolveShipReferences();
+
+        SetupPlayerModules();
+
+        BuildSidebar(transform);
+
+        RefreshAllModulePanels();
     }
 
     private static void RefreshPlayerIcon(Image icon, int playerId)
