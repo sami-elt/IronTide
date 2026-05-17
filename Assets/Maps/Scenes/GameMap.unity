@@ -541,9 +541,9 @@ MonoBehaviour:
   healthIndicators:
   - {fileID: 0}
   - {fileID: 0}
-  ships:
   - {fileID: 0}
   - {fileID: 0}
+  ships: []
   moduleLibrary: {fileID: 11400000, guid: 6fb3f4a7b1c44f1eb1a85d08dcf79050, type: 2}
   autoDealStarterModules: 1
 --- !u!114 &801241387

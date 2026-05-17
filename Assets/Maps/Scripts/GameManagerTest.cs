@@ -77,6 +77,7 @@ public class GameManagerTest : MonoBehaviour
 
         if (ui != null)
         {
+            ui.ships = new List<Ship>();
             ui.ships.Clear();
 
             foreach (TurnPlayerController player in spawnedPlayers)
@@ -91,17 +92,17 @@ public class GameManagerTest : MonoBehaviour
                     ui.ships.Add(ship);
                 }
             }
-
+            ui.RebuildUI();
             Debug.Log("UI SHIPS COUNT: " + ui.ships.Count);
 
-            ui.RebuildUI();
+            
         }
 
         TurnManager.Instance.BeginGame();
 
         Debug.Log("Spawn klart");
-        Debug.Log("Update");
-        Debug.Log("Update");
+        
+
        
     }
 }
