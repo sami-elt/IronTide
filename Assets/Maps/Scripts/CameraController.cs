@@ -25,7 +25,7 @@ public class CameraController : MonoBehaviour
     void Update()
     {
         Zoom();
-        Move();
+        //Move();
 
         if (isMoving)
         {
@@ -56,22 +56,22 @@ public class CameraController : MonoBehaviour
         }
     }
 
-    void Move()
-    {
-        float h = Input.GetAxis("Horizontal"); // A/D
-        float v = Input.GetAxis("Vertical");   // W/S
+    //void Move()
+    //{
+    //    float h = Input.GetAxis("Horizontal"); // A/D
+    //    float v = Input.GetAxis("Vertical");   // W/S
 
-        Vector3 dir = new Vector3(h, 0, v);
+    //    Vector3 dir = new Vector3(h, 0, v);
 
-        transform.position += dir * moveSpeed * Time.deltaTime;
+    //    transform.position += dir * moveSpeed * Time.deltaTime;
 
-        // 🔒 Begränsa kameran till kartan
-        Vector3 pos = transform.position;
-        pos.x = Mathf.Clamp(pos.x, -mapLimit, mapLimit);
-        pos.z = Mathf.Clamp(pos.z, -mapLimit, mapLimit);
+    //    // Begränsa kameran till kartan
+    //    Vector3 pos = transform.position;
+    //    pos.x = Mathf.Clamp(pos.x, -mapLimit, mapLimit);
+    //    pos.z = Mathf.Clamp(pos.z, -mapLimit, mapLimit);
 
-        transform.position = pos;
-    }
+    //    transform.position = pos;
+    //}
     void FitCameraToMap()
     {
         Renderer[] renderers = mapParent.GetComponentsInChildren<Renderer>();

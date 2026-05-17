@@ -18,7 +18,7 @@ public class ShipMovement : MonoBehaviour
     public Dictionary<Vector3, int> ReachableTileMoveCosts { get; private set; } = new();
     public int avaliableTileDistance;
 
-    public static float DistanceBetweenTiles { get; } = 1.5f;//Since tiles are hexagonal they do not share the same distance in all directions but keeping value to the width works well enough on the current map size.
+    public static float DistanceBetweenTiles { get; } = 1.50f;//Since tiles are hexagonal they do not share the same distance in all directions but keeping value to the width works well enough on the current map size.
 
     private void Awake()
     {
@@ -114,14 +114,16 @@ public class ShipMovement : MonoBehaviour
             {
                 //Debug.Log("step: " + step);
                 Vector3 stepPos = tileSize * direction + origin;
+                Debug.DrawLine(origin, stepPos, Color.red, 5f);
+                Debug.Log("FROM: " + origin + " TO: " + stepPos);
                 stepPos.y += 10;
 
                 if (!Physics.Raycast(stepPos, Vector3.down, out RaycastHit hitInfo))
                 {
-                    //Debug.LogWarning("Broke because of missed raycast");
+                    Debug.LogWarning("Broke because of missed raycast");
                     break;
                 }
-
+                Debug.Log(hitInfo.transform.name);
                 Vector3 newOrigin = hitInfo.transform.position;
                 origin.x = newOrigin.x;
                 origin.z = newOrigin.z;
@@ -142,4 +144,6 @@ public class ShipMovement : MonoBehaviour
             //Debug.LogWarning("Reached end of side " + side);
         }
     }
+
+
 }

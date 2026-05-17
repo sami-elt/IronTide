@@ -77,20 +77,4 @@ public class PlayerSlotUI : MonoBehaviour
 
 
 
-    //public void ChangeIcon()
-    //{
-    //    // 🔴 skydd så det inte crashar
-    //    if (icons == null || icons.Length == 0)
-    //    {
-    //        Debug.LogWarning("No icons assigned!");
-    //        return;
-    //    }
-
-    //    currentIcon++;
-
-    //    if (currentIcon >= icons.Length)
-    //        currentIcon = 0;
-
-    //    iconImage.sprite = icons[currentIcon];
-    //}
 }
