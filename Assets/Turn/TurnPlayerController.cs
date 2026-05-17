@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class TurnPlayerController : MonoBehaviour
 {
+
+
     public int playerID;
     private bool isMyTurn = false;
     public bool IsMyTurn { get => isMyTurn; }
@@ -13,28 +15,44 @@ public class TurnPlayerController : MonoBehaviour
     public int armorBonus; //finns inget än
 
     [Header("references")]
-    [SerializeField] private DiceComponent diceComponent;
     [SerializeField] private ShipMovement shipMovement;
     [SerializeField] private ShipWeapon shipWeapon;
+
+    //public void SetMyTurn(bool value)
+    //{
+    //    isMyTurn = value;
+
+    //    Debug.Log("Player" + playerID + " is my turn: " + isMyTurn);
+
+    //    if (isMyTurn && shipMovement != null)
+    //    {
+    //        shipMovement.avaliableTileDistance = 0;
+    //    }
+    //}
 
     public void SetMyTurn(bool value)
     {
         isMyTurn = value;
 
-        Debug.Log("Player" + playerID + " is my turn: " + isMyTurn);
 
         if (isMyTurn && shipMovement != null)
         {
             shipMovement.avaliableTileDistance = 0;
+
+            // Visa rätt tärning direkt när det blir spelarens tur
+            int sides = shipMovement.ship.shipInfo.GetEngineDice();
+            //FindFirstObjectByType<DiceManager>().ActiveDice(sides);
+        }
+        else if (!isMyTurn)
+        {
+            // Göm tärningen när turen är slut
+            FindFirstObjectByType<DiceManager>().HideAllDice();
         }
     }
 
     private void Awake()
     {
-        if (diceComponent == null)
-        {
-            diceComponent = GetComponent<DiceComponent>();
-        }
+
 
         if (shipMovement == null)
         {
@@ -54,18 +72,58 @@ public class TurnPlayerController : MonoBehaviour
         {
             return;
         }
+
         HandleMovePhaseAutoProgress();
         HandleAttackPhaseAutoProgress();
 
         if (Input.GetKeyDown(KeyCode.M))
         {
-            HandleMoveKey();
+            OnMoveButtonClicked();
+            //HandleMoveKey();
         }
 
         if (Input.GetKeyDown(KeyCode.A))
         {
-            HandleAttackKey();
+            OnAttackButtonClicked();
+            //HandleAttackKey();
         }
+    }
+
+    public void OnMoveButtonClicked()
+    {
+        var phase = TurnManager.Instance.currentPhase;
+
+        switch (phase)
+        {
+            case TurnPhase.RollMovement:
+                StartMoveAction();
+                break;
+
+            case TurnPhase.Move:
+                TryFinishMovePhase();
+                break;
+
+            case TurnPhase.RollAttack:
+                //StartMoveAction();
+                OnAttackButtonClicked();
+                break;
+        }
+    }
+
+    public void OnAttackButtonClicked()
+    {
+        if (TurnManager.Instance.currentPhase != TurnPhase.RollAttack)
+        {
+            return;
+        }
+
+        if (shipWeapon == null)
+        {
+            Debug.Log("shipWeapon missing on player " + playerID);
+            return;
+        }
+
+        TryStartAttackAction();
     }
 
     private void HandlePhase()
@@ -114,7 +172,9 @@ public class TurnPlayerController : MonoBehaviour
         //Debug.Log("Player " + playerID + " rolled a " + moveRoll + " for movement.");
         //Debug.Log("Player " + playerID + " has a total movement of " + totalMove + ".");
 
-        TurnManager.Instance.NextPhase();
+
+        //kommenterar bort här sålänge med nya dice
+        //TurnManager.Instance.NextPhase();
     }
 
     private void TryFinishMovePhase()
@@ -158,6 +218,8 @@ public class TurnPlayerController : MonoBehaviour
         {
             return;
         }
+
+        Debug.Log("AutoProgress check — avaliableTileDistance: " + shipMovement.avaliableTileDistance);
 
         if (shipMovement.avaliableTileDistance <= 0)
         {
@@ -236,7 +298,9 @@ public class TurnPlayerController : MonoBehaviour
         }
 
         shipMovement.EnterMovePhase(true);
-        TurnManager.Instance.StartMovePhase();
+
+        //kommenterar bort sålänge med nya dice
+        //TurnManager.Instance.StartMovePhase();
     }
 
     private bool TryStartAttackAction()

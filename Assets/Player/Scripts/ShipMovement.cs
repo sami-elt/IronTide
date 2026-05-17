@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class ShipMovement : MonoBehaviour
 {
-    [SerializeField] private Ship ship;
+    [SerializeField] public Ship ship;
 
     [SerializeField] private float speed = 20;
     private float moveIncrement;
@@ -37,13 +37,44 @@ public class ShipMovement : MonoBehaviour
             Move();
     }
 
+    public bool isWaitingForDice = false;
+
     public void EnterMovePhase(bool addBonus = true)
     {
-        avaliableTileDistance = ship.shipInfo.GetMoveDistance(addBonus);
+
+        isWaitingForDice = true;
+
+
+        //avaliableTileDistance = ship.shipInfo.GetMoveDistance(addBonus);
+
+        int sides = ship.shipInfo.GetEngineDice();
+
+        FindFirstObjectByType<DiceManager>().ActiveDice(sides);
+
+        //TurnManager.BroadcastMovementRolled(avaliableTileDistance);
+        //FindReachableTiles();
+        //ship.shipWeapon.FindReachableTargets();
+    }
+
+    public void ReceiveDiceResult(int result)
+    {
+        isWaitingForDice = false;
+        //FindFirstObjectByType<DiceManager>().HideAllDice();
+
+
+        avaliableTileDistance = ship.shipInfo.CalculateMoveDistance(result, true);
+
         TurnManager.BroadcastMovementRolled(avaliableTileDistance);
         FindReachableTiles();
         ship.shipWeapon.FindReachableTargets();
+
+        if (TurnManager.Instance != null)
+        {
+            TurnManager.Instance.StartMovePhase();
+        }
     }
+
+
 
 
     public void StartMove(Vector3 targetPosition, int tilesMoved)

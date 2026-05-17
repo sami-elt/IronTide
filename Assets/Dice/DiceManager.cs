@@ -1,0 +1,225 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class DiceManager : MonoBehaviour
+{
+
+    public GameObject diceD4;
+    public GameObject diceD6;
+    public GameObject diceD8;
+    public GameObject diceD12;
+
+    private static readonly Dictionary<int, Vector3> D6FaceRotations = new()
+{
+    { 1, new Vector3(0, 0, 0) },     // <-- byt ut mot dina kalibrerade värden
+    { 2, new Vector3(90, 0, 0) },
+    { 3, new Vector3(0, 0, -90) },
+    { 4, new Vector3(0, 0, 90) },
+    { 5, new Vector3(-90, 0, 0) },
+    { 6, new Vector3(180, 0, 0) },
+};
+
+    private static readonly Dictionary<int, Vector3> D4FaceRotations = new()
+{
+    { 1, new Vector3(0, 0, 0) },     // kalibrera
+    { 2, new Vector3(0, 0, 0) },
+    { 3, new Vector3(0, 0, 0) },
+    { 4, new Vector3(0, 0, 0) },
+};
+
+    private static readonly Dictionary<int, Vector3> D8FaceRotations = new()
+{
+    { 1, new Vector3(0, 0, 0) },     // kalibrera
+    { 2, new Vector3(0, 0, 0) },
+    { 3, new Vector3(0, 0, 0) },
+    { 4, new Vector3(0, 0, 0) },
+    { 5, new Vector3(0, 0, 0) },
+    { 6, new Vector3(0, 0, 0) },
+    { 7, new Vector3(0, 0, 0) },
+    { 8, new Vector3(0, 0, 0) },
+};
+
+    private static readonly Dictionary<int, Vector3> D12FaceRotations = new()
+{
+    { 1, new Vector3(0, 0, 0) },     // kalibrera
+    { 2, new Vector3(0, 0, 0) },
+    { 3, new Vector3(0, 0, 0) },
+    { 4, new Vector3(0, 0, 0) },
+    { 5, new Vector3(0, 0, 0) },
+    { 6, new Vector3(0, 0, 0) },
+    { 7, new Vector3(0, 0, 0) },
+    { 8, new Vector3(0, 0, 0) },
+    { 9, new Vector3(0, 0, 0) },
+    { 10, new Vector3(0, 0, 0) },
+    { 11, new Vector3(0, 0, 0) },
+    { 12, new Vector3(0, 0, 0) },
+};
+
+
+    private int currentSides = 6;
+    private bool isRolling = false;
+    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    void Start()
+    {
+        //HideAllDice();
+
+        ActiveDice(6);
+
+        
+    }
+
+    public void ActiveDice(int sides)
+    {
+
+        currentSides = sides;
+        HideAllDice();
+
+        switch (sides)
+        {
+            case 4: if (diceD4 != null) diceD4.SetActive(true); break;
+            case 6: if (diceD6 != null) diceD6.SetActive(true); break;
+            case 8: if (diceD8 != null) diceD8.SetActive(true); break;
+            case 12: if (diceD12 != null) diceD12.SetActive(true); break;
+        }
+
+    }
+        public void HideAllDice()
+    {
+        if (diceD4 != null) diceD4.SetActive(false);
+        if (diceD6 != null) diceD6.SetActive(false);
+        if (diceD8 != null) diceD8.SetActive(false);
+        if (diceD12 != null) diceD12.SetActive(false);
+    }
+    // Update is called once per frame
+    void Update()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            if (Physics.Raycast(ray, out RaycastHit hit))
+            {
+                if (hit.collider.gameObject == diceD4 ||
+                    hit.collider.gameObject == diceD6 ||
+                    hit.collider.gameObject == diceD8 ||
+                    hit.collider.gameObject == diceD12)
+                {
+                    // TärningskliCk gör samma som rörelseknappen
+                    TurnPlayerController[] allPlayers = FindObjectsByType<TurnPlayerController>(FindObjectsSortMode.None);
+                    foreach (var player in allPlayers)
+                    {
+                        if (player.IsMyTurn)
+                        {
+                            ShipMovement movement = player.GetComponent<ShipMovement>();
+                            RollForMovement(movement);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+    public void RollForMovement(ShipMovement movement)
+    {
+        if (!isRolling)
+            StartCoroutine(RollAnimation(movement));
+    }
+
+
+    private void TryRollDice()
+    {
+        if (isRolling) return;
+
+        TurnPlayerController[] allPlayers = FindObjectsByType<TurnPlayerController>(FindObjectsSortMode.None);
+        TurnPlayerController activePlayer = null;
+        foreach (var player in allPlayers)
+            if (player.IsMyTurn) { activePlayer = player; break; }
+
+        if (activePlayer == null) return;
+
+        TurnPhase phase = TurnManager.Instance.currentPhase;
+
+        // Alltid rörelse om RollMovement
+        if (phase == TurnPhase.RollMovement)
+        {
+            ShipMovement movement = activePlayer.GetComponent<ShipMovement>();
+            if (!movement.isWaitingForDice)
+                activePlayer.OnMoveButtonClicked();
+            StartCoroutine(RollAnimation(movement));
+            return;
+        }
+
+        // Under RollAttack — tärningskliCk betyder alltid rörelse om man har rörelser kvar
+        if (phase == TurnPhase.RollAttack && TurnManager.Instance.MovesUsedthisTurn < 2)
+        {
+            ShipMovement movement = activePlayer.GetComponent<ShipMovement>();
+            if (!movement.isWaitingForDice)
+                activePlayer.OnMoveButtonClicked();
+            StartCoroutine(RollAnimation(movement));
+            return;
+        }
+
+        // Bara attackera om spelaren explicit valt det via skeppet eller A-tangenten
+        // TärningskliCk gör ingenting här
+    }
+
+    private IEnumerator RollAnimation(ShipMovement shipToMove)
+    {
+        isRolling = true;
+
+        GameObject activeDiceObj = GetActiveDiceObject();
+
+
+        // Låt tärningen snurra fritt i ca 1 sekund
+        float timer = 1f;
+        while (timer > 0)
+        {
+            if (activeDiceObj != null)
+            {
+                // Roterar snabbt i alla riktningar
+                activeDiceObj.transform.Rotate(new Vector3(800, 1200, 1000) * Time.deltaTime);
+            }
+            timer -= Time.deltaTime;
+            yield return null; 
+        }
+
+        int result = Random.Range(1, currentSides + 1);
+
+        // Återställ rotationen
+        if (activeDiceObj != null)
+        {
+            activeDiceObj.transform.eulerAngles = GetFaceRotation(currentSides, result);
+        }
+
+        shipToMove.ReceiveDiceResult(result);
+
+        yield return new WaitForSeconds(2f);
+        HideAllDice();
+
+        isRolling = false;
+    }
+
+    private Vector3 GetFaceRotation(int sides, int result)
+    {
+        Dictionary<int, Vector3> table = sides switch
+        {
+            4 => D4FaceRotations,
+            6 => D6FaceRotations,
+            8 => D8FaceRotations,
+            12 => D12FaceRotations,
+            _ => D6FaceRotations
+        };
+
+        return table.TryGetValue(result, out Vector3 rot) ? rot : Vector3.zero;
+    }
+    private GameObject GetActiveDiceObject()
+    {
+        if (currentSides == 4) return diceD4;
+        if (currentSides == 6) return diceD6;
+        if (currentSides == 8) return diceD8;
+        if (currentSides == 12) return diceD12;
+        return diceD6;
+    }
+}
