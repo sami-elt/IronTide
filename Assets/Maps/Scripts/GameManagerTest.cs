@@ -17,6 +17,9 @@ public class GameManagerTest : MonoBehaviour
 
     void SpawnPlayers()
     {
+        if (IronTideGameState.Players.Count == 0)
+            IronTideGameState.EnsurePlayers(map != null ? map.playerCount : 2);
+
         IReadOnlyList<IronTidePlayerState> playerData =
             IronTideGameState.Players;
 
@@ -99,6 +102,10 @@ public class GameManagerTest : MonoBehaviour
         }
 
         TurnManager.Instance.BeginGame();
+
+        CameraController cameraController = FindFirstObjectByType<CameraController>();
+        if (cameraController != null)
+            cameraController.FocusCurrentTurnPlayer(true);
 
         Debug.Log("Spawn klart");
         

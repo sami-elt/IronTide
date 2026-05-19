@@ -68,6 +68,39 @@ public class TurnPlayerController : MonoBehaviour
         }
     }
 
+    public void RequestMoveAction()
+    {
+        if (!isMyTurn)
+            return;
+
+        HandleMoveKey();
+    }
+
+    public void RequestAttackAction()
+    {
+        if (!isMyTurn)
+            return;
+
+        HandleAttackKey();
+    }
+
+    public void RequestEndCurrentAction()
+    {
+        if (!isMyTurn || TurnManager.Instance == null)
+            return;
+
+        switch (TurnManager.Instance.currentPhase)
+        {
+            case TurnPhase.Move:
+                TryFinishMovePhase();
+                break;
+            case TurnPhase.RollAttack:
+            case TurnPhase.Attack:
+                TurnManager.Instance.FinishAttackAction();
+                break;
+        }
+    }
+
     private void HandlePhase()
     {
         var phase = TurnManager.Instance.currentPhase;
