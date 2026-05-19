@@ -203,9 +203,6 @@ namespace IronTide.BasicCards
                 if (card == null || !card.IsValid)
                     continue;
 
-                if (!card.IsPlayableInShop)
-                    continue;
-
                 if (card.AppearsInBasicShop)
                 {
                     _availableBasicCards.Add(card);
@@ -865,9 +862,6 @@ namespace IronTide.BasicCards
         private void ReturnToOriginPool(IronTideModuleCardEntry card)
         {
             if (card == null)
-                return;
-
-            if (!card.IsPlayableInShop)
                 return;
 
             if (card.AppearsInBasicShop)

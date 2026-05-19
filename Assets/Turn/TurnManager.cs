@@ -21,7 +21,6 @@ public class TurnManager : MonoBehaviour
     public int MovesUsedthisTurn { get; private set; }
     public bool HasAttackedThisTurn { get; private set; }
 
-    private readonly Dictionary<int, HashSet<int>> attackedPlayersThisRound = new Dictionary<int, HashSet<int>>();
 
      // Dice results
      private int movementRoll;
@@ -51,7 +50,6 @@ public class TurnManager : MonoBehaviour
 
     public void BeginGame()
     {
-        attackedPlayersThisRound.Clear();
         StartTurn();
     }
 
@@ -61,6 +59,12 @@ public class TurnManager : MonoBehaviour
 
         ResolvePlayers();
         PrepareAssignedPlayers();
+
+        Debug.Log(
+    "Before turn active: " +
+    Players[CurrentPlayerIndex].gameObject.activeSelf
+);
+
 
         if (Players == null || Players.Length == 0)
         {
@@ -74,11 +78,6 @@ public class TurnManager : MonoBehaviour
             Debug.LogWarning("TurnManager could not start because no active players are available.");
             return;
         }
-
-        Debug.Log(
-    "Before turn active: " +
-    Players[CurrentPlayerIndex].gameObject.activeSelf
-);
 
         // Reset all players
         for (int i = 0; i < Players.Length; i++)
@@ -253,44 +252,6 @@ public class TurnManager : MonoBehaviour
     }
 
 
-
-    public void RecordShipAttack(ShipInfo attacker, ShipInfo target)
-    {
-        int attackerId = GetShipPlayerId(attacker);
-        int targetId = GetShipPlayerId(target);
-        if (attackerId < 0 || targetId < 0 || attackerId == targetId)
-            return;
-
-        if (!attackedPlayersThisRound.TryGetValue(attackerId, out var attackedTargets))
-        {
-            attackedTargets = new HashSet<int>();
-            attackedPlayersThisRound[attackerId] = attackedTargets;
-        }
-
-        attackedTargets.Add(targetId);
-    }
-
-    public bool HasShipAttackedTargetThisRound(ShipInfo attacker, ShipInfo target)
-    {
-        return HasPlayerAttackedTargetThisRound(GetShipPlayerId(attacker), GetShipPlayerId(target));
-    }
-
-    public bool HasPlayerAttackedTargetThisRound(int attackerId, int targetId)
-    {
-        return attackerId >= 0 &&
-            targetId >= 0 &&
-            attackedPlayersThisRound.TryGetValue(attackerId, out var attackedTargets) &&
-            attackedTargets.Contains(targetId);
-    }
-
-    private int GetShipPlayerId(ShipInfo info)
-    {
-        if (info == null)
-            return -1;
-
-        TurnPlayerController controller = info.GetComponent<TurnPlayerController>();
-        return controller != null ? controller.playerID : -1;
-    }
 
     public static void BroadcastMovementRolled(int totalMovement)
     {

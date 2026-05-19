@@ -121,22 +121,6 @@ public static class IronTideGameState
         FirstKillOwnerId = killerPlayerId;
     }
 
-    public static bool TryTransferGold(int fromPlayerId, int toPlayerId, int amount)
-    {
-        if (amount <= 0 || fromPlayerId == toPlayerId)
-            return false;
-
-        IronTidePlayerState source = GetPlayer(fromPlayerId);
-        IronTidePlayerState destination = GetPlayer(toPlayerId);
-        if (source == null || destination == null || source.Gold <= 0)
-            return false;
-
-        int transferred = Math.Min(amount, source.Gold);
-        source.Gold -= transferred;
-        destination.Gold += transferred;
-        return transferred > 0;
-    }
-
     public static void AwardShopGold(int winnerPlayerId)
     {
         RoundWinnerId = winnerPlayerId;
