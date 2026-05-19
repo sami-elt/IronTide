@@ -18,8 +18,8 @@ public class TestDay1PlayUI : MonoBehaviour
     public TextMeshProUGUI winIndicator;
     public TextMeshProUGUI phaseIndicator;
     public List<TextMeshProUGUI> healthIndicators;
-    public List<Ship> ships;
-
+    //public List<Ship> ships;
+    public List<Ship> ships = new();
     [Header("Module Test Setup")]
     [SerializeField] private IronTideModuleCardLibrary moduleLibrary;
     [SerializeField] private bool autoDealStarterModules = true;
@@ -86,7 +86,7 @@ public class TestDay1PlayUI : MonoBehaviour
     {
         ResolveModuleLibrary();
         ResolveShipReferences();
-        SetupPlayerModules();
+        //SetupPlayerModules();
     }
 
     private void Start()
@@ -686,9 +686,23 @@ public class TestDay1PlayUI : MonoBehaviour
         verticalLayout.childForceExpandHeight = false;
         verticalLayout.childControlHeight = true;
 
-        int playerNumber = ship.turnPlayerController != null ? ship.turnPlayerController.playerID + 1 : playerPanels.Count + 1;
-        TextMeshProUGUI title = CreateLabel(panel, $"Player {playerNumber}", 16f, FontStyles.Bold, GoldColor, TextAlignmentOptions.Left);
-        title.gameObject.AddComponent<LayoutElement>().preferredHeight = 18f;
+        RectTransform header = CreatePanel("Player Header", panel, new Color(0f, 0f, 0f, 0f));
+        header.gameObject.AddComponent<LayoutElement>().preferredHeight = 20f;
+
+        var headerLayout = header.gameObject.AddComponent<HorizontalLayoutGroup>();
+        headerLayout.spacing = 6;
+        headerLayout.childForceExpandWidth = false;
+        headerLayout.childForceExpandHeight = false;
+        headerLayout.childControlWidth = true;
+        headerLayout.childControlHeight = true;
+
+        int playerId = GetShipPlayerId(ship, playerPanels.Count);
+        Image icon = CreatePlayerIcon(header, playerId);
+        TextMeshProUGUI title = CreateLabel(header, IronTideGameState.GetPlayerDisplayName(playerId), 16f,
+            FontStyles.Bold, IronTideGameState.GetPlayerColor(playerId, GoldColor), TextAlignmentOptions.Left);
+        var titleLayout = title.gameObject.AddComponent<LayoutElement>();
+        titleLayout.preferredHeight = 20f;
+        titleLayout.flexibleWidth = 1f;
 
         RectTransform hpRoot = CreatePanel("HP Bar", panel, new Color(0.025f, 0.070f, 0.035f, 1f));
         hpRoot.gameObject.AddComponent<LayoutElement>().preferredHeight = 18f;
@@ -709,6 +723,8 @@ public class TestDay1PlayUI : MonoBehaviour
         return new PlayerHudPanel
         {
             Ship = ship,
+            Title = title,
+            Icon = icon,
             HpFill = hpFill,
             HpDividers = hpDividers,
             HpText = hpText,
@@ -855,16 +871,6 @@ public class TestDay1PlayUI : MonoBehaviour
         if (currentShip == null || currentShip.shipInfo == null)
             return;
 
-<<<<<<< Updated upstream
-        int playerNumber = currentShip.turnPlayerController != null ? currentShip.turnPlayerController.playerID + 1 : 1;
-        sidebarTitle.SetText($"Player {playerNumber}'s Turn");
-        sidebarPhase.SetText(FormatInfoLine("PHASE", GetPhaseLabel(), GoldHex));
-        sidebarMovement.SetText(FormatInfoLine("MOVE", $"{currentShip.shipMovement.avaliableTileDistance} tiles left", MoveHex));
-        sidebarWeapon.SetText(FormatInfoLine("WEAPON", $"{GetCardName(currentShip.shipInfo.WeaponModule)} | Range {currentShip.shipInfo.GetWeaponRange()}", TextHex));
-        sidebarAttack.SetText(FormatInfoLine("ATTACK", GetAttackLabel(currentShip), GoldHex));
-        sidebarArmor.SetText(FormatInfoLine("ARMOR", currentShip.shipInfo.GetArmor().ToString(), MutedHex));
-        sidebarLastAction.SetText(FormatInfoLine("LAST", lastActionText, GoldHex));
-=======
         int playerId = GetShipPlayerId(currentShip, 0);
         if (hudPlayerTitle != null)
         {
@@ -888,7 +894,6 @@ public class TestDay1PlayUI : MonoBehaviour
         RefreshModuleSlot(activeArmorSlot, currentShip.shipInfo.ArmorModule, currentShip.shipInfo.ArmorEnabled);
         RefreshModuleSlot(activeEngineSlot, currentShip.shipInfo.EngineModule, currentShip.shipInfo.EngineEnabled);
         RefreshCommandButtons(currentShip);
->>>>>>> Stashed changes
     }
 
     private Ship GetCurrentShip()
@@ -1022,6 +1027,14 @@ public class TestDay1PlayUI : MonoBehaviour
             return;
 
         ShipInfo info = panel.Ship.shipInfo;
+        int playerId = GetShipPlayerId(panel.Ship, playerPanels.IndexOf(panel));
+        if (panel.Title != null)
+        {
+            panel.Title.SetText(IronTideGameState.GetPlayerDisplayName(playerId));
+            panel.Title.color = IronTideGameState.GetPlayerColor(playerId, GoldColor);
+        }
+        RefreshPlayerIcon(panel.Icon, playerId);
+
         float hpRatio = info.MaxHealth > 0 ? Mathf.Clamp01((float)info.Health / info.MaxHealth) : 0f;
         panel.HpFill.anchorMax = new Vector2(hpRatio, 1f);
         panel.HpFill.GetComponent<Image>().color = HpHealthyColor;
@@ -1186,7 +1199,7 @@ public class TestDay1PlayUI : MonoBehaviour
             winnerNumber = winner;
             if (winIndicator != null)
             {
-                winIndicator.SetText($"Player {winnerNumber} won!");
+                winIndicator.SetText($"{IronTideGameState.GetPlayerDisplayName(winnerNumber - 1)} won!");
                 winIndicator.gameObject.SetActive(true);
             }
 
@@ -1409,8 +1422,6 @@ public class TestDay1PlayUI : MonoBehaviour
         rect.offsetMax = Vector2.zero;
     }
 
-<<<<<<< Updated upstream
-=======
     private static int GetShipPlayerId(Ship ship, int fallbackPlayerId)
     {
         if (ship != null && ship.turnPlayerController != null)
@@ -1683,10 +1694,11 @@ public class TestDay1PlayUI : MonoBehaviour
         }
     }
 
->>>>>>> Stashed changes
     private sealed class PlayerHudPanel
     {
         public Ship Ship;
+        public TextMeshProUGUI Title;
+        public Image Icon;
         public RectTransform HpFill;
         public List<RectTransform> HpDividers;
         public TextMeshProUGUI HpText;

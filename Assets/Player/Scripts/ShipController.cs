@@ -13,21 +13,39 @@ public class ShipController : MonoBehaviour
     {
         ship = GetComponent<Ship>();
 
-        ship.shipInfo.ResetValues();
+        //if (ship == null)
+        //    return;
+        //if (ship.shipInfo != null)
+        //    ship.shipInfo.ResetValues();
     }
 
     private void Update()
     {
-        if (Time.timeSinceLevelLoad < 3)
+        //if (Time.timeSinceLevelLoad < 3)
+        //    return;
+
+        //if (activeIndicator.activeInHierarchy && !ship.turnPlayerController.IsMyTurn)
+        //{
+        //    activeIndicator.SetActive(false);
+        //}
+        //else if (!activeIndicator.activeInHierarchy && ship.turnPlayerController.IsMyTurn)
+        //{
+        //    activeIndicator.SetActive(true);
+        //}
+        if (Time.timeSinceLevelLoad < 1f)
             return;
 
-        if (activeIndicator.activeInHierarchy && !ship.turnPlayerController.IsMyTurn)
+        if (ship == null || ship.turnPlayerController == null)
+            return;
+
+        if (activeIndicator == null)
+            return;
+
+        bool myTurn = ship.turnPlayerController.IsMyTurn;
+
+        if (activeIndicator.activeSelf != myTurn)
         {
-            activeIndicator.SetActive(false);
-        }
-        else if (!activeIndicator.activeInHierarchy && ship.turnPlayerController.IsMyTurn)
-        {
-            activeIndicator.SetActive(true);
+            activeIndicator.SetActive(myTurn);
         }
     }
 

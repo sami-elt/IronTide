@@ -4,7 +4,9 @@ using UnityEngine;
 public class GameManagerTest : MonoBehaviour
 {
     public GenerateMap map;
+
     public GameObject playerPrefab;
+    public IronTide.BasicCards.IronTideModuleCardLibrary moduleLibrary;
 
     List<GameObject> players = new List<GameObject>();
 
@@ -15,9 +17,6 @@ public class GameManagerTest : MonoBehaviour
 
     void SpawnPlayers()
     {
-<<<<<<< Updated upstream
-        foreach (var pos in map.spawnWorldPositions)
-=======
         if (IronTideGameState.Players.Count == 0)
             IronTideGameState.EnsurePlayers(map != null ? map.playerCount : 2);
 
@@ -28,13 +27,52 @@ public class GameManagerTest : MonoBehaviour
             new TurnPlayerController[playerData.Count];
 
         for (int i = 0; i < playerData.Count; i++)
->>>>>>> Stashed changes
         {
-            GameObject p = Instantiate(playerPrefab, pos + Vector3.up * 0.5f, Quaternion.identity);
+            Vector3 pos = map.spawnWorldPositions[i];
+
+            GameObject p = Instantiate(
+                playerPrefab,
+                pos + Vector3.up * 0.5f,
+                Quaternion.identity
+            );
+
+            // APPLY LOADOUTS
+            Ship ship = p.GetComponent<Ship>();
+
+            if (ship != null)
+            {
+                IronTideGameState.ApplyLoadoutToShip(
+                    ship,
+                    playerData[i],
+                    moduleLibrary
+                );
+                ship.shipInfo.ResetValues();
+            }
+
+            p.name = playerData[i].DisplayName;
+
+            Renderer rend =
+                p.GetComponentInChildren<Renderer>();
+
+            if (rend != null)
+            {
+                rend.material.color =
+                    playerData[i].PlayerColor;
+            }
+
+            TurnPlayerController controller =
+                p.GetComponent<TurnPlayerController>();
+
+            if (controller != null)
+            {
+                controller.playerID =
+                    playerData[i].PlayerId;
+
+                spawnedPlayers[i] = controller;
+            }
+
             players.Add(p);
         }
-<<<<<<< Updated upstream
-=======
 
         TurnManager.Instance.Players = spawnedPlayers;
 
@@ -73,6 +111,5 @@ public class GameManagerTest : MonoBehaviour
         
 
        
->>>>>>> Stashed changes
     }
 }

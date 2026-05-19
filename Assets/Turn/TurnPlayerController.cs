@@ -49,6 +49,7 @@ public class TurnPlayerController : MonoBehaviour
 
     void Update()
     {
+       
         if (!isMyTurn)
         {
             return;

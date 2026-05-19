@@ -112,7 +112,7 @@ public class ShipReachVisuals : MonoBehaviour
             visuals.Add(visual);
             visualsDrawn = true;
         }
-        
+
     }
 
     private void ShowReachable(bool clearVisuals = true)
@@ -137,7 +137,7 @@ public class ShipReachVisuals : MonoBehaviour
             visuals.Add(visual);
             visualsDrawn = true;
         }
-        
+
     }
 
     private void ShowHittable(bool clearVisuals = true)
@@ -147,6 +147,9 @@ public class ShipReachVisuals : MonoBehaviour
 
         Dictionary<Vector3, int> damageModifiers = ship.shipWeapon.ReachableTargetsDamageModifiers;
         positions = new(damageModifiers.Keys);
+        IronTide.BasicCards.IronTideModuleCardEntry weapon = ship.shipInfo.WeaponModule;
+        int dSides = weapon.DiceSides;
+        int dCount = weapon.DiceCount;
 
         for (int i = 0; i < positions.Count; i++)
         {
@@ -154,15 +157,46 @@ public class ShipReachVisuals : MonoBehaviour
 
             TMP_Text visualText = visual.GetComponentInChildren<TMP_Text>();
             int damageModifier = damageModifiers[positions[i]];
-            if (damageModifier == 0)
-                visualText.text = "";
+
+            //string modifierString;
+
+            //if (damageModifier > 0)
+            //    modifierString = $"+{damageModifier}";
+            //else if (damageModifier < 0)
+            //    modifierString = $"-{damageModifier}";
+            //else
+            //    modifierString = "";
+
+            //if (weapon.DiceCount == 1)
+            //{
+            //    visualText.text = $"D{dSides}{modifierString}";
+            //}
+            //else
+            //{
+            //    visualText.text = $"{weapon.DiceCount}xD{dSides}{modifierString}";
+            //}
+
+            int lowestDmg = dCount + damageModifier;
+            string lowBound;
+            if (lowestDmg < 0)
+                lowBound = "0";
             else
-                visualText.text = $"{damageModifier}";
+                lowBound = lowestDmg.ToString();
+
+            int highestDmg = dCount * dSides + damageModifier;
+            string highBound;
+            if (highestDmg < 0)
+                highBound = "0";
+            else
+                highBound = highestDmg.ToString();
+
+                visualText.text = $"{lowBound}-{highBound}";
+
 
             visuals.Add(visual);
             visualsDrawn = true;
         }
-        
+
     }
 
     private void ClearVisuals()

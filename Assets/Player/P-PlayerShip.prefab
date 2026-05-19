@@ -54,7 +54,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67b9a2d9ad77ddc4f93472384bbfbf16, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShipToggle
-  shipInfo: {fileID: 0}
+  shipInfo: {fileID: 2377969469349253868}
   shipMovement: {fileID: 0}
   shipWeapon: {fileID: 0}
   shipController: {fileID: 0}
@@ -86,10 +86,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0123d0a7b4c7ad428ff06b7c1bbc6b2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShipMovement
-  ship: {fileID: 0}
+  ship: {fileID: 4068468499050262875}
   speed: 20
   avaliableTileDistance: 0
-  distanceBetweenTiles: 20.5
 --- !u!114 &358540957929218636
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -102,7 +101,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbcec1c9125208b4ab1c0c23cd7ccde1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShipWeapon
-  ship: {fileID: 0}
+  ship: {fileID: 4068468499050262875}
   bulletObject: {fileID: 0}
 --- !u!114 &5326623181522260129
 MonoBehaviour:
@@ -116,8 +115,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 798c245158bc6f84b85c7cf2f75be9c8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShipController
-  ship: {fileID: 0}
-  activeIndicator: {fileID: 0}
+  ship: {fileID: 4068468499050262875}
+  activeIndicator: {fileID: 5923652115993538515}
 --- !u!114 &4174277555462946843
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -125,7 +124,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 693427283123718945}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
   m_Name: 

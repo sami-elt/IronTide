@@ -6,14 +6,20 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/TestDay1Play.unity
-    guid: 25d4eb5e0fb34234f892ab34890379bd
+    path: Assets/GameDemo.unity
+    guid: 829a86ba161cdd840842063447f41aab
+  - enabled: 1
+    path: Assets/Maps/Scenes/GameMap.unity
+    guid: 8f5458d46c7c9bf479fa2e5f5f12f82f
   - enabled: 1
     path: Assets/Shopping Phase.unity
     guid: 7bd38afeb6d183745b478ef64d797041
-  - enabled: 1
+  - enabled: 0
     path: Assets/PlayerMapTest.unity
     guid: cbf80172e90d0384db4053fe946beead
+  - enabled: 1
+    path: Assets/TestDay1Play.unity
+    guid: 25d4eb5e0fb34234f892ab34890379bd
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0
