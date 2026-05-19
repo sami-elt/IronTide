@@ -62,9 +62,9 @@ public class DiceManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        //HideAllDice();
+        HideAllDice();
 
-        ActiveDice(6);
+        //ActiveDice(6);
 
         
     }
@@ -94,32 +94,69 @@ public class DiceManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetMouseButtonDown(0))
-        {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            if (Physics.Raycast(ray, out RaycastHit hit))
-            {
-                if (hit.collider.gameObject == diceD4 ||
-                    hit.collider.gameObject == diceD6 ||
-                    hit.collider.gameObject == diceD8 ||
-                    hit.collider.gameObject == diceD12)
-                {
-                    // TärningskliCk gör samma som rörelseknappen
-                    TurnPlayerController[] allPlayers = FindObjectsByType<TurnPlayerController>(FindObjectsSortMode.None);
-                    foreach (var player in allPlayers)
-                    {
-                        if (player.IsMyTurn)
-                        {
-                            ShipMovement movement = player.GetComponent<ShipMovement>();
-                            RollForMovement(movement);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
+        //if (Input.GetMouseButtonDown(0))
+        //{
+        //    Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        //    if (Physics.Raycast(ray, out RaycastHit hit))
+        //    {
+        //        if (hit.collider.gameObject == diceD4 ||
+        //            hit.collider.gameObject == diceD6 ||
+        //            hit.collider.gameObject == diceD8 ||
+        //            hit.collider.gameObject == diceD12)
+        //        {
+        //            // TärningskliCk gör samma som rörelseknappen
+        //            TurnPlayerController[] allPlayers = FindObjectsByType<TurnPlayerController>(FindObjectsSortMode.None);
+        //            foreach (var player in allPlayers)
+        //            {
+        //                if (player.IsMyTurn)
+        //                {
+        //                    ShipMovement movement = player.GetComponent<ShipMovement>();
+        //                    RollForMovement(movement);
+        //                    break;
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
     }
 
+    public void RollForAttack(System.Action onComplete)
+    {
+        if (!isRolling)
+            StartCoroutine(RollAttackAnimation(onComplete));
+    }
+
+    private IEnumerator RollAttackAnimation(System.Action onComplete)
+    {
+        isRolling = true;
+
+        int sides = TurnManager.Instance.GetCurrentPlayer()
+            .GetComponent<ShipInfo>().GetWeaponDiceSides();
+        ActiveDice(sides);
+        GameObject activeDiceObj = GetActiveDiceObject();
+
+
+        //timer för animationen, ändra vid behov för att skapa en mer smooth upplevelse
+        float timer = 0.5f;
+        while (timer > 0)
+        {
+            if (activeDiceObj != null)
+                activeDiceObj.transform.Rotate(new Vector3(800, 1200, 1000) * Time.deltaTime);
+            timer -= Time.deltaTime;
+            yield return null;
+        }
+
+        int result = Random.Range(1, sides + 1);
+        if (activeDiceObj != null)
+            activeDiceObj.transform.eulerAngles = GetFaceRotation(sides, result);
+
+        //minska tiden efter attacken.
+        yield return new WaitForSeconds(0.8f);
+        HideAllDice();
+        isRolling = false;
+
+        onComplete?.Invoke();
+    }
 
     public void RollForMovement(ShipMovement movement)
     {

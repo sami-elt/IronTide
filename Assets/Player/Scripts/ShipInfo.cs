@@ -652,6 +652,14 @@ public class ShipInfo : MonoBehaviour
     }
 
 
+    //för att få rätt tärning
+    public int GetWeaponDiceSides()
+    {
+        if (WeaponModule != null && WeaponModule.IsValid && WeaponModule.UsesDice)
+            return WeaponModule.DiceSides;
+        return 6;
+    }
+
     public int GetEngineDice()
     {
         if(EngineModule != null && EngineModule.IsValid && EngineModule.UsesDice)

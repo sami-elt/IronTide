@@ -110,21 +110,35 @@ public class TurnPlayerController : MonoBehaviour
         }
     }
 
-    public void OnAttackButtonClicked()
+    public bool OnAttackButtonClicked()
     {
         if (TurnManager.Instance.currentPhase != TurnPhase.RollAttack)
-        {
-            return;
-        }
+            return false;
 
         if (shipWeapon == null)
         {
             Debug.Log("shipWeapon missing on player " + playerID);
-            return;
+            return false;
         }
 
-        TryStartAttackAction();
+        return TryStartAttackAction();
     }
+
+    //public void OnAttackButtonClicked()
+    //{
+    //    if (TurnManager.Instance.currentPhase != TurnPhase.RollAttack)
+    //    {
+    //        return;
+    //    }
+
+    //    if (shipWeapon == null)
+    //    {
+    //        Debug.Log("shipWeapon missing on player " + playerID);
+    //        return;
+    //    }
+
+    //    TryStartAttackAction();
+    //}
 
     private void HandlePhase()
     {
@@ -316,7 +330,6 @@ public class TurnPlayerController : MonoBehaviour
         if (targetCount <= 0)
         {
             TurnManager.BroadcastTurnFeedback("No enemies in range. Press M to move instead.");
-            Debug.Log("Player " + playerID + " cannot attack because no enemies are in range.");
             return false;
         }
 

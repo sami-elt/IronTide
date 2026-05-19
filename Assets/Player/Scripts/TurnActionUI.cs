@@ -34,11 +34,17 @@ public class TurnActionUI : MonoBehaviour
         moveButton.interactable = (phase == TurnPhase.RollMovement || phase == TurnPhase.RollAttack)
                                    && movesUsed < 2;
 
-        attackButton.interactable = phase == TurnPhase.RollAttack
+        //uppdatera så man kan attackera direkt
+        attackButton.interactable = (phase == TurnPhase.RollAttack || phase == TurnPhase.RollMovement)
                                     && !TurnManager.Instance.HasAttackedThisTurn;
 
+        //välja att kunna avsluta sin runda direkt
         endTurnButton.interactable = phase == TurnPhase.RollMovement
-                                     || phase == TurnPhase.RollAttack;
+                             || phase == TurnPhase.RollAttack
+                             || phase == TurnPhase.Move;
+
+        //endTurnButton.interactable = phase == TurnPhase.RollMovement
+        //                             || phase == TurnPhase.RollAttack;
     }
 
 
@@ -67,6 +73,21 @@ public class TurnActionUI : MonoBehaviour
 
         Invoke(nameof(ResetProcessing), 0.5f);
     }
+    //private void OnAttackClicked()
+    //{
+    //    if (isProcessing) return;
+    //    isProcessing = true;
+
+    //    TurnPlayerController activePlayer = GetActivePlayer();
+    //    if (activePlayer == null) { isProcessing = false; return; }
+
+    //    // Gå direkt till attack utan att räkna som rörelse
+    //    TurnManager.Instance.GoToAttack();
+    //    activePlayer.OnAttackButtonClicked();
+
+    //    Invoke(nameof(ResetProcessing), 0.5f);
+    //}
+
     private void OnAttackClicked()
     {
         if (isProcessing) return;
@@ -75,13 +96,11 @@ public class TurnActionUI : MonoBehaviour
         TurnPlayerController activePlayer = GetActivePlayer();
         if (activePlayer == null) { isProcessing = false; return; }
 
-        // Gå direkt till attack utan att räkna som rörelse
         TurnManager.Instance.GoToAttack();
         activePlayer.OnAttackButtonClicked();
 
         Invoke(nameof(ResetProcessing), 0.5f);
     }
-
     private void OnEndTurnClicked()
     {
         if (isProcessing) return;
