@@ -55,6 +55,7 @@ public class TurnManager : MonoBehaviour
 
     private void StartTurn()
     {
+  
 
         ResolvePlayers();
         PrepareAssignedPlayers();
@@ -111,6 +112,11 @@ public class TurnManager : MonoBehaviour
         Debug.Log("Current phase: " + currentPhase);
     }
 
+    public void GoToAttack()
+    {
+        currentPhase = TurnPhase.RollAttack;
+    }
+
     public void NextPhase()
     {
         switch (currentPhase)
@@ -142,6 +148,7 @@ public class TurnManager : MonoBehaviour
             Players[CurrentPlayerIndex].SetMyTurn(false);
 
         CurrentPlayerIndex++;
+        Debug.Log("EndTurn — nästa index: " + CurrentPlayerIndex);
 
         if (Players == null || Players.Length == 0)
             return;
@@ -213,12 +220,15 @@ public class TurnManager : MonoBehaviour
         Debug.Log("Move phase has started");
     }
 
+
     public void FinishMoveAction()
     {
         MovesUsedthisTurn++;
 
         if (MovesUsedthisTurn >= 2)
         {
+
+
             EndTurn();
             return;
         }
@@ -227,17 +237,21 @@ public class TurnManager : MonoBehaviour
         Debug.Log("Choose second action: press M for move or A for attack");
     }
 
+    public void FinishAttackAction()
+    {
+        HasAttackedThisTurn = true;
+        EndTurn();
+    }
+
+
+
     public void StartAttackPhase()
     {
         currentPhase = TurnPhase.Attack;
         Debug.Log("Attack phase has started");
     }
 
-    public void FinishAttackAction()
-    {
-        HasAttackedThisTurn = true;
-        EndTurn();
-    }
+
 
     public static void BroadcastMovementRolled(int totalMovement)
     {
