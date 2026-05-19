@@ -16,6 +16,8 @@ public class DiceComponent : MonoBehaviour
             resultText.text = result.ToString();
         }
 
+        DiceVisualManager.ShowRoll(sides, result, transform);
+
         return result;
     }
 
