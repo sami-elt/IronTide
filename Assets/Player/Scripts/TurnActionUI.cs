@@ -115,7 +115,7 @@ public class TurnActionUI : MonoBehaviour
         }
         else if (phase == TurnPhase.RollAttack)
         {
-            // Avsluta turen helt
+            // Avsluta helt
             TurnManager.Instance.FinishAttackAction();
         }
         else if (phase == TurnPhase.RollMovement)

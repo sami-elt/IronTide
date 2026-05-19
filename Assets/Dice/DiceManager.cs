@@ -10,9 +10,11 @@ public class DiceManager : MonoBehaviour
     public GameObject diceD8;
     public GameObject diceD12;
 
+
+    //Behövs fixas, varje animation för sig så rätt sida på tärningen visas
     private static readonly Dictionary<int, Vector3> D6FaceRotations = new()
 {
-    { 1, new Vector3(0, 0, 0) },     // <-- byt ut mot dina kalibrerade värden
+    { 1, new Vector3(0, 0, 0) },    
     { 2, new Vector3(90, 0, 0) },
     { 3, new Vector3(0, 0, -90) },
     { 4, new Vector3(0, 0, 90) },
@@ -22,7 +24,7 @@ public class DiceManager : MonoBehaviour
 
     private static readonly Dictionary<int, Vector3> D4FaceRotations = new()
 {
-    { 1, new Vector3(0, 0, 0) },     // kalibrera
+    { 1, new Vector3(0, 0, 0) },    
     { 2, new Vector3(0, 0, 0) },
     { 3, new Vector3(0, 0, 0) },
     { 4, new Vector3(0, 0, 0) },
@@ -30,7 +32,7 @@ public class DiceManager : MonoBehaviour
 
     private static readonly Dictionary<int, Vector3> D8FaceRotations = new()
 {
-    { 1, new Vector3(0, 0, 0) },     // kalibrera
+    { 1, new Vector3(0, 0, 0) },    
     { 2, new Vector3(0, 0, 0) },
     { 3, new Vector3(0, 0, 0) },
     { 4, new Vector3(0, 0, 0) },
@@ -42,7 +44,7 @@ public class DiceManager : MonoBehaviour
 
     private static readonly Dictionary<int, Vector3> D12FaceRotations = new()
 {
-    { 1, new Vector3(0, 0, 0) },     // kalibrera
+    { 1, new Vector3(0, 0, 0) },     
     { 2, new Vector3(0, 0, 0) },
     { 3, new Vector3(0, 0, 0) },
     { 4, new Vector3(0, 0, 0) },
@@ -94,30 +96,6 @@ public class DiceManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //if (Input.GetMouseButtonDown(0))
-        //{
-        //    Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        //    if (Physics.Raycast(ray, out RaycastHit hit))
-        //    {
-        //        if (hit.collider.gameObject == diceD4 ||
-        //            hit.collider.gameObject == diceD6 ||
-        //            hit.collider.gameObject == diceD8 ||
-        //            hit.collider.gameObject == diceD12)
-        //        {
-        //            // TärningskliCk gör samma som rörelseknappen
-        //            TurnPlayerController[] allPlayers = FindObjectsByType<TurnPlayerController>(FindObjectsSortMode.None);
-        //            foreach (var player in allPlayers)
-        //            {
-        //                if (player.IsMyTurn)
-        //                {
-        //                    ShipMovement movement = player.GetComponent<ShipMovement>();
-        //                    RollForMovement(movement);
-        //                    break;
-        //                }
-        //            }
-        //        }
-        //    }
-        //}
     }
 
     public void RollForAttack(System.Action onComplete)
@@ -165,57 +143,18 @@ public class DiceManager : MonoBehaviour
     }
 
 
-    private void TryRollDice()
-    {
-        if (isRolling) return;
-
-        TurnPlayerController[] allPlayers = FindObjectsByType<TurnPlayerController>(FindObjectsSortMode.None);
-        TurnPlayerController activePlayer = null;
-        foreach (var player in allPlayers)
-            if (player.IsMyTurn) { activePlayer = player; break; }
-
-        if (activePlayer == null) return;
-
-        TurnPhase phase = TurnManager.Instance.currentPhase;
-
-        // Alltid rörelse om RollMovement
-        if (phase == TurnPhase.RollMovement)
-        {
-            ShipMovement movement = activePlayer.GetComponent<ShipMovement>();
-            if (!movement.isWaitingForDice)
-                activePlayer.OnMoveButtonClicked();
-            StartCoroutine(RollAnimation(movement));
-            return;
-        }
-
-        // Under RollAttack — tärningskliCk betyder alltid rörelse om man har rörelser kvar
-        if (phase == TurnPhase.RollAttack && TurnManager.Instance.MovesUsedthisTurn < 2)
-        {
-            ShipMovement movement = activePlayer.GetComponent<ShipMovement>();
-            if (!movement.isWaitingForDice)
-                activePlayer.OnMoveButtonClicked();
-            StartCoroutine(RollAnimation(movement));
-            return;
-        }
-
-        // Bara attackera om spelaren explicit valt det via skeppet eller A-tangenten
-        // TärningskliCk gör ingenting här
-    }
-
     private IEnumerator RollAnimation(ShipMovement shipToMove)
     {
         isRolling = true;
 
         GameObject activeDiceObj = GetActiveDiceObject();
 
-
-        // Låt tärningen snurra fritt i ca 1 sekund
         float timer = 1f;
         while (timer > 0)
         {
             if (activeDiceObj != null)
             {
-                // Roterar snabbt i alla riktningar
+            
                 activeDiceObj.transform.Rotate(new Vector3(800, 1200, 1000) * Time.deltaTime);
             }
             timer -= Time.deltaTime;
