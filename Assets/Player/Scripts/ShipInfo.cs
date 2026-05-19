@@ -2,6 +2,13 @@ using UnityEngine;
 using IronTide.BasicCards;
 using System.Collections.Generic;
 
+public enum IronTideAttackLineType
+{
+    Unknown = 0,
+    Straight = 1,
+    Diagonal = 2
+}
+
 public class ShipInfo : MonoBehaviour
 {
     public const int HealthPerModule = 10;
@@ -11,6 +18,19 @@ public class ShipInfo : MonoBehaviour
         public int DiceTotal;
         public int BonusTotal;
         public int TotalDamage;
+        public int DiceSides;
+        public bool RolledCrit;
+    }
+
+    public struct DamageResult
+    {
+        public int RawDamage;
+        public int DamageReduction;
+        public int EffectiveDamage;
+        public int DamageDealt;
+        public bool ModuleDestroyed;
+        public bool Sunk;
+        public bool WasCancelled;
     }
 
     public IronTideModuleCardEntry WeaponModule { get; private set; }
@@ -67,39 +87,88 @@ public class ShipInfo : MonoBehaviour
 
     public int Hurt(int damage, int rangeModifier, int coverModifier)
     {
-        int totalDamage = Mathf.Max(0, damage - GetDamageReduction(rangeModifier, coverModifier));
-        if (totalDamage <= 0 || Sunk)
-            return 0;
+        return HurtDetailed(damage, null, rangeModifier, coverModifier, IronTideAttackLineType.Unknown, false).DamageDealt;
+    }
+
+    public DamageResult HurtDetailed(int damage, ShipInfo attacker, int rangeModifier, int coverModifier,
+        IronTideAttackLineType lineType, bool allowOverkill)
+    {
+        var result = new DamageResult
+        {
+            RawDamage = Mathf.Max(0, damage),
+            DamageReduction = GetDamageReduction(attacker, rangeModifier, coverModifier, lineType)
+        };
+
+        result.EffectiveDamage = Mathf.Max(0, result.RawDamage - result.DamageReduction);
+        if (result.EffectiveDamage <= 0 || Sunk)
+            return result;
 
         int damageToNextModuleBreak = GetDamageToNextModuleBreak();
-        int appliedDamage = Mathf.Min(totalDamage, damageToNextModuleBreak);
+        int appliedDamage = Mathf.Min(result.EffectiveDamage, damageToNextModuleBreak);
+        ApplyHealthDamage(appliedDamage, ref result);
+
+        int overflowDamage = Mathf.Max(0, result.EffectiveDamage - appliedDamage);
+        if (allowOverkill && overflowDamage > 0 && result.ModuleDestroyed && !Sunk)
+        {
+            int carryDamage = overflowDamage / 2;
+            if (carryDamage > 0)
+                ApplyHealthDamage(carryDamage, ref result);
+        }
+
+        result.Sunk = Sunk;
+        OnModuleStateChanged?.Invoke();
+        return result;
+    }
+
+    public DamageResult LoseHealthDirect(int amount, ShipInfo source)
+    {
+        var result = new DamageResult
+        {
+            RawDamage = Mathf.Max(0, amount),
+            EffectiveDamage = Mathf.Max(0, amount)
+        };
+
+        if (result.EffectiveDamage <= 0 || Sunk)
+            return result;
+
+        ApplyHealthDamage(result.EffectiveDamage, ref result);
+        result.Sunk = Sunk;
+        OnModuleStateChanged?.Invoke();
+        return result;
+    }
+
+    private void ApplyHealthDamage(int amount, ref DamageResult result)
+    {
+        if (amount <= 0 || Sunk)
+            return;
+
+        int damageToNextModuleBreak = GetDamageToNextModuleBreak();
+        int appliedDamage = Mathf.Min(amount, damageToNextModuleBreak);
         Health = Mathf.Max(0, Health - appliedDamage);
+        result.DamageDealt += appliedDamage;
 
         if (ShouldCheatDeath(appliedDamage))
         {
             Health = Mathf.Min(1, MaxHealth);
             cheatDeathUsed = true;
-            OnModuleStateChanged?.Invoke();
-            return appliedDamage;
+            return;
         }
 
-        if (Health % HealthPerModule == 0)
+        if (Health % HealthPerModule != 0)
+            return;
+
+        DestroyModule();
+        result.ModuleDestroyed = true;
+
+        if (GetActiveModuleAmount() > 0)
         {
-            DestroyModule();
-
-            if (GetActiveModuleAmount() > 0)
-            {
-                Health = Mathf.Min(Health, MaxHealth);
-            }
-            else
-            {
-                Health = 0;
-                SetSunk(true);
-            }
+            Health = Mathf.Min(Health, MaxHealth);
         }
-
-        OnModuleStateChanged?.Invoke();
-        return appliedDamage;
+        else
+        {
+            Health = 0;
+            SetSunk(true);
+        }
     }
 
     private int GetDamageToNextModuleBreak()
@@ -317,8 +386,7 @@ public class ShipInfo : MonoBehaviour
                 maxDamage += WeaponModule.BaseModifier;
 
                 if (WeaponModule.PassiveKey == "perfect_shot_t1" ||
-                    WeaponModule.PassiveKey == "perfect_shot_t2" ||
-                    WeaponModule.PassiveKey == "lucky")
+                    WeaponModule.PassiveKey == "perfect_shot_t2")
                 {
                     maxDamage += WeaponModule.DiceSides;
                 }
@@ -330,7 +398,7 @@ public class ShipInfo : MonoBehaviour
             maxDamage = 6;
         }
 
-        if (HasActivePassive(WeaponModule, "marauder") && Health <= 5)
+        if (HasActivePassive(WeaponModule, "marauder_epic") && Health <= 5)
         {
             minDamage += 3;
             maxDamage += 3;
@@ -349,10 +417,10 @@ public class ShipInfo : MonoBehaviour
     {
         int diceDamage = 0;
         int bonusDamage = 0;
+        var rolls = new List<int>();
 
         if (WeaponModule != null && WeaponModule.IsValid)
         {
-            var rolls = new List<int>();
             for (int i = 0; i < WeaponModule.DiceCount; i++)
             {
                 int roll = RollDice(WeaponModule.DiceSides);
@@ -369,28 +437,23 @@ public class ShipInfo : MonoBehaviour
         else
         {
             diceDamage = RollDice(6);
+            rolls.Add(diceDamage);
         }
 
-        if (HasActivePassive(EngineModule, "sea_begger"))
+        if (HasActivePassive(EngineModule, "sea_begger_epic"))
             bonusDamage += 1;
 
-        if (HasActivePassive(WeaponModule, "marauder") && Health <= 5)
+        if (HasActivePassive(WeaponModule, "marauder_epic") && Health <= 5)
             bonusDamage += 3;
-
-        if (target != null && IsHighestHealthTarget(target))
-        {
-            if (HasActivePassive(WeaponModule, "healthy_collector_t1"))
-                bonusDamage += 1;
-            else if (HasActivePassive(WeaponModule, "healthy_collector_t2"))
-                bonusDamage += 2;
-        }
 
         int total = Mathf.Max(0, diceDamage + bonusDamage);
         return new WeaponDamageRoll
         {
             DiceTotal = diceDamage,
             BonusTotal = bonusDamage,
-            TotalDamage = total
+            TotalDamage = total,
+            DiceSides = WeaponModule != null && WeaponModule.IsValid ? WeaponModule.DiceSides : 6,
+            RolledCrit = DidRollCrit(rolls, WeaponModule != null && WeaponModule.IsValid ? WeaponModule.DiceSides : 6, diceDamage)
         };
     }
 
@@ -415,10 +478,10 @@ public class ShipInfo : MonoBehaviour
                     break;
             }
 
-            if (weaponEnabled && WeaponModule.PassiveKey == "long_shot")
+            if (weaponEnabled && HasActivePassive(WeaponModule, "long_shot_t1"))
                 range = 7;
 
-            if (weaponEnabled && WeaponModule.PassiveKey == "sea_horse")
+            if (weaponEnabled && HasActivePassive(WeaponModule, "sea_horse_t2"))
                 range = 2;
 
             return range;
@@ -468,7 +531,8 @@ public class ShipInfo : MonoBehaviour
         { 3, 0 },
         { 4, 0 },
         { 5, 1 },
-        { 6, 2 }
+        { 6, 2 },
+        { 7, 0 }
     };
 
     //public int GetMoveDistance(bool addBonus)
@@ -480,34 +544,15 @@ public class ShipInfo : MonoBehaviour
     //        return 0;
     //    }
 
-    //    if (HasActivePassive(ArmorModule, "king_of_the_sea"))
-    //    {
-    //        Debug.Log($"{gameObject.name} movement fixed to 2 by King of the Sea.");
-    //        return 2;
-    //    }
-
-    //    int value = RollEngineDice(myDice);
-    //    bool secondMove = TurnManager.Instance != null && TurnManager.Instance.MovesUsedthisTurn > 0;
-    //    bool canUseBonus = addBonus && (!secondMove || HasActivePassive(EngineModule, "momentum"));
-
-    //    int bonus = canUseBonus && engineEnabled && EngineModule != null && EngineModule.IsValid
-    //        ? EngineModule.BaseModifier
-    //        : 0;
-
-    //    int total = Mathf.Max(0, value + bonus);
-    //    Debug.Log($"{gameObject.name} rolled {value} for movement. Engine bonus {bonus}. Total {total}.");
-    //    return total;
-    //}
-
     public int CalculateMoveDistance(int rolledValue, bool addBonus)
     {
-        if (HasActivePassive(ArmorModule, "king_of_the_sea"))
+        if (HasActivePassive(ArmorModule, "king_of_the_sea_legendary"))
         {
             return 2;
         }
 
         bool secondMove = TurnManager.Instance != null && TurnManager.Instance.MovesUsedthisTurn > 0;
-        bool canUseBonus = addBonus && (!secondMove || HasActivePassive(EngineModule, "momentum"));
+        bool canUseBonus = addBonus && (!secondMove || HasActivePassive(EngineModule, "momentum_t1"));
 
         int bonus = canUseBonus && engineEnabled && EngineModule != null && EngineModule.IsValid
             ? EngineModule.BaseModifier
@@ -533,16 +578,35 @@ public class ShipInfo : MonoBehaviour
 
     public int GetDamageReduction(int rangeModifier, int coverModifier)
     {
+        return GetDamageReduction(null, rangeModifier, coverModifier, IronTideAttackLineType.Unknown);
+    }
+
+    public int GetDamageReduction(ShipInfo attacker, int rangeModifier, int coverModifier, IronTideAttackLineType lineType)
+    {
         int reduction = GetArmor();
 
-        if (HasActivePassive(ArmorModule, "supplies") && Health == MaxHealth)
+        if (HasActivePassive(ArmorModule, "supplies_t1") && Health == MaxHealth)
             reduction += 2;
 
-        if (HasActivePassive(ArmorModule, "lookout") && rangeModifier > 0)
+        if (HasActivePassive(ArmorModule, "look_out_t1") && rangeModifier > 0)
             reduction += 1;
 
-        if (HasActivePassive(EngineModule, "sneaky") && coverModifier < 0)
-            reduction += Mathf.Abs(coverModifier) / 2;
+        if (HasActivePassive(EngineModule, "sneaky_t1"))
+            reduction += CountAdjacentRocks();
+
+        if (HasActivePassive(ArmorModule, "rookie_t1") && lineType == IronTideAttackLineType.Straight)
+            reduction += 2;
+
+        if (HasActivePassive(ArmorModule, "bishop_armor_t2") && lineType == IronTideAttackLineType.Diagonal)
+            reduction += 2;
+
+        if (HasActivePassive(ArmorModule, "hull_of_honor_epic") &&
+            attacker != null &&
+            TurnManager.Instance != null &&
+            !TurnManager.Instance.HasShipAttackedTargetThisRound(this, attacker))
+        {
+            reduction += 3;
+        }
 
         return Mathf.Max(0, reduction);
     }
@@ -576,12 +640,76 @@ public class ShipInfo : MonoBehaviour
         if (card == EngineModule && !engineEnabled)
             return false;
 
-        return card.PassiveKey == passiveKey;
+        return NormalizePassiveKey(card.PassiveKey) == NormalizePassiveKey(passiveKey);
+    }
+
+    public int GetAttackContextDamageModifier(ShipInfo target, IronTideAttackLineType lineType)
+    {
+        int modifier = 0;
+
+        if (HasActivePassive(WeaponModule, "bishop_long_t1"))
+        {
+            if (lineType == IronTideAttackLineType.Diagonal)
+                modifier += 2;
+            else if (lineType == IronTideAttackLineType.Straight)
+                modifier -= 1;
+        }
+
+        if (HasActivePassive(WeaponModule, "bishop_long_t2") && lineType == IronTideAttackLineType.Diagonal)
+            modifier += 2;
+
+        if (HasActivePassive(WeaponModule, "rook_t1"))
+        {
+            if (lineType == IronTideAttackLineType.Straight)
+                modifier += 2;
+            else if (lineType == IronTideAttackLineType.Diagonal)
+                modifier -= 1;
+        }
+
+        if (HasActivePassive(WeaponModule, "rook_ii_t2") && lineType == IronTideAttackLineType.Straight)
+            modifier += 3;
+
+        if (target != null && IsHighestHealthTarget(target))
+        {
+            if (HasActivePassive(WeaponModule, "healthy_collector_t1"))
+                modifier += 1;
+            else if (HasActivePassive(WeaponModule, "healthy_collector_ii_t2"))
+                modifier += 2;
+        }
+
+        if (target != null &&
+            HasActivePassive(WeaponModule, "death_of_duty_epic") &&
+            TurnManager.Instance != null &&
+            !TurnManager.Instance.HasShipAttackedTargetThisRound(this, target))
+        {
+            modifier += 4;
+        }
+
+        return modifier;
+    }
+
+    public bool ShouldCancelCriticalAttack(WeaponDamageRoll damageRoll)
+    {
+        if (!damageRoll.RolledCrit)
+            return false;
+
+        if (HasActivePassive(ArmorModule, "dodge_t2") && RollPassiveD6() % 2 == 1)
+            return true;
+
+        if (HasActivePassive(EngineModule, "evade_t2") && RollPassiveD6() % 2 == 0)
+            return true;
+
+        return false;
+    }
+
+    public int RollPassiveD6()
+    {
+        return RollDice(6);
     }
 
     private bool ShouldCheatDeath(int damageTaken)
     {
-        return damageTaken > 0 && Health <= 0 && HasActivePassive(ArmorModule, "cheat_death") && !cheatDeathUsed;
+        return damageTaken > 0 && Health <= 0 && HasActivePassive(ArmorModule, "cheat_death_t2") && !cheatDeathUsed;
     }
 
     //private int RollEngineDice(DiceComponent myDice)
@@ -616,19 +744,132 @@ public class ShipInfo : MonoBehaviour
                 extraDamage += RollDice(WeaponModule.DiceSides);
         }
 
-        if (HasActivePassive(WeaponModule, "lucky") && rolls.Count > 0)
+        return extraDamage;
+    }
+
+    private static bool DidRollCrit(List<int> rolls, int diceSides, int fallbackRoll)
+    {
+        if (diceSides <= 0)
+            return false;
+
+        if (rolls != null && rolls.Count > 0)
         {
             for (int i = 0; i < rolls.Count; i++)
             {
-                if (rolls[i] % 2 == 1)
-                {
-                    extraDamage += RollDice(WeaponModule.DiceSides);
-                    break;
-                }
+                if (rolls[i] == diceSides)
+                    return true;
             }
         }
 
-        return extraDamage;
+        return fallbackRoll == diceSides;
+    }
+
+    private int CountAdjacentRocks()
+    {
+        HexTile[] tiles = FindObjectsByType<HexTile>(FindObjectsSortMode.None);
+        int count = 0;
+        float adjacentDistance = ShipMovement.DistanceBetweenTiles * 1.45f;
+
+        for (int i = 0; i < tiles.Length; i++)
+        {
+            HexTile tile = tiles[i];
+            if (tile == null || tile.isWalkable)
+                continue;
+
+            Vector3 delta = tile.transform.position - transform.position;
+            delta.y = 0f;
+            if (delta.magnitude <= adjacentDistance)
+                count++;
+        }
+
+        return count;
+    }
+
+    private static string NormalizePassiveKey(string passiveKey)
+    {
+        switch (passiveKey)
+        {
+            case "long_shot":
+                return "long_shot_t1";
+            case "mortar":
+                return "mortar_t1";
+            case "one_of_each":
+                return "one_of_each_t1";
+            case "strong_arm":
+                return "strong_arm_t1";
+            case "rookie":
+                return "rookie_t1";
+            case "supplies":
+                return "supplies_t1";
+            case "lookout":
+                return "look_out_t1";
+            case "momentum":
+                return "momentum_t1";
+            case "gust_of_wind":
+                return "gust_of_wind_t1";
+            case "sneaky":
+                return "sneaky_t1";
+            case "runaway":
+                return "runaway_t1";
+            case "piercing_shot":
+                return "piercing_shot_t2";
+            case "lead_shell":
+                return "lead_shell_t2";
+            case "retribution":
+                return "retribution_t2";
+            case "healthy_collector_t2":
+                return "healthy_collector_ii_t2";
+            case "rook_t2":
+                return "rook_ii_t2";
+            case "grappling_cannon_t2":
+                return "grappling_cannon_ii_t2";
+            case "boarding_party_t2":
+                return "boarding_party_ii_t2";
+            case "sea_horse":
+                return "sea_horse_t2";
+            case "cheat_death":
+                return "cheat_death_t2";
+            case "hunker_down":
+                return "hunker_down_t2";
+            case "dodge":
+                return "dodge_t2";
+            case "scavanger":
+                return "scavanger_t2";
+            case "evade":
+                return "evade_t2";
+            case "ramming_speed":
+                return "ramming_speed_t2";
+            case "lucky":
+                return "lucky_legendary";
+            case "precision":
+                return "precision_legendary";
+            case "coordination":
+                return "coordination_legendary";
+            case "overkill":
+                return "overkill_legendary";
+            case "king_of_the_sea":
+                return "king_of_the_sea_legendary";
+            case "surprise_mother_trucker":
+                return "surprise_mother_trucker_legendary";
+            case "wolf_pack":
+                return "wolf_pack_legendary";
+            case "queen_of_the_sea":
+                return "queen_of_the_sea_legendary";
+            case "marauder":
+                return "marauder_epic";
+            case "death_of_duty":
+                return "death_of_duty_epic";
+            case "hard_shell":
+                return "hard_shell_epic";
+            case "hull_of_honor":
+                return "hull_of_honor_epic";
+            case "tactical_retreat":
+                return "tactical_retreat_epic";
+            case "sea_begger":
+                return "sea_begger_epic";
+            default:
+                return passiveKey;
+        }
     }
 
     private bool IsHighestHealthTarget(ShipInfo target)
