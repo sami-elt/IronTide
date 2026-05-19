@@ -24,42 +24,6 @@ namespace IronTide.BasicCards
     [Serializable]
     public sealed class IronTideModuleCardEntry
     {
-        private static readonly HashSet<string> DisabledShopPassiveKeys = new HashSet<string>
-        {
-            "one_of_each_t1",
-            "one_of_each",
-            "strong_arm_t1",
-            "strong_arm",
-            "doubleshot_t1",
-            "gust_of_wind_t1",
-            "gust_of_wind",
-            "runaway_t1",
-            "runaway",
-            "lead_shell_t2",
-            "lead_shell",
-            "retribution_t2",
-            "retribution",
-            "doubleshot_t2",
-            "hunker_down_t2",
-            "hunker_down",
-            "scavanger_t2",
-            "scavanger",
-            "lucky_legendary",
-            "lucky",
-            "precision_legendary",
-            "precision",
-            "coordination_legendary",
-            "coordination",
-            "surprise_mother_trucker_legendary",
-            "surprise_mother_trucker",
-            "wolf_pack_legendary",
-            "wolf_pack",
-            "hard_shell_epic",
-            "hard_shell",
-            "tactical_retreat_epic",
-            "tactical_retreat"
-        };
-
         [SerializeField] private string id;
         [SerializeField] private string displayName;
         [SerializeField] private IronTideModuleArchetype archetype;
@@ -87,9 +51,8 @@ namespace IronTide.BasicCards
         public bool IsValid => !string.IsNullOrWhiteSpace(id) && !string.IsNullOrWhiteSpace(displayName);
         public bool HasPassive => !string.IsNullOrWhiteSpace(passiveName) && passiveName != "-";
         public bool UsesDice => diceCount > 0 && diceSides > 0;
-        public bool IsPlayableInShop => string.IsNullOrWhiteSpace(passiveKey) || !DisabledShopPassiveKeys.Contains(passiveKey);
-        public bool AppearsInBasicShop => tier == IronTideCardTier.Tier1 && IsPlayableInShop;
-        public bool AppearsInAdvancedShop => IsPlayableInShop && (tier == IronTideCardTier.Tier2 || tier == IronTideCardTier.Epic || tier == IronTideCardTier.Legendary);
+        public bool AppearsInBasicShop => tier == IronTideCardTier.Tier1;
+        public bool AppearsInAdvancedShop => tier == IronTideCardTier.Tier2 || tier == IronTideCardTier.Epic || tier == IronTideCardTier.Legendary;
         public bool IsTier2 => tier == IronTideCardTier.Tier2;
         public bool IsLegendary => tier == IronTideCardTier.Legendary;
         public bool IsEpic => tier == IronTideCardTier.Epic;
@@ -296,8 +259,6 @@ namespace IronTide.BasicCards
             if (string.IsNullOrWhiteSpace(id))
                 return null;
 
-            id = NormalizeCardId(id);
-
             foreach (IronTideModuleCardEntry card in cards)
             {
                 if (card != null && card.Id == id)
@@ -307,47 +268,13 @@ namespace IronTide.BasicCards
             return null;
         }
 
-        private static string NormalizeCardId(string id)
-        {
-            switch (id)
-            {
-                case "t1_long_deck_gun":
-                    return "t1_long_base";
-                case "t1_medium_broadside":
-                    return "t1_medium_base";
-                case "t1_short_boarding_gun":
-                    return "t1_short_base";
-                case "t1_armor_iron_plating":
-                    return "t1_armor_base";
-                case "t1_armor_lookout":
-                    return "t1_armor_look_out";
-                case "t1_engine_full_steam":
-                    return "t1_engine_base";
-                case "t2_long_heavy_deck_gun":
-                    return "t2_long_base";
-                case "t2_medium_heavy_broadside":
-                    return "t2_medium_base";
-                case "t2_short_breaching_gun":
-                    return "t2_short_base";
-                case "t2_armor_fortified_hull":
-                    return "t2_armor_base";
-                case "t2_engine_twin_engines":
-                    return "t2_engine_base";
-                default:
-                    return id;
-            }
-        }
-
         public List<IronTideModuleCardEntry> GetTier1Cards(BasicModuleType slotType)
         {
             var results = new List<IronTideModuleCardEntry>();
             foreach (IronTideModuleCardEntry card in cards)
             {
-                if (card != null && card.IsValid && card.IsPlayableInShop &&
-                    card.Tier == IronTideCardTier.Tier1 && card.SlotType == slotType)
-                {
+                if (card != null && card.IsValid && card.Tier == IronTideCardTier.Tier1 && card.SlotType == slotType)
                     results.Add(card);
-                }
             }
 
             return results;

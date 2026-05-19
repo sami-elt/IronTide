@@ -104,40 +104,8 @@ public class TurnPlayerController : MonoBehaviour
                 break;
 
             case TurnPhase.RollAttack:
+                //StartMoveAction();
                 OnAttackButtonClicked();
-                break;
-        }
-    }
-
-    public void RequestMoveAction()
-    {
-        if (!isMyTurn)
-            return;
-
-        HandleMoveKey();
-    }
-
-    public void RequestAttackAction()
-    {
-        if (!isMyTurn)
-            return;
-
-        HandleAttackKey();
-    }
-
-    public void RequestEndCurrentAction()
-    {
-        if (!isMyTurn || TurnManager.Instance == null)
-            return;
-
-        switch (TurnManager.Instance.currentPhase)
-        {
-            case TurnPhase.Move:
-                TryFinishMovePhase();
-                break;
-            case TurnPhase.RollAttack:
-            case TurnPhase.Attack:
-                TurnManager.Instance.FinishAttackAction();
                 break;
         }
     }
@@ -155,6 +123,22 @@ public class TurnPlayerController : MonoBehaviour
 
         return TryStartAttackAction();
     }
+
+    //public void OnAttackButtonClicked()
+    //{
+    //    if (TurnManager.Instance.currentPhase != TurnPhase.RollAttack)
+    //    {
+    //        return;
+    //    }
+
+    //    if (shipWeapon == null)
+    //    {
+    //        Debug.Log("shipWeapon missing on player " + playerID);
+    //        return;
+    //    }
+
+    //    TryStartAttackAction();
+    //}
 
     private void HandlePhase()
     {
