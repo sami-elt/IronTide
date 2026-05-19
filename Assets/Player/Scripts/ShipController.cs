@@ -103,7 +103,7 @@ public class ShipController : MonoBehaviour
             return;
         }
 
-        ship.shipWeapon.SelectTarget(hitInfo.collider.gameObject);
+        ship.shipWeapon.SelectTarget(component.gameObject);
         ship.shipWeapon.Attack(damageModifier);
     }
 
