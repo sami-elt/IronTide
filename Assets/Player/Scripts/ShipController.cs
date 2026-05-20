@@ -57,10 +57,12 @@ public class ShipController : MonoBehaviour
 
         switch (TurnManager.Instance.currentPhase)
         {
+
             case TurnPhase.Move:
                 TryMoveShipToTileAtMouse();
                 break;
 
+            case TurnPhase.RollAttack:
             case TurnPhase.Attack:
                 if (!ship.shipWeapon.HasAttacked)
                     TryAttackingShipAtMouse();
@@ -97,6 +99,9 @@ public class ShipController : MonoBehaviour
 
     private void TryAttackingShipAtMouse()
     {
+        //null check
+        if (ship.shipWeapon == null) return; 
+
         Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
 
         if (!Physics.Raycast(ray, out RaycastHit hitInfo))
@@ -115,7 +120,7 @@ public class ShipController : MonoBehaviour
         }
 
         hitPos = component.transform.position;
-        if (!ship.shipWeapon.ReachablePositionsDamageModifiers.TryGetValue(hitPos, out int damageModifier))
+        if (!ship.shipWeapon.ReachableTargetsDamageModifiers.TryGetValue(hitPos, out int damageModifier))
         {
             Debug.Log("Player is not reachable");
             return;

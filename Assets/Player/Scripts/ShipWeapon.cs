@@ -11,6 +11,8 @@ public class ShipWeapon : MonoBehaviour
     private ShipInfo.WeaponDamageRoll preparedDamageRoll;
     private bool hasPreparedDamageRoll;
 
+    private DiceManager diceManager;
+
     public bool HasAttacked { get; private set; }
 
     public Dictionary<Vector3, int> ReachablePositionsDamageModifiers = new();
@@ -23,6 +25,7 @@ public class ShipWeapon : MonoBehaviour
     private void Awake()
     {
         ship = GetComponent<Ship>();
+        diceManager = FindFirstObjectByType<DiceManager>();
     }
 
 
@@ -45,49 +48,41 @@ public class ShipWeapon : MonoBehaviour
     {
         if (target != null)
         {
-            //skapa skottet
-            if (bulletObject != null)
+            diceManager.RollForAttack(() =>
             {
-                // Skapar prefab p� skeppets position
-                GameObject newBullet = Instantiate(bulletObject, transform.position, Quaternion.identity);
-
-            
-                WeaponProjectiles projScript = newBullet.GetComponent<WeaponProjectiles>();
-
-                // Kollar om det finns script
-                if (projScript != null)
+                if (bulletObject != null)
                 {
-                    projScript.Shoot(target.transform);
+                    GameObject newBullet = Instantiate(bulletObject, transform.position, Quaternion.identity);
+                    WeaponProjectiles projScript = newBullet.GetComponent<WeaponProjectiles>();
+                    if (projScript != null)
+                        projScript.Shoot(target.transform);
                 }
-            }
 
-          
-            
-            Vector3 targetPosition = target.transform.position;
-            ReachableTargetsDistance.TryGetValue(targetPosition, out int distance);
-            ReachableTargetsCoverModifiers.TryGetValue(targetPosition, out int coverModifier);
+                Vector3 targetPosition = target.transform.position;
+                ReachableTargetsDistance.TryGetValue(targetPosition, out int distance);
+                ReachableTargetsCoverModifiers.TryGetValue(targetPosition, out int coverModifier);
 
-            bool targetWasSunk = target.Sunk;
-            int rangeModifier = damageModifier - coverModifier;
-            ShipInfo.WeaponDamageRoll damageRoll = hasPreparedDamageRoll
-                ? preparedDamageRoll
-                : ship.shipInfo.RollWeaponDamage(target);
-            int totalBonus = damageRoll.BonusTotal + damageModifier;
-            int rawDamage = Mathf.Max(0, damageRoll.DiceTotal + totalBonus);
-            int damageReduction = target.GetDamageReduction(rangeModifier, coverModifier);
-            int dealtDamage = target.Hurt(rawDamage, rangeModifier, coverModifier);
-            if (!targetWasSunk && target.Sunk && ship.turnPlayerController != null)
-                IronTideGameState.RecordFirstKill(ship.turnPlayerController.playerID);
+                bool targetWasSunk = target.Sunk;
+                int rangeModifier = damageModifier - coverModifier;
+                ShipInfo.WeaponDamageRoll damageRoll = hasPreparedDamageRoll
+                    ? preparedDamageRoll
+                    : ship.shipInfo.RollWeaponDamage(target);
+                int totalBonus = damageRoll.BonusTotal + damageModifier;
+                int rawDamage = Mathf.Max(0, damageRoll.DiceTotal + totalBonus);
+                int damageReduction = target.GetDamageReduction(rangeModifier, coverModifier);
+                int dealtDamage = target.Hurt(rawDamage, rangeModifier, coverModifier);
+                if (!targetWasSunk && target.Sunk && ship.turnPlayerController != null)
+                    IronTideGameState.RecordFirstKill(ship.turnPlayerController.playerID);
 
-            TurnManager.BroadcastAttackRolled(rawDamage);
-            TurnManager.BroadcastDamageDealt(dealtDamage);
-            TurnManager.BroadcastAttackResolved(damageRoll.DiceTotal, totalBonus, damageReduction, dealtDamage);
-            ShowDamagePopup(target.transform.position, dealtDamage);
-            hasPreparedDamageRoll = false;
-            target = null;
-            HasAttacked = true;
+                TurnManager.BroadcastAttackRolled(rawDamage);
+                TurnManager.BroadcastDamageDealt(dealtDamage);
+                TurnManager.BroadcastAttackResolved(damageRoll.DiceTotal, totalBonus, damageReduction, dealtDamage);
+                ShowDamagePopup(target.transform.position, dealtDamage);
+                hasPreparedDamageRoll = false;
+                target = null;
+                HasAttacked = true;
+            });
         }
-
     }
 
     private void ShowDamagePopup(Vector3 targetPosition, int dealtDamage)
@@ -160,13 +155,13 @@ public class ShipWeapon : MonoBehaviour
                 int distanceDamageModifier = ship.shipInfo.GetDistanceDamageModifier(step + 1);
 
                 if (shipComponent != null)
-                {    
+                {
                     ReachablePositionsDamageModifiers.TryAdd(shipComponent.transform.position, obstacleDamageModifier + distanceDamageModifier);
                     ReachableTargetsDamageModifiers.TryAdd(shipComponent.transform.position, obstacleDamageModifier + distanceDamageModifier);
                     ReachableTargetsDistance.TryAdd(shipComponent.transform.position, step + 1);
                     ReachableTargetsCoverModifiers.TryAdd(shipComponent.transform.position, obstacleDamageModifier);
                 }
-                else if(tileIsWalkable)
+                else if (tileIsWalkable)
                 {
                     ReachablePositionsDamageModifiers.TryAdd(tileComponent.transform.position, obstacleDamageModifier + distanceDamageModifier);
                 }
