@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class ReachVisual : MonoBehaviour
 {
-    //For rotating towards camera
+    //Rotates gameObject with camera rotation
     private GameObject target;
 
     private void Start()
@@ -12,10 +12,7 @@ public class ReachVisual : MonoBehaviour
 
     private void Update()
     {
-        Vector3 targetPosition = target.transform.forward + target.transform.position;
-        targetPosition.y = target.transform.position.y;
-        Vector3 targetRotation = (targetPosition - target.transform.position).normalized;
-        
-        transform.rotation = Quaternion.LookRotation(targetRotation, Vector3.up);
+        Vector3 eulerRot = transform.rotation.eulerAngles;
+        transform.rotation = Quaternion.Euler(new(eulerRot.x, target.transform.rotation.eulerAngles.y, eulerRot.z));   
     }
 }
