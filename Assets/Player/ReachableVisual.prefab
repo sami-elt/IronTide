@@ -224,6 +224,7 @@ GameObject:
   - component: {fileID: 2990847351926350779}
   - component: {fileID: 5425520030716951427}
   - component: {fileID: 5619390942923380085}
+  - component: {fileID: 7539021887898007904}
   m_Layer: 0
   m_Name: Model
   m_TagString: Untagged
@@ -304,3 +305,15 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &7539021887898007904
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4048448914765354303}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef9047f01ffbf0c48b502dc24a854d6e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ReachVisual
