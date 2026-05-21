@@ -7,8 +7,6 @@ public class ShipController : MonoBehaviour
 
     private readonly int playerLayer = 3;
 
-    public GameObject activeIndicator;
-
     private void Start()
     {
         ship = GetComponent<Ship>();
@@ -21,32 +19,7 @@ public class ShipController : MonoBehaviour
 
     private void Update()
     {
-        //if (Time.timeSinceLevelLoad < 3)
-        //    return;
-
-        //if (activeIndicator.activeInHierarchy && !ship.turnPlayerController.IsMyTurn)
-        //{
-        //    activeIndicator.SetActive(false);
-        //}
-        //else if (!activeIndicator.activeInHierarchy && ship.turnPlayerController.IsMyTurn)
-        //{
-        //    activeIndicator.SetActive(true);
-        //}
-        if (Time.timeSinceLevelLoad < 1f)
-            return;
-
-        if (ship == null || ship.turnPlayerController == null)
-            return;
-
-        if (activeIndicator == null)
-            return;
-
-        bool myTurn = ship.turnPlayerController.IsMyTurn;
-
-        if (activeIndicator.activeSelf != myTurn)
-        {
-            activeIndicator.SetActive(myTurn);
-        }
+        
     }
 
 
