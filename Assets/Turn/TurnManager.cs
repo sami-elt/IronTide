@@ -21,7 +21,6 @@ public class TurnManager : MonoBehaviour
     public int MovesUsedthisTurn { get; private set; }
     public bool HasAttackedThisTurn { get; private set; }
 
-    private readonly Dictionary<int, HashSet<int>> attackedPlayersThisRound = new Dictionary<int, HashSet<int>>();
 
      // Dice results
      private int movementRoll;
@@ -51,16 +50,21 @@ public class TurnManager : MonoBehaviour
 
     public void BeginGame()
     {
-        attackedPlayersThisRound.Clear();
         StartTurn();
     }
 
     private void StartTurn()
     {
+  
 
         ResolvePlayers();
         PrepareAssignedPlayers();
-        DiceVisualManager.HideActiveRoll();
+
+        Debug.Log(
+    "Before turn active: " +
+    Players[CurrentPlayerIndex].gameObject.activeSelf
+);
+
 
         if (Players == null || Players.Length == 0)
         {
@@ -74,11 +78,6 @@ public class TurnManager : MonoBehaviour
             Debug.LogWarning("TurnManager could not start because no active players are available.");
             return;
         }
-
-        Debug.Log(
-    "Before turn active: " +
-    Players[CurrentPlayerIndex].gameObject.activeSelf
-);
 
         // Reset all players
         for (int i = 0; i < Players.Length; i++)
@@ -113,6 +112,11 @@ public class TurnManager : MonoBehaviour
         Debug.Log("Current phase: " + currentPhase);
     }
 
+    public void GoToAttack()
+    {
+        currentPhase = TurnPhase.RollAttack;
+    }
+
     public void NextPhase()
     {
         switch (currentPhase)
@@ -144,6 +148,7 @@ public class TurnManager : MonoBehaviour
             Players[CurrentPlayerIndex].SetMyTurn(false);
 
         CurrentPlayerIndex++;
+        Debug.Log("EndTurn — nästa index: " + CurrentPlayerIndex);
 
         if (Players == null || Players.Length == 0)
             return;
@@ -215,12 +220,15 @@ public class TurnManager : MonoBehaviour
         Debug.Log("Move phase has started");
     }
 
+
     public void FinishMoveAction()
     {
         MovesUsedthisTurn++;
 
         if (MovesUsedthisTurn >= 2)
         {
+
+
             EndTurn();
             return;
         }
@@ -229,55 +237,21 @@ public class TurnManager : MonoBehaviour
         Debug.Log("Choose second action: press M for move or A for attack");
     }
 
-    public void StartAttackPhase()
-    {
-        currentPhase = TurnPhase.Attack;
-        Debug.Log("Attack phase has started");
-    }
-
     public void FinishAttackAction()
     {
         HasAttackedThisTurn = true;
         EndTurn();
     }
 
-    public void RecordShipAttack(ShipInfo attacker, ShipInfo target)
+
+
+    public void StartAttackPhase()
     {
-        int attackerId = GetShipPlayerId(attacker);
-        int targetId = GetShipPlayerId(target);
-        if (attackerId < 0 || targetId < 0 || attackerId == targetId)
-            return;
-
-        if (!attackedPlayersThisRound.TryGetValue(attackerId, out var attackedTargets))
-        {
-            attackedTargets = new HashSet<int>();
-            attackedPlayersThisRound[attackerId] = attackedTargets;
-        }
-
-        attackedTargets.Add(targetId);
+        currentPhase = TurnPhase.Attack;
+        Debug.Log("Attack phase has started");
     }
 
-    public bool HasShipAttackedTargetThisRound(ShipInfo attacker, ShipInfo target)
-    {
-        return HasPlayerAttackedTargetThisRound(GetShipPlayerId(attacker), GetShipPlayerId(target));
-    }
 
-    public bool HasPlayerAttackedTargetThisRound(int attackerId, int targetId)
-    {
-        return attackerId >= 0 &&
-            targetId >= 0 &&
-            attackedPlayersThisRound.TryGetValue(attackerId, out var attackedTargets) &&
-            attackedTargets.Contains(targetId);
-    }
-
-    private int GetShipPlayerId(ShipInfo info)
-    {
-        if (info == null)
-            return -1;
-
-        TurnPlayerController controller = info.GetComponent<TurnPlayerController>();
-        return controller != null ? controller.playerID : -1;
-    }
 
     public static void BroadcastMovementRolled(int totalMovement)
     {
