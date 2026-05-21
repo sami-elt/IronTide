@@ -60,6 +60,7 @@ public class TurnManager : MonoBehaviour
 
         ResolvePlayers();
         PrepareAssignedPlayers();
+        DiceVisualManager.HideActiveRoll();
 
         if (Players == null || Players.Length == 0)
         {

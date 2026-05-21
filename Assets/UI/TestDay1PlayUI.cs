@@ -913,10 +913,17 @@ public class TestDay1PlayUI : MonoBehaviour
         if (TurnManager.Instance == null)
             return "-";
 
+        TurnPlayerController currentPlayer = TurnManager.Instance.GetCurrentPlayer();
+        if (currentPlayer != null && currentPlayer.IsResolvingAttackResult)
+            return "Attack result";
+
+        if (currentPlayer != null && !currentPlayer.CanReceiveTurnInput)
+            return "Camera focusing";
+
         switch (TurnManager.Instance.currentPhase)
         {
             case TurnPhase.RollMovement:
-                return "Roll Movement [M]";
+                return "Choose Move [M] or Attack [A]";
             case TurnPhase.Move:
                 return "Move";
             case TurnPhase.RollAttack:
@@ -934,13 +941,14 @@ public class TestDay1PlayUI : MonoBehaviour
             return;
 
         TurnPhase phase = TurnManager.Instance.currentPhase;
-        bool isCurrentTurn = currentShip.turnPlayerController.IsMyTurn;
+        bool isCurrentTurn = currentShip.turnPlayerController.CanReceiveTurnInput;
 
         SetButtonInteractable(moveButton, isCurrentTurn &&
             (phase == TurnPhase.RollMovement || phase == TurnPhase.Move || phase == TurnPhase.RollAttack));
-        SetButtonInteractable(attackButton, isCurrentTurn && phase == TurnPhase.RollAttack);
+        SetButtonInteractable(attackButton, isCurrentTurn &&
+            (phase == TurnPhase.RollMovement || phase == TurnPhase.RollAttack));
         SetButtonInteractable(endTurnButton, isCurrentTurn &&
-            (phase == TurnPhase.Move || phase == TurnPhase.RollAttack || phase == TurnPhase.Attack));
+            (phase == TurnPhase.RollMovement || phase == TurnPhase.Move || phase == TurnPhase.RollAttack || phase == TurnPhase.Attack));
         SetButtonInteractable(rosterToggleButton, true);
         SetButtonInteractable(cameraToggleButton, GetCameraController() != null);
 

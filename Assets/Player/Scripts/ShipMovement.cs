@@ -39,7 +39,7 @@ public class ShipMovement : MonoBehaviour
 
     public void EnterMovePhase(bool addBonus = true)
     {
-        avaliableTileDistance = ship.shipInfo.GetMoveDistance(addBonus);
+        avaliableTileDistance = ship.shipInfo.GetMoveDistance(addBonus, true);
         TurnManager.BroadcastMovementRolled(avaliableTileDistance);
         FindReachableTiles();
         ship.shipWeapon.FindReachableTargets();

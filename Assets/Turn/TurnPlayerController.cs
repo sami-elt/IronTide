@@ -1,3 +1,4 @@
+using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -6,6 +7,8 @@ public class TurnPlayerController : MonoBehaviour
     public int playerID;
     private bool isMyTurn = false;
     public bool IsMyTurn { get => isMyTurn; }
+    public bool IsResolvingAttackResult => finishAttackAfterDelayRoutine != null;
+    public bool CanReceiveTurnInput => isMyTurn && !IsResolvingAttackResult && IsCameraReadyForTurnInput();
 
     [Header("card bonuses")]
     public int motorBonus;
@@ -16,6 +19,9 @@ public class TurnPlayerController : MonoBehaviour
     [SerializeField] private DiceComponent diceComponent;
     [SerializeField] private ShipMovement shipMovement;
     [SerializeField] private ShipWeapon shipWeapon;
+    [SerializeField] private float attackResultPause = 1.26f;
+
+    private Coroutine finishAttackAfterDelayRoutine;
 
     public void SetMyTurn(bool value)
     {
@@ -47,10 +53,19 @@ public class TurnPlayerController : MonoBehaviour
         }
     }
 
+    private void OnDisable()
+    {
+        if (finishAttackAfterDelayRoutine != null)
+        {
+            StopCoroutine(finishAttackAfterDelayRoutine);
+            finishAttackAfterDelayRoutine = null;
+        }
+    }
+
     void Update()
     {
        
-        if (!isMyTurn)
+        if (!CanReceiveTurnInput)
         {
             return;
         }
@@ -70,7 +85,7 @@ public class TurnPlayerController : MonoBehaviour
 
     public void RequestMoveAction()
     {
-        if (!isMyTurn)
+        if (!CanReceiveTurnInput)
             return;
 
         HandleMoveKey();
@@ -78,7 +93,7 @@ public class TurnPlayerController : MonoBehaviour
 
     public void RequestAttackAction()
     {
-        if (!isMyTurn)
+        if (!CanReceiveTurnInput)
             return;
 
         HandleAttackKey();
@@ -86,11 +101,14 @@ public class TurnPlayerController : MonoBehaviour
 
     public void RequestEndCurrentAction()
     {
-        if (!isMyTurn || TurnManager.Instance == null)
+        if (!CanReceiveTurnInput || TurnManager.Instance == null)
             return;
 
         switch (TurnManager.Instance.currentPhase)
         {
+            case TurnPhase.RollMovement:
+                TurnManager.Instance.FinishAttackAction();
+                break;
             case TurnPhase.Move:
                 TryFinishMovePhase();
                 break;
@@ -246,7 +264,8 @@ public class TurnPlayerController : MonoBehaviour
 
     private void HandleAttackKey()
     {
-        if (TurnManager.Instance.currentPhase != TurnPhase.RollAttack)
+        if (TurnManager.Instance.currentPhase != TurnPhase.RollAttack &&
+            TurnManager.Instance.currentPhase != TurnPhase.RollMovement)
         {
             return;
         }
@@ -310,10 +329,37 @@ public class TurnPlayerController : MonoBehaviour
 
         if (shipWeapon.HasAttacked)
         {
-            Debug.Log("Player " + playerID + " finished attacking.");
-            TurnManager.Instance.FinishAttackAction();
+            if (finishAttackAfterDelayRoutine == null)
+                finishAttackAfterDelayRoutine = StartCoroutine(FinishAttackAfterResultPause());
         }
 
        
+    }
+
+    private IEnumerator FinishAttackAfterResultPause()
+    {
+        Debug.Log("Player " + playerID + " finished attacking. Showing result before next turn.");
+
+        yield return new WaitForSeconds(Mathf.Max(0f, attackResultPause));
+
+        finishAttackAfterDelayRoutine = null;
+
+        if (!isMyTurn || TurnManager.Instance == null || TurnManager.Instance.currentPhase != TurnPhase.Attack)
+            yield break;
+
+        TurnManager.Instance.FinishAttackAction();
+    }
+
+    private bool IsCameraReadyForTurnInput()
+    {
+        Camera mainCamera = Camera.main;
+        CameraController cameraController = mainCamera != null
+            ? mainCamera.GetComponent<CameraController>()
+            : null;
+
+        if (cameraController == null)
+            cameraController = FindFirstObjectByType<CameraController>();
+
+        return cameraController == null || cameraController.IsReadyForTurnInput(transform);
     }
 }

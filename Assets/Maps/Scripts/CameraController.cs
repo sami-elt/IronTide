@@ -39,12 +39,32 @@ public class CameraController : MonoBehaviour
     public float mapLimit = 100f;
     public float followSmoothTime = 0.55f;
     public float rotationSmoothSpeed = 5f;
+    public float orthographicFocusHeight = 0.8f;
+    public bool useSafeTurnTransitions = true;
+    [Range(60f, 82f)] public float turnTransitionPitch = 72f;
+    public float turnTransitionDistanceMultiplier = 1.15f;
+    public float turnTransitionDuration = 1.45f;
+    public float turnTransitionSpeedMultiplier = 1.15f;
+    public float focusReadyDistance = 0.18f;
+    public float focusReadyAngle = 1f;
 
     Camera cam;
     public Vector3 cameraOffset = new Vector3(0, 0, -10f);
     Quaternion targetRotation;
     Vector3 moveVelocity;
     Transform followedTarget;
+    TurnCameraState turnCameraState = TurnCameraState.Idle;
+    float currentPerspectiveFieldOfView;
+    Vector3 finalTurnPosition;
+    Quaternion finalTurnRotation;
+    Vector3 turnTransitionStartPosition;
+    Quaternion turnTransitionStartRotation;
+    Vector3 turnTransitionRisePosition;
+    Vector3 turnTransitionTravelPosition;
+    Vector3 turnTransitionStartFocus;
+    Vector3 turnTransitionEndFocus;
+    float turnTransitionElapsed;
+    float currentTurnTransitionDuration;
 
     public bool IsStrategyTopDownActive => strategyTopDownActive;
 
@@ -61,6 +81,7 @@ public class CameraController : MonoBehaviour
     void Start()
     {
         cam = GetComponent<Camera>();
+        currentPerspectiveFieldOfView = Mathf.Clamp(perspectiveFieldOfView, minFieldOfView, maxFieldOfView);
         ApplyViewPreset();
         FitCameraToMap();
 
@@ -79,15 +100,22 @@ public class CameraController : MonoBehaviour
         {
             RefreshFollowTargetFromTurnManager(false);
 
-            if (useThirdPersonPerspective && followedTarget != null)
+            if (useThirdPersonPerspective && followedTarget != null && turnCameraState == TurnCameraState.Idle)
             {
                 GetThirdPersonCameraPose(followedTarget.position, followedTarget, out targetPosition, out targetRotation);
-                isMoving = true;
+                if (!IsAtCameraTarget())
+                    isMoving = true;
             }
         }
 
         if (isMoving)
         {
+            if (turnCameraState == TurnCameraState.TurnTravel)
+            {
+                UpdateTurnCameraTransition();
+                return;
+            }
+
             transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref moveVelocity, followSmoothTime);
             transform.rotation = Quaternion.Slerp(
                 transform.rotation,
@@ -97,7 +125,7 @@ public class CameraController : MonoBehaviour
             if (Vector3.Distance(transform.position, targetPosition) < 0.1f &&
                 Quaternion.Angle(transform.rotation, targetRotation) < 0.5f)
             {
-                isMoving = false;
+                AdvanceTurnCameraState();
             }
         }
     }
@@ -117,6 +145,9 @@ public class CameraController : MonoBehaviour
             float target = cam.fieldOfView - scroll * zoomSpeed;
             cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, target, Time.deltaTime * 10f);
             cam.fieldOfView = Mathf.Clamp(cam.fieldOfView, minFieldOfView, maxFieldOfView);
+
+            if (useThirdPersonPerspective && !strategyTopDownActive)
+                currentPerspectiveFieldOfView = cam.fieldOfView;
         }
     }
 
@@ -183,6 +214,7 @@ public class CameraController : MonoBehaviour
 
         ApplyViewPreset();
         followedTarget = null;
+        turnCameraState = TurnCameraState.Idle;
 
         Vector3 finalPos;
         Quaternion finalRotation = transform.rotation;
@@ -192,8 +224,7 @@ public class CameraController : MonoBehaviour
         }
         else
         {
-            finalPos = target + cameraOffset;
-            finalPos.y = transform.position.y; // behåll höjd
+            GetOrthographicCameraPose(target, out finalPos, out finalRotation);
         }
 
         targetPosition = finalPos;
@@ -214,25 +245,35 @@ public class CameraController : MonoBehaviour
         if (strategyTopDownActive)
             return;
 
+        useThirdPersonPerspective = true;
         ApplyViewPreset();
 
-        if (!useThirdPersonPerspective)
-        {
-            MoveToPosition(target.position);
-            return;
-        }
-
+        Vector3 transitionStartFocus = GetCurrentFocusPoint(target.position);
         followedTarget = target;
-        GetThirdPersonCameraPose(target.position, target, out targetPosition, out targetRotation);
+        GetThirdPersonCameraPose(target.position, target, out finalTurnPosition, out finalTurnRotation);
         if (snap)
         {
-            transform.position = targetPosition;
-            transform.rotation = targetRotation;
+            targetPosition = finalTurnPosition;
+            targetRotation = finalTurnRotation;
+            transform.position = finalTurnPosition;
+            transform.rotation = finalTurnRotation;
             moveVelocity = Vector3.zero;
             isMoving = false;
+            turnCameraState = TurnCameraState.Idle;
         }
         else
         {
+            if (useSafeTurnTransitions)
+            {
+                StartTurnCameraTransition(target, transitionStartFocus);
+            }
+            else
+            {
+                targetPosition = finalTurnPosition;
+                targetRotation = finalTurnRotation;
+                turnCameraState = TurnCameraState.TurnSettle;
+            }
+
             isMoving = true;
         }
     }
@@ -242,7 +283,19 @@ public class CameraController : MonoBehaviour
         if (strategyTopDownActive)
             return;
 
+        useThirdPersonPerspective = true;
         RefreshFollowTargetFromTurnManager(snap);
+    }
+
+    public bool IsReadyForTurnInput(Transform turnTarget)
+    {
+        if (strategyTopDownActive)
+            return true;
+
+        if (turnTarget == null)
+            return true;
+
+        return followedTarget == turnTarget && turnCameraState == TurnCameraState.Idle && !isMoving && IsAtCameraTarget();
     }
 
     public void ToggleStrategyView()
@@ -269,8 +322,10 @@ public class CameraController : MonoBehaviour
         if (cam == null)
             return;
 
+        RememberPerspectiveZoom();
         strategyTopDownActive = true;
         followedTarget = null;
+        turnCameraState = TurnCameraState.Idle;
 
         if (!TryGetMapBounds(out Bounds bounds))
             bounds = new Bounds(transform.position, Vector3.one * 10f);
@@ -307,9 +362,20 @@ public class CameraController : MonoBehaviour
             return;
 
         cam.orthographic = false;
-        cam.fieldOfView = perspectiveFieldOfView;
+        if (currentPerspectiveFieldOfView <= 0f)
+            currentPerspectiveFieldOfView = Mathf.Clamp(perspectiveFieldOfView, minFieldOfView, maxFieldOfView);
+
+        cam.fieldOfView = Mathf.Clamp(currentPerspectiveFieldOfView, minFieldOfView, maxFieldOfView);
         cam.nearClipPlane = 0.3f;
         cam.farClipPlane = Mathf.Max(cam.farClipPlane, 1000f);
+    }
+
+    void RememberPerspectiveZoom()
+    {
+        if (cam == null || cam.orthographic || !useThirdPersonPerspective || strategyTopDownActive)
+            return;
+
+        currentPerspectiveFieldOfView = Mathf.Clamp(cam.fieldOfView, minFieldOfView, maxFieldOfView);
     }
 
     Quaternion GetThirdPersonRotation()
@@ -325,14 +391,154 @@ public class CameraController : MonoBehaviour
 
     void GetThirdPersonCameraPose(Vector3 target, Transform targetTransform, out Vector3 position, out Quaternion rotation)
     {
-        Vector3 viewDirection = GetThirdPersonViewDirection(target, targetTransform);
-        float pitchRadians = perspectivePitch * Mathf.Deg2Rad;
-        float horizontalDistance = Mathf.Cos(pitchRadians) * perspectiveFollowDistance;
-        float height = Mathf.Sin(pitchRadians) * perspectiveFollowDistance;
+        GetThirdPersonCameraPose(target, targetTransform, perspectivePitch, perspectiveFollowDistance, lookAheadDistance,
+            out position, out rotation);
+    }
 
-        Vector3 lookTarget = target + Vector3.up * targetHeight + viewDirection * lookAheadDistance;
+    void StartTurnCameraTransition(Transform target, Vector3 riseFocus)
+    {
+        turnTransitionStartPosition = transform.position;
+        turnTransitionStartRotation = transform.rotation;
+        turnTransitionStartFocus = riseFocus + Vector3.up * targetHeight;
+
+        GetTurnTransitionCameraPose(riseFocus, null, out turnTransitionRisePosition, out _);
+        GetTurnTransitionCameraPose(target.position, target, out turnTransitionTravelPosition, out _);
+
+        Vector3 viewDirection = GetThirdPersonViewDirection(target.position, target);
+        turnTransitionEndFocus = target.position + Vector3.up * targetHeight + viewDirection * lookAheadDistance;
+        turnTransitionElapsed = 0f;
+
+        float speed = Mathf.Max(1f, moveSpeed * Mathf.Max(0.01f, turnTransitionSpeedMultiplier));
+        float distanceDuration = Vector3.Distance(turnTransitionStartPosition, finalTurnPosition) / speed;
+        float baseDuration = turnTransitionDuration / Mathf.Max(0.01f, turnTransitionSpeedMultiplier);
+        currentTurnTransitionDuration = Mathf.Clamp(Mathf.Max(baseDuration, distanceDuration), 0.75f, 2.2f);
+
+        targetPosition = finalTurnPosition;
+        targetRotation = finalTurnRotation;
+        moveVelocity = Vector3.zero;
+        turnCameraState = TurnCameraState.TurnTravel;
+    }
+
+    void UpdateTurnCameraTransition()
+    {
+        turnTransitionElapsed += Time.deltaTime;
+        float t = Mathf.Clamp01(turnTransitionElapsed / Mathf.Max(0.01f, currentTurnTransitionDuration));
+        float eased = Mathf.SmoothStep(0f, 1f, t);
+
+        transform.position = GetCubicBezierPoint(
+            turnTransitionStartPosition,
+            turnTransitionRisePosition,
+            turnTransitionTravelPosition,
+            finalTurnPosition,
+            eased);
+
+        Vector3 lookTarget = Vector3.Lerp(turnTransitionStartFocus, turnTransitionEndFocus, eased);
+        Quaternion lookRotation = GetRotationLookingAt(lookTarget, transform.position);
+        float startRotationBlend = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0f, 0.28f, t));
+        lookRotation = Quaternion.Slerp(turnTransitionStartRotation, lookRotation, startRotationBlend);
+
+        float finalRotationBlend = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.68f, 1f, t));
+        transform.rotation = Quaternion.Slerp(lookRotation, finalTurnRotation, finalRotationBlend);
+
+        if (t >= 1f)
+        {
+            transform.position = finalTurnPosition;
+            transform.rotation = finalTurnRotation;
+            turnCameraState = TurnCameraState.Idle;
+            isMoving = false;
+        }
+    }
+
+    void AdvanceTurnCameraState()
+    {
+        switch (turnCameraState)
+        {
+            case TurnCameraState.TurnRise:
+                turnCameraState = TurnCameraState.TurnTravel;
+                moveVelocity = Vector3.zero;
+                isMoving = true;
+                break;
+
+            case TurnCameraState.TurnTravel:
+                targetPosition = finalTurnPosition;
+                targetRotation = finalTurnRotation;
+                turnCameraState = TurnCameraState.TurnSettle;
+                moveVelocity = Vector3.zero;
+                isMoving = true;
+                break;
+
+            case TurnCameraState.TurnSettle:
+                turnCameraState = TurnCameraState.Idle;
+                isMoving = false;
+                break;
+
+            default:
+                isMoving = false;
+                break;
+        }
+    }
+
+    Vector3 GetCurrentFocusPoint(Vector3 fallback)
+    {
+        if (followedTarget != null)
+            return followedTarget.position;
+
+        Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
+        Ray cameraRay = new Ray(transform.position, transform.forward);
+        if (groundPlane.Raycast(cameraRay, out float distance))
+            return cameraRay.GetPoint(distance);
+
+        return fallback;
+    }
+
+    void GetTurnTransitionCameraPose(Vector3 target, Transform targetTransform, out Vector3 position, out Quaternion rotation)
+    {
+        float distance = perspectiveFollowDistance * Mathf.Max(1f, turnTransitionDistanceMultiplier);
+        GetThirdPersonCameraPose(target, targetTransform, turnTransitionPitch, distance, 0f, out position, out rotation);
+    }
+
+    Vector3 GetCubicBezierPoint(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
+    {
+        float inverseT = 1f - t;
+        return inverseT * inverseT * inverseT * p0 +
+            3f * inverseT * inverseT * t * p1 +
+            3f * inverseT * t * t * p2 +
+            t * t * t * p3;
+    }
+
+    void GetThirdPersonCameraPose(Vector3 target, Transform targetTransform, float pitch, float distance,
+        float lookAhead, out Vector3 position, out Quaternion rotation)
+    {
+        Vector3 viewDirection = GetThirdPersonViewDirection(target, targetTransform);
+        float pitchRadians = pitch * Mathf.Deg2Rad;
+        float horizontalDistance = Mathf.Cos(pitchRadians) * distance;
+        float height = Mathf.Sin(pitchRadians) * distance;
+
+        Vector3 lookTarget = target + Vector3.up * targetHeight + viewDirection * lookAhead;
         position = target - viewDirection * horizontalDistance + Vector3.up * height;
-        rotation = Quaternion.LookRotation(lookTarget - position, Vector3.up);
+        rotation = GetRotationLookingAt(lookTarget, position);
+    }
+
+    void GetOrthographicCameraPose(Vector3 target, out Vector3 position, out Quaternion rotation)
+    {
+        position = target + cameraOffset;
+        position.y = transform.position.y;
+        rotation = GetRotationLookingAt(target + Vector3.up * orthographicFocusHeight, position);
+    }
+
+    Quaternion GetRotationLookingAt(Vector3 lookTarget, Vector3 cameraPosition)
+    {
+        Vector3 lookDirection = lookTarget - cameraPosition;
+        if (lookDirection.sqrMagnitude < 0.0001f)
+            return transform.rotation;
+
+        return Quaternion.LookRotation(lookDirection.normalized, Vector3.up);
+    }
+
+    bool IsAtCameraTarget()
+    {
+        return Vector3.Distance(transform.position, targetPosition) <= focusReadyDistance &&
+            Quaternion.Angle(transform.rotation, targetRotation) <= focusReadyAngle;
     }
 
     Vector3 GetThirdPersonViewDirection(Vector3 target, Transform targetTransform)
@@ -506,5 +712,13 @@ public class CameraController : MonoBehaviour
             return;
 
         MoveToTarget(currentPlayer.transform, snap);
+    }
+
+    enum TurnCameraState
+    {
+        Idle,
+        TurnRise,
+        TurnTravel,
+        TurnSettle
     }
 }

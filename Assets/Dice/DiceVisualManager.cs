@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class DiceVisualManager : MonoBehaviour
@@ -19,9 +20,27 @@ public class DiceVisualManager : MonoBehaviour
     [SerializeField] private float visibleDuration = 0.9f;
     [SerializeField] private float spinSpeed = 720f;
     [SerializeField] private Vector3 fallbackOffset = new Vector3(0f, 2.2f, 0f);
+    [SerializeField] private DiceFaceRotations[] faceRotations =
+    {
+        new DiceFaceRotations(4, new Vector3[4]),
+        new DiceFaceRotations(6, new[]
+        {
+            new Vector3(-90f, 0f, 0f),
+            new Vector3(0f, 0f, 0f),
+            new Vector3(0f, 0f, -90f),
+            new Vector3(0f, 0f, 90f),
+            new Vector3(180f, 0f, 0f),
+            new Vector3(90f, 0f, 0f)
+        }),
+        new DiceFaceRotations(8, new Vector3[8]),
+        new DiceFaceRotations(10, new Vector3[10]),
+        new DiceFaceRotations(12, new Vector3[12]),
+        new DiceFaceRotations(20, new Vector3[20])
+    };
 
     private GameObject activeDice;
     private Coroutine activeRoll;
+    private readonly Queue<RollRequest> pendingRolls = new Queue<RollRequest>();
 
     private void Awake()
     {
@@ -38,7 +57,7 @@ public class DiceVisualManager : MonoBehaviour
     {
         if (Instance == null)
         {
-            DiceVisualManager prefab = Resources.Load<DiceVisualManager>("DiceVisualManager");
+            GameObject prefab = Resources.Load<GameObject>("DiceVisualManager");
             if (prefab != null)
                 Instantiate(prefab);
         }
@@ -46,37 +65,78 @@ public class DiceVisualManager : MonoBehaviour
         if (Instance == null)
             return;
 
-        Instance.PlayRoll(sides, result, source);
+        Instance.QueueRoll(sides, result, source);
+    }
+
+    public static void HideActiveRoll()
+    {
+        if (Instance != null)
+            Instance.Hide();
     }
 
     public void PlayRoll(int sides, int result, Transform source = null)
+    {
+        QueueRoll(sides, result, source);
+    }
+
+    public void PreviewResult(int sides, int result)
+    {
+        Hide();
+
+        GameObject prefab = GetPrefab(sides);
+        if (prefab == null)
+            return;
+
+        activeDice = Instantiate(prefab, GetDisplayPosition(null), Quaternion.Euler(GetFaceRotation(sides, result)));
+    }
+
+    public void QueueRoll(int sides, int result, Transform source = null)
     {
         GameObject prefab = GetPrefab(sides);
         if (prefab == null)
             return;
 
-        if (activeRoll != null)
-            StopCoroutine(activeRoll);
+        pendingRolls.Enqueue(new RollRequest(prefab, sides, result, source));
 
-        activeRoll = StartCoroutine(RollRoutine(prefab, sides, result, source));
+        if (activeRoll == null)
+            activeRoll = StartCoroutine(ProcessRollQueue());
     }
 
     public void Hide()
     {
+        pendingRolls.Clear();
+
         if (activeRoll != null)
         {
             StopCoroutine(activeRoll);
             activeRoll = null;
         }
 
+        ClearActiveDice();
+    }
+
+    private IEnumerator ProcessRollQueue()
+    {
+        while (pendingRolls.Count > 0)
+        {
+            RollRequest request = pendingRolls.Dequeue();
+            yield return RollRoutine(request.Prefab, request.Sides, request.Result, request.Source);
+        }
+
+        activeRoll = null;
+    }
+
+    private void ClearActiveDice()
+    {
         if (activeDice != null)
             Destroy(activeDice);
+
+        activeDice = null;
     }
 
     private IEnumerator RollRoutine(GameObject prefab, int sides, int result, Transform source)
     {
-        if (activeDice != null)
-            Destroy(activeDice);
+        ClearActiveDice();
 
         Vector3 position = GetDisplayPosition(source);
         activeDice = Instantiate(prefab, position, Quaternion.identity);
@@ -93,7 +153,7 @@ public class DiceVisualManager : MonoBehaviour
             activeDice.transform.rotation = Quaternion.Euler(GetFaceRotation(sides, result));
 
         yield return new WaitForSeconds(visibleDuration);
-        Hide();
+        ClearActiveDice();
     }
 
     private Vector3 GetDisplayPosition(Transform source)
@@ -128,29 +188,59 @@ public class DiceVisualManager : MonoBehaviour
         }
     }
 
-    private static Vector3 GetFaceRotation(int sides, int result)
+    private Vector3 GetFaceRotation(int sides, int result)
     {
-        if (sides == 6)
+        if (faceRotations != null)
         {
-            switch (result)
+            for (int i = 0; i < faceRotations.Length; i++)
             {
-                case 1:
-                    return new Vector3(0f, 0f, 0f);
-                case 2:
-                    return new Vector3(90f, 0f, 0f);
-                case 3:
-                    return new Vector3(0f, 0f, -90f);
-                case 4:
-                    return new Vector3(0f, 0f, 90f);
-                case 5:
-                    return new Vector3(-90f, 0f, 0f);
-                case 6:
-                    return new Vector3(180f, 0f, 0f);
-                default:
-                    return Vector3.zero;
+                if (faceRotations[i].Sides == sides && faceRotations[i].TryGetRotation(result, out Vector3 rotation))
+                    return rotation;
             }
         }
 
-        return new Vector3(0f, (result - 1) * (360f / Mathf.Max(1, sides)), 0f);
+        return Vector3.zero;
+    }
+
+    private readonly struct RollRequest
+    {
+        public readonly GameObject Prefab;
+        public readonly int Sides;
+        public readonly int Result;
+        public readonly Transform Source;
+
+        public RollRequest(GameObject prefab, int sides, int result, Transform source)
+        {
+            Prefab = prefab;
+            Sides = sides;
+            Result = result;
+            Source = source;
+        }
+    }
+
+    [System.Serializable]
+    private class DiceFaceRotations
+    {
+        [SerializeField] private int sides;
+        [SerializeField] private Vector3[] resultRotations;
+
+        public int Sides => sides;
+
+        public DiceFaceRotations(int sides, Vector3[] resultRotations)
+        {
+            this.sides = sides;
+            this.resultRotations = resultRotations;
+        }
+
+        public bool TryGetRotation(int result, out Vector3 rotation)
+        {
+            rotation = Vector3.zero;
+
+            if (resultRotations == null || result <= 0 || result > resultRotations.Length)
+                return false;
+
+            rotation = resultRotations[result - 1];
+            return true;
+        }
     }
 }

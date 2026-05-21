@@ -36,7 +36,7 @@ public class ShipWeapon : MonoBehaviour
 
         if (ReachableTargetsDamageModifiers.Count > 0)
         {
-            preparedDamageRoll = ship.shipInfo.RollWeaponDamage(null);
+            preparedDamageRoll = ship.shipInfo.RollWeaponDamage(null, true);
             hasPreparedDamageRoll = true;
             TurnManager.BroadcastAttackPrepared(preparedDamageRoll.DiceTotal, preparedDamageRoll.BonusTotal);
         }
@@ -61,7 +61,7 @@ public class ShipWeapon : MonoBehaviour
 
         ShipInfo.WeaponDamageRoll damageRoll = hasPreparedDamageRoll
             ? preparedDamageRoll
-            : ship.shipInfo.RollWeaponDamage(null);
+            : ship.shipInfo.RollWeaponDamage(null, true);
 
         ShipInfo.DamageResult result = ResolveDamage(primaryTarget, damageRoll, damageModifier, coverModifier, lineType);
         ApplyPostDamagePassives(primaryTarget, result, targetWasSunk);

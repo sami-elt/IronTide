@@ -9,14 +9,12 @@ public class DiceComponent : MonoBehaviour
     {
         int result = Random.Range(1, sides + 1);
 
-        Debug.Log("tärning" + sides +"resultat" + result);
+        Debug.Log("Dice " + sides + " result " + result);
 
         if (resultText != null)
         {
             resultText.text = result.ToString();
         }
-
-        DiceVisualManager.ShowRoll(sides, result, transform);
 
         return result;
     }
