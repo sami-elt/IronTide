@@ -5,8 +5,6 @@ DefaultImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-<<<<<<< Updated upstream
-=======
 AssetOrigin:
   serializedVersion: 1
   productId: 353486
@@ -14,4 +12,3 @@ AssetOrigin:
   packageVersion: 1.1.0
   assetPath: Assets/Procedural Water Shader/Demo/Procedural Water Shader.unity
   uploadId: 855070
->>>>>>> Stashed changes

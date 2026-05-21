@@ -9,7 +9,7 @@ EditorBuildSettings:
     path: Assets/GameDemo.unity
     guid: 829a86ba161cdd840842063447f41aab
   - enabled: 1
-    path: Assets/Maps/Scenes/GameMap.unity
+    path: Assets/Maps/Scenes/GameMapBackup.unity
     guid: 8f5458d46c7c9bf479fa2e5f5f12f82f
   - enabled: 1
     path: Assets/Shopping Phase.unity
