@@ -519,7 +519,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &801241386
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -751,7 +751,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e95d7a98ecdb08447b770fb1cf484452, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GenerateMap
-  radius: 10
+  radius: 15
   hexSize: 1
   waterPrefab: {fileID: 1448183548141105987, guid: 7bbf86add4209474c97ad27d990d3481, type: 3}
   rockPrefab: {fileID: 3153400372265611219, guid: d7986ef901370494abd95da4cbe3420d, type: 3}
