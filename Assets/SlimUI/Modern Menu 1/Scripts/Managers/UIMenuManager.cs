@@ -24,11 +24,13 @@ namespace SlimUI.ModernMenu{
         public GameObject setupWindow;
         public PlayerSetupUI playerSetupUI;
         public GameObject tutorialPanel;
+        public GameObject PauseCanvas;
         public enum Theme {custom1, custom2, custom3};
         [Header("THEME SETTINGS")]
         public Theme theme;
         private int themeIndex;
         public ThemedUIData themeController;
+		
 
         [Header("PANELS")]
         [Tooltip("The UI Panel parenting all sub menus")]
@@ -89,13 +91,17 @@ namespace SlimUI.ModernMenu{
 			playMenu.SetActive(false);
 			exitMenu.SetActive(false);
 			if(extrasMenu) extrasMenu.SetActive(false);
-			firstMenu.SetActive(true);
+            PauseCanvas.SetActive(false);
+            firstMenu.SetActive(true);
 			mainMenu.SetActive(true);
 
 			SetThemeColors();
 		}
 
-		void SetThemeColors()
+        
+
+
+        void SetThemeColors()
 		{
 			switch (theme)
 			{
@@ -276,7 +282,7 @@ namespace SlimUI.ModernMenu{
             mainCanvas.SetActive(false);
             playerSetupCanvas.SetActive(true);
 
-            // 🔥 Visa rätt antal slots
+            //  Visa rätt antal slots
             playerSetupUI.ShowPlayers(playerCount);
         }
 
@@ -289,6 +295,25 @@ namespace SlimUI.ModernMenu{
         {
             tutorialPanel.SetActive(false);
         }
+
+        public void OpenPauseCanv()
+        {
+            PauseCanvas.SetActive(true);
+            Time.timeScale = 0f;
+        }
+
+        public void ResumeGame()
+        {
+            PauseCanvas.SetActive(false);
+            Time.timeScale = 1f;
+        }
+
+        public void BackToMainMenu()
+        {
+            Time.timeScale = 1f;
+            mainMenu.SetActive(true);
+        }
+
         // Load Bar synching animation
         IEnumerator LoadAsynchronously(string sceneName){ // scene name is just the name of the current scene being loaded
 			AsyncOperation operation = SceneManager.LoadSceneAsync(sceneName);
