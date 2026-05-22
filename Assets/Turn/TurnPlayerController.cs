@@ -91,12 +91,22 @@ public class TurnPlayerController : MonoBehaviour
         HandleMoveKey();
     }
 
+    public void OnMoveButtonClicked()
+    {
+        RequestMoveAction();
+    }
+
     public void RequestAttackAction()
     {
         if (!CanReceiveTurnInput)
             return;
 
         HandleAttackKey();
+    }
+
+    public void OnAttackButtonClicked()
+    {
+        RequestAttackAction();
     }
 
     public void RequestEndCurrentAction()

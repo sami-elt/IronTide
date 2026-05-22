@@ -63,7 +63,7 @@ public class TurnActionUI : MonoBehaviour
         ShipMovement movement = activePlayer.GetComponent<ShipMovement>();
 
         // Visa rätt tärning när spelaren väljer att röra sig
-        int sides = movement.ship.shipInfo.GetEngineDice();
+        int sides = movement.Ship.shipInfo.GetEngineDice();
         diceManager.ActiveDice(sides);
 
         if (!movement.isWaitingForDice)

@@ -4,6 +4,7 @@ using UnityEngine;
 public class ShipMovement : MonoBehaviour
 {
     [SerializeField] private Ship ship;
+    public Ship Ship => ship;
 
     [SerializeField] private float speed = 20;
     private float moveIncrement;
@@ -14,6 +15,7 @@ public class ShipMovement : MonoBehaviour
     private bool moveStartedAsFirstMove;
 
     public bool Moving { get; private set; }
+    public bool isWaitingForDice { get; private set; }
 
     public Dictionary<Vector3, int> ReachableTileMoveCosts { get; private set; } = new();
     public int avaliableTileDistance;
@@ -43,6 +45,27 @@ public class ShipMovement : MonoBehaviour
         TurnManager.BroadcastMovementRolled(avaliableTileDistance);
         FindReachableTiles();
         ship.shipWeapon.FindReachableTargets();
+    }
+
+    public void ReceiveDiceResult(int result)
+    {
+        isWaitingForDice = false;
+
+        int bonus = 0;
+        if (ship != null && ship.shipInfo != null)
+        {
+            bool secondMove = TurnManager.Instance != null && TurnManager.Instance.MovesUsedthisTurn > 0;
+            bool canUseBonus = !secondMove || ship.shipInfo.HasActivePassive(ship.shipInfo.EngineModule, "momentum_t1");
+            if (canUseBonus && ship.shipInfo.EngineEnabled && ship.shipInfo.EngineModule != null && ship.shipInfo.EngineModule.IsValid)
+                bonus = ship.shipInfo.EngineModule.BaseModifier;
+        }
+
+        avaliableTileDistance = Mathf.Max(0, result + bonus);
+        TurnManager.BroadcastMovementRolled(avaliableTileDistance);
+        FindReachableTiles();
+
+        if (ship != null && ship.shipWeapon != null)
+            ship.shipWeapon.FindReachableTargets();
     }
 
     public void StartMove(Vector3 targetPosition, int tilesMoved)

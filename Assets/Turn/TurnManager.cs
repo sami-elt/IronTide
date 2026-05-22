@@ -235,6 +235,12 @@ public class TurnManager : MonoBehaviour
         Debug.Log("Attack phase has started");
     }
 
+    public void GoToAttack()
+    {
+        currentPhase = TurnPhase.RollAttack;
+        Debug.Log("Choose attack action");
+    }
+
     public void FinishAttackAction()
     {
         HasAttackedThisTurn = true;

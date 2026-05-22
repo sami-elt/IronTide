@@ -412,6 +412,11 @@ public class ShipInfo : MonoBehaviour
         return RollWeaponDamage(target).TotalDamage;
     }
 
+    public int GetWeaponDiceSides()
+    {
+        return WeaponModule != null && WeaponModule.IsValid ? WeaponModule.DiceSides : 6;
+    }
+
     public WeaponDamageRoll RollWeaponDamage(ShipInfo target)
     {
         return RollWeaponDamage(target, false);
@@ -573,6 +578,11 @@ public class ShipInfo : MonoBehaviour
         int total = Mathf.Max(0, value + bonus);
         Debug.Log($"{gameObject.name} rolled {value} for movement. Engine bonus {bonus}. Total {total}.");
         return total;
+    }
+
+    public int GetEngineDice()
+    {
+        return EngineModule != null && EngineModule.IsValid ? EngineModule.DiceSides : 6;
     }
 
     public int GetArmor()
