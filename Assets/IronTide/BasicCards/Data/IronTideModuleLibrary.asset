@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: IronTideModuleLibrary
   m_EditorClassIdentifier: 
   cards:
-  - id: "t1_long_deck_gun"
-    displayName: "Deck Gun"
+  - id: "t1_long_base"
+    displayName: "Long Range Weapon Base"
     archetype: 0
     tier: 0
     baseModifier: 2
@@ -31,7 +31,7 @@ MonoBehaviour:
     baseModifier: 1
     diceCount: 1
     diceSides: 6
-    passiveKey: "long_shot"
+    passiveKey: "long_shot_t1"
     passiveName: "Long Shot"
     passiveDescription: "You may attack from a range of 7 tiles without any bonus."
     artworkSprite: {fileID: 0}
@@ -42,9 +42,9 @@ MonoBehaviour:
     baseModifier: 1
     diceCount: 1
     diceSides: 6
-    passiveKey: "mortar"
+    passiveKey: "mortar_t1"
     passiveName: "Mortar"
-    passiveDescription: "You may shoot over rocks without any disadvantage."
+    passiveDescription: "Shoot over rocks without disadvantage."
     artworkSprite: {fileID: 0}
   - id: "t1_long_bishop"
     displayName: "Bishop"
@@ -57,8 +57,8 @@ MonoBehaviour:
     passiveName: "Bishop"
     passiveDescription: "+2 damage to diagonal shots. -1 damage to straight shots."
     artworkSprite: {fileID: 0}
-  - id: "t1_medium_broadside"
-    displayName: "Broadside"
+  - id: "t1_medium_base"
+    displayName: "Medium Range Weapon Base"
     archetype: 1
     tier: 0
     baseModifier: 2
@@ -77,7 +77,7 @@ MonoBehaviour:
     diceSides: 4
     passiveKey: "perfect_shot_t1"
     passiveName: "Perfect Shot"
-    passiveDescription: "If your attacking dice are the same, you may roll an additional dice."
+    passiveDescription: "If your attacking dice are the same, roll an additional die."
     artworkSprite: {fileID: 0}
   - id: "t1_medium_one_of_each"
     displayName: "One of Each"
@@ -86,9 +86,9 @@ MonoBehaviour:
     baseModifier: 1
     diceCount: 2
     diceSides: 4
-    passiveKey: "one_of_each"
+    passiveKey: "one_of_each_t1"
     passiveName: "One of Each"
-    passiveDescription: "After attacking another player you may choose to pull the player towards you 1 tile or knock them back 1 tile."
+    passiveDescription: "After attacking another player, choose to pull the target 1 tile toward you or knock them back 1 tile."
     artworkSprite: {fileID: 0}
   - id: "t1_medium_rook"
     displayName: "Rook"
@@ -112,8 +112,8 @@ MonoBehaviour:
     passiveName: "Healthy Collector"
     passiveDescription: "+1 damage when attacking the highest health opponent on the board. Each undamaged module counts as 10 hp."
     artworkSprite: {fileID: 0}
-  - id: "t1_short_boarding_gun"
-    displayName: "Boarding Gun"
+  - id: "t1_short_base"
+    displayName: "Short Range Weapon Base"
     archetype: 2
     tier: 0
     baseModifier: 2
@@ -132,7 +132,7 @@ MonoBehaviour:
     diceSides: 6
     passiveKey: "boarding_party_t1"
     passiveName: "Boarding Party"
-    passiveDescription: "When you attack while adjacent to another player, steal 1 gold from them."
+    passiveDescription: "When this ship attacks while adjacent to the target, steal 1 gold from the target player."
     artworkSprite: {fileID: 0}
   - id: "t1_short_grappling_cannon"
     displayName: "Grappling Cannon"
@@ -143,7 +143,7 @@ MonoBehaviour:
     diceSides: 6
     passiveKey: "grappling_cannon_t1"
     passiveName: "Grappling Cannon"
-    passiveDescription: "Before you attack, pull the other player 1 tile towards you."
+    passiveDescription: "Before this ship attacks, pull the target player 1 tile toward you."
     artworkSprite: {fileID: 0}
   - id: "t1_short_strong_arm"
     displayName: "Strong Arm"
@@ -152,9 +152,9 @@ MonoBehaviour:
     baseModifier: 2
     diceCount: 1
     diceSides: 6
-    passiveKey: "strong_arm"
+    passiveKey: "strong_arm_t1"
     passiveName: "Strong Arm"
-    passiveDescription: "When you attack you may knockback the player 1-2 tiles."
+    passiveDescription: "When this ship attacks, you may knock back the target player 1-2 tiles."
     artworkSprite: {fileID: 0}
   - id: "t1_short_doubleshot"
     displayName: "Doubleshot"
@@ -165,10 +165,10 @@ MonoBehaviour:
     diceSides: 6
     passiveKey: "doubleshot_t1"
     passiveName: "Doubleshot"
-    passiveDescription: "If you destroy an enemy's module you may attack another player, so long as they are within range."
+    passiveDescription: "If this ship destroys an enemy module, you may attack another player within range."
     artworkSprite: {fileID: 0}
-  - id: "t1_armor_iron_plating"
-    displayName: "Iron Plating"
+  - id: "t1_armor_base"
+    displayName: "Armor Base"
     archetype: 3
     tier: 0
     baseModifier: 2
@@ -185,9 +185,9 @@ MonoBehaviour:
     baseModifier: 1
     diceCount: 0
     diceSides: 0
-    passiveKey: "rookie"
+    passiveKey: "rookie_t1"
     passiveName: "Rookie"
-    passiveDescription: "-2 damage from straight attacks."
+    passiveDescription: "Reduce damage from straight attacks by 2."
     artworkSprite: {fileID: 0}
   - id: "t1_armor_supplies"
     displayName: "Supplies"
@@ -196,9 +196,9 @@ MonoBehaviour:
     baseModifier: 1
     diceCount: 0
     diceSides: 0
-    passiveKey: "supplies"
+    passiveKey: "supplies_t1"
     passiveName: "Supplies"
-    passiveDescription: "While at full health reduce damage from attacks by 2."
+    passiveDescription: "While at full health, reduce damage from attacks by 2."
     artworkSprite: {fileID: 0}
   - id: "t1_armor_scrappy"
     displayName: "Scrappy"
@@ -209,21 +209,21 @@ MonoBehaviour:
     diceSides: 0
     passiveKey: "scrappy_t1"
     passiveName: "Scrappy"
-    passiveDescription: "At the start of your turn regain 1 hp."
+    passiveDescription: "At the start of your turn, regain 1 hp."
     artworkSprite: {fileID: 0}
-  - id: "t1_armor_lookout"
+  - id: "t1_armor_look_out"
     displayName: "Look-out"
     archetype: 3
     tier: 0
     baseModifier: 1
     diceCount: 0
     diceSides: 0
-    passiveKey: "lookout"
+    passiveKey: "look_out_t1"
     passiveName: "Look-out"
     passiveDescription: "If another player has a bonus to their damage from range, reduce the damage dealt by 1."
     artworkSprite: {fileID: 0}
-  - id: "t1_engine_full_steam"
-    displayName: "Full Steam"
+  - id: "t1_engine_base"
+    displayName: "Engine Base"
     archetype: 4
     tier: 0
     baseModifier: 2
@@ -240,9 +240,9 @@ MonoBehaviour:
     baseModifier: 1
     diceCount: 1
     diceSides: 6
-    passiveKey: "momentum"
+    passiveKey: "momentum_t1"
     passiveName: "Momentum"
-    passiveDescription: "When moving twice in one turn you may apply the bonus to both moves."
+    passiveDescription: "When moving twice in one turn, apply the movement bonus to both moves."
     artworkSprite: {fileID: 0}
   - id: "t1_engine_gust_of_wind"
     displayName: "Gust of Wind"
@@ -251,9 +251,9 @@ MonoBehaviour:
     baseModifier: 1
     diceCount: 1
     diceSides: 6
-    passiveKey: "gust_of_wind"
+    passiveKey: "gust_of_wind_t1"
     passiveName: "Gust of Wind"
-    passiveDescription: "If another player is within 2 tiles, you may knock them back a tile."
+    passiveDescription: "If another player is within 2 tiles, you may knock them back 1 tile."
     artworkSprite: {fileID: 0}
   - id: "t1_engine_sneaky"
     displayName: "Sneaky"
@@ -262,9 +262,9 @@ MonoBehaviour:
     baseModifier: 1
     diceCount: 1
     diceSides: 6
-    passiveKey: "sneaky"
+    passiveKey: "sneaky_t1"
     passiveName: "Sneaky"
-    passiveDescription: "When you are next to a rock you take -1 damage per rock."
+    passiveDescription: "When next to a rock, take 1 less damage per adjacent rock."
     artworkSprite: {fileID: 0}
   - id: "t1_engine_runaway"
     displayName: "Runaway"
@@ -273,12 +273,12 @@ MonoBehaviour:
     baseModifier: 1
     diceCount: 1
     diceSides: 6
-    passiveKey: "runaway"
+    passiveKey: "runaway_t1"
     passiveName: "Runaway"
     passiveDescription: "If another player is directly adjacent to you at the start of your turn, you may move twice and then attack."
     artworkSprite: {fileID: 0}
-  - id: "t2_long_heavy_deck_gun"
-    displayName: "Heavy Deck Gun"
+  - id: "t2_long_base"
+    displayName: "Long Range Weapon Base"
     archetype: 0
     tier: 1
     baseModifier: 3
@@ -297,7 +297,7 @@ MonoBehaviour:
     diceSides: 6
     passiveKey: "bishop_long_t2"
     passiveName: "Bishop"
-    passiveDescription: "+2 damage for diagonal shots."
+    passiveDescription: "+2 damage to diagonal shots."
     artworkSprite: {fileID: 0}
   - id: "t2_long_piercing_shot"
     displayName: "Piercing Shot"
@@ -306,9 +306,9 @@ MonoBehaviour:
     baseModifier: 2
     diceCount: 1
     diceSides: 6
-    passiveKey: "piercing_shot"
+    passiveKey: "piercing_shot_t2"
     passiveName: "Piercing Shot"
-    passiveDescription: "If more than one player is on the same diagonal or straight when attacking your damage is applied to both."
+    passiveDescription: "If more than one player is on the same diagonal or straight line when attacking, your damage is applied to both players."
     artworkSprite: {fileID: 0}
   - id: "t2_long_lead_shell"
     displayName: "Lead Shell"
@@ -317,12 +317,12 @@ MonoBehaviour:
     baseModifier: 2
     diceCount: 1
     diceSides: 6
-    passiveKey: "lead_shell"
+    passiveKey: "lead_shell_t2"
     passiveName: "Lead Shell"
-    passiveDescription: "When attacking another player you may choose to apply your damage as knockback instead of dealing damage."
+    passiveDescription: "When attacking another player, you may apply your damage as knockback instead of dealing damage."
     artworkSprite: {fileID: 0}
-  - id: "t2_medium_heavy_broadside"
-    displayName: "Heavy Broadside"
+  - id: "t2_medium_base"
+    displayName: "Medium Range Weapon Base"
     archetype: 1
     tier: 1
     baseModifier: 3
@@ -339,9 +339,9 @@ MonoBehaviour:
     baseModifier: 2
     diceCount: 2
     diceSides: 4
-    passiveKey: "retribution"
+    passiveKey: "retribution_t2"
     passiveName: "Retribution"
-    passiveDescription: "If another player destroys one of your modules, you may attack them once for free. Range modifiers are not adhered to for retribution attacks."
+    passiveDescription: "If another player destroys one of your modules, you may attack them once for free."
     artworkSprite: {fileID: 0}
   - id: "t2_medium_healthy_collector_ii"
     displayName: "Healthy Collector II"
@@ -350,7 +350,7 @@ MonoBehaviour:
     baseModifier: 2
     diceCount: 2
     diceSides: 4
-    passiveKey: "healthy_collector_t2"
+    passiveKey: "healthy_collector_ii_t2"
     passiveName: "Healthy Collector II"
     passiveDescription: "+2 damage when attacking the highest health opponent on the board. Each undamaged module counts as 10 hp."
     artworkSprite: {fileID: 0}
@@ -361,9 +361,9 @@ MonoBehaviour:
     baseModifier: 1
     diceCount: 2
     diceSides: 4
-    passiveKey: "rook_t2"
+    passiveKey: "rook_ii_t2"
     passiveName: "Rook II"
-    passiveDescription: "+3 damage for straight attacks."
+    passiveDescription: "+3 damage to straight attacks."
     artworkSprite: {fileID: 0}
   - id: "t2_medium_perfect_shot"
     displayName: "Perfect Shot"
@@ -374,10 +374,10 @@ MonoBehaviour:
     diceSides: 4
     passiveKey: "perfect_shot_t2"
     passiveName: "Perfect Shot"
-    passiveDescription: "If your attacking dice are the same, you may roll an additional dice."
+    passiveDescription: "If your attacking dice are the same, roll an additional die."
     artworkSprite: {fileID: 0}
-  - id: "t2_short_breaching_gun"
-    displayName: "Breaching Gun"
+  - id: "t2_short_base"
+    displayName: "Short Range Weapon Base"
     archetype: 2
     tier: 1
     baseModifier: 3
@@ -394,9 +394,9 @@ MonoBehaviour:
     baseModifier: 2
     diceCount: 1
     diceSides: 6
-    passiveKey: "grappling_cannon_t2"
+    passiveKey: "grappling_cannon_ii_t2"
     passiveName: "Grappling Cannon II"
-    passiveDescription: "Before you attack, pull the other player up to 2 tiles towards you."
+    passiveDescription: "Before this ship attacks, pull the target player up to 2 tiles toward you."
     artworkSprite: {fileID: 0}
   - id: "t2_short_doubleshot"
     displayName: "Doubleshot"
@@ -407,7 +407,7 @@ MonoBehaviour:
     diceSides: 6
     passiveKey: "doubleshot_t2"
     passiveName: "Doubleshot"
-    passiveDescription: "If you destroy an enemy module you may attack another player, so long as they are within range."
+    passiveDescription: "If this ship destroys an enemy module, you may attack another player within range."
     artworkSprite: {fileID: 0}
   - id: "t2_short_boarding_party_ii"
     displayName: "Boarding Party II"
@@ -416,9 +416,9 @@ MonoBehaviour:
     baseModifier: 2
     diceCount: 1
     diceSides: 6
-    passiveKey: "boarding_party_t2"
+    passiveKey: "boarding_party_ii_t2"
     passiveName: "Boarding Party II"
-    passiveDescription: "When you attack while adjacent to another player, regain 2 hp."
+    passiveDescription: "When this ship attacks while adjacent to another player, regain 2 hp."
     artworkSprite: {fileID: 0}
   - id: "t2_short_sea_horse"
     displayName: "Sea Horse"
@@ -427,12 +427,12 @@ MonoBehaviour:
     baseModifier: 2
     diceCount: 1
     diceSides: 6
-    passiveKey: "sea_horse"
+    passiveKey: "sea_horse_t2"
     passiveName: "Sea Horse"
-    passiveDescription: "You may attack anyone within a 2 tile radius."
+    passiveDescription: "You may attack anyone within a 2-tile radius."
     artworkSprite: {fileID: 0}
-  - id: "t2_armor_fortified_hull"
-    displayName: "Fortified Hull"
+  - id: "t2_armor_base"
+    displayName: "Armor Base"
     archetype: 3
     tier: 1
     baseModifier: 3
@@ -451,7 +451,7 @@ MonoBehaviour:
     diceSides: 0
     passiveKey: "bishop_armor_t2"
     passiveName: "Bishop"
-    passiveDescription: "-2 damage for diagonal shots."
+    passiveDescription: "Reduce damage from diagonal shots by 2."
     artworkSprite: {fileID: 0}
   - id: "t2_armor_cheat_death"
     displayName: "Cheat Death"
@@ -460,9 +460,9 @@ MonoBehaviour:
     baseModifier: 1
     diceCount: 0
     diceSides: 0
-    passiveKey: "cheat_death"
+    passiveKey: "cheat_death_t2"
     passiveName: "Cheat Death"
-    passiveDescription: "When you reach 1 hp you stay at 1 hp until the next attack."
+    passiveDescription: "When you reach 1 hp, stay at 1 hp until the next attack."
     artworkSprite: {fileID: 0}
   - id: "t2_armor_scrapper"
     displayName: "Scrapper"
@@ -482,9 +482,9 @@ MonoBehaviour:
     baseModifier: 2
     diceCount: 0
     diceSides: 0
-    passiveKey: "hunker_down"
+    passiveKey: "hunker_down_t2"
     passiveName: "Hunker Down"
-    passiveDescription: "When an enemy attacks you may choose to take 2 damage and make them reroll."
+    passiveDescription: "When an enemy attacks you, you may choose to take 2 damage and make them reroll."
     artworkSprite: {fileID: 0}
   - id: "t2_armor_dodge"
     displayName: "Dodge"
@@ -493,12 +493,12 @@ MonoBehaviour:
     baseModifier: 2
     diceCount: 0
     diceSides: 0
-    passiveKey: "dodge"
+    passiveKey: "dodge_t2"
     passiveName: "Dodge"
-    passiveDescription: "If another player crits against you, roll a D6. If it's odd the enemy will miss."
+    passiveDescription: "If another player crits against you, roll a D6. If it is odd, the enemy misses."
     artworkSprite: {fileID: 0}
-  - id: "t2_engine_twin_engines"
-    displayName: "Twin Engines"
+  - id: "t2_engine_base"
+    displayName: "Engine Base"
     archetype: 4
     tier: 1
     baseModifier: 3
@@ -515,9 +515,9 @@ MonoBehaviour:
     baseModifier: 1
     diceCount: 1
     diceSides: 6
-    passiveKey: "scavanger"
+    passiveKey: "scavanger_t2"
     passiveName: "Scavanger"
-    passiveDescription: "You may choose to forego your attack and instead roll a D4 and heal however many hp."
+    passiveDescription: "Instead of attacking, roll a D4 and heal that many hp."
     artworkSprite: {fileID: 0}
   - id: "t2_engine_evade"
     displayName: "Evade"
@@ -526,9 +526,9 @@ MonoBehaviour:
     baseModifier: 2
     diceCount: 1
     diceSides: 6
-    passiveKey: "evade"
+    passiveKey: "evade_t2"
     passiveName: "Evade"
-    passiveDescription: "If another player crits against you, roll a D6. If it's even the enemy will miss."
+    passiveDescription: "If another player crits against you, roll a D6. If it is even, the enemy misses."
     artworkSprite: {fileID: 0}
   - id: "t2_engine_ramming_speed"
     displayName: "Ramming Speed"
@@ -537,9 +537,9 @@ MonoBehaviour:
     baseModifier: 2
     diceCount: 1
     diceSides: 6
-    passiveKey: "ramming_speed"
+    passiveKey: "ramming_speed_t2"
     passiveName: "Ramming Speed"
-    passiveDescription: "When you move adjacent to another player on your first move, they lose 1 hp."
+    passiveDescription: "When you move adjacent to another player on your first move, that player loses 1 hp."
     artworkSprite: {fileID: 0}
   - id: "legendary_long_lucky"
     displayName: "Lucky"
@@ -548,9 +548,9 @@ MonoBehaviour:
     baseModifier: 3
     diceCount: 1
     diceSides: 8
-    passiveKey: "lucky"
+    passiveKey: "lucky_legendary"
     passiveName: "Lucky"
-    passiveDescription: "When you roll an odd number you may roll again, once per turn."
+    passiveDescription: "When you roll an odd number, you may roll again once per turn."
     artworkSprite: {fileID: 0}
   - id: "legendary_long_precision"
     displayName: "Precision"
@@ -559,9 +559,9 @@ MonoBehaviour:
     baseModifier: 1
     diceCount: 1
     diceSides: 8
-    passiveKey: "precision"
+    passiveKey: "precision_legendary"
     passiveName: "Precision"
-    passiveDescription: "If you destroy another player's module you may choose the module freely."
+    passiveDescription: "If you destroy another player's module, you may choose the module freely."
     artworkSprite: {fileID: 0}
   - id: "legendary_medium_coordination"
     displayName: "Coordination"
@@ -570,9 +570,9 @@ MonoBehaviour:
     baseModifier: 3
     diceCount: 2
     diceSides: 6
-    passiveKey: "coordination"
+    passiveKey: "coordination_legendary"
     passiveName: "Coordination"
-    passiveDescription: "You may split your attack between two players dealing 1 D6 + your bonus to each."
+    passiveDescription: "When attacking, split your attack between two players, dealing 1D6 + your bonus to each."
     artworkSprite: {fileID: 0}
   - id: "legendary_short_overkill"
     displayName: "Overkill"
@@ -581,9 +581,9 @@ MonoBehaviour:
     baseModifier: 3
     diceCount: 2
     diceSides: 4
-    passiveKey: "overkill"
+    passiveKey: "overkill_legendary"
     passiveName: "Overkill"
-    passiveDescription: "When you deplete an enemy's health bar, the enemy will take half of the remaining damage, rounding down, and apply it to the next health bar."
+    passiveDescription: "When you deplete an enemy's health bar, half of the remaining damage, rounded down, is applied to the next health bar."
     artworkSprite: {fileID: 0}
   - id: "legendary_armor_king_of_the_sea"
     displayName: "King of the Sea"
@@ -592,7 +592,7 @@ MonoBehaviour:
     baseModifier: 5
     diceCount: 0
     diceSides: 0
-    passiveKey: "king_of_the_sea"
+    passiveKey: "king_of_the_sea_legendary"
     passiveName: "King of the Sea"
     passiveDescription: "Your movement is fixed to 2 per turn regardless of engine bonus or dice roll. Engine abilities still apply."
     artworkSprite: {fileID: 0}
@@ -603,9 +603,9 @@ MonoBehaviour:
     baseModifier: -1
     diceCount: 2
     diceSides: 4
-    passiveKey: "surprise_mother_trucker"
+    passiveKey: "surprise_mother_trucker_legendary"
     passiveName: "Surprise Mother Trucker"
-    passiveDescription: "Pay 1 gold to switch places with another player."
+    passiveDescription: "By paying 1 gold, switch places with another player."
     artworkSprite: {fileID: 0}
   - id: "legendary_engine_wolf_pack"
     displayName: "Wolf Pack"
@@ -614,9 +614,9 @@ MonoBehaviour:
     baseModifier: 3
     diceCount: 2
     diceSides: 4
-    passiveKey: "wolf_pack"
+    passiveKey: "wolf_pack_legendary"
     passiveName: "Wolf Pack"
-    passiveDescription: "You may choose to attack before you move."
+    passiveDescription: "On your turn, you may attack before you move."
     artworkSprite: {fileID: 0}
   - id: "legendary_engine_queen_of_the_sea"
     displayName: "Queen of the Sea"
@@ -625,7 +625,7 @@ MonoBehaviour:
     baseModifier: 1
     diceCount: 1
     diceSides: 6
-    passiveKey: "queen_of_the_sea"
+    passiveKey: "queen_of_the_sea_legendary"
     passiveName: "Queen of the Sea"
     passiveDescription: "You may move diagonally without any extra cost."
     artworkSprite: {fileID: 0}
@@ -636,9 +636,9 @@ MonoBehaviour:
     baseModifier: 1
     diceCount: 1
     diceSides: 6
-    passiveKey: "marauder"
+    passiveKey: "marauder_epic"
     passiveName: "Marauder"
-    passiveDescription: "+3 damage while you have 5 hp or less."
+    passiveDescription: "While you have 5 hp or less, gain +3 damage."
     artworkSprite: {fileID: 0}
   - id: "epic_medium_death_of_duty"
     displayName: "Death of Duty"
@@ -647,9 +647,9 @@ MonoBehaviour:
     baseModifier: 1
     diceCount: 2
     diceSides: 4
-    passiveKey: "death_of_duty"
+    passiveKey: "death_of_duty_epic"
     passiveName: "Death of Duty"
-    passiveDescription: "+4 damage against players you have not yet attacked this round."
+    passiveDescription: "Against players you have not yet attacked this round, gain +4 damage."
     artworkSprite: {fileID: 0}
   - id: "epic_short_hard_shell"
     displayName: "Hard Shell"
@@ -658,9 +658,9 @@ MonoBehaviour:
     baseModifier: 2
     diceCount: 1
     diceSides: 6
-    passiveKey: "hard_shell"
+    passiveKey: "hard_shell_epic"
     passiveName: "Hard Shell"
-    passiveDescription: "When you knockback another player into a rock they take 1xD4 of damage. If you knockback a player into another player they both take 1xD4 of damage."
+    passiveDescription: "When you knock back another player into a rock or another player, roll 1D4 collision damage."
     artworkSprite: {fileID: 0}
   - id: "epic_armor_hull_of_honor"
     displayName: "Hull of Honor"
@@ -669,9 +669,9 @@ MonoBehaviour:
     baseModifier: 1
     diceCount: 0
     diceSides: 0
-    passiveKey: "hull_of_honor"
+    passiveKey: "hull_of_honor_epic"
     passiveName: "Hull of Honor"
-    passiveDescription: "+3 armor against players you have not attacked this round."
+    passiveDescription: "Against players you have not attacked this round, gain +3 armor."
     artworkSprite: {fileID: 0}
   - id: "epic_engine_tactical_retreat"
     displayName: "Tactical Retreat"
@@ -680,9 +680,9 @@ MonoBehaviour:
     baseModifier: 2
     diceCount: 1
     diceSides: 6
-    passiveKey: "tactical_retreat"
+    passiveKey: "tactical_retreat_epic"
     passiveName: "Tactical Retreat"
-    passiveDescription: "When an enemy attacks and damages you, you may move one tile in any direction. If this module is destroyed you may move one tile before it is destroyed."
+    passiveDescription: "When an enemy attacks and damages you, you may move 1 tile in any direction."
     artworkSprite: {fileID: 0}
   - id: "epic_engine_sea_begger"
     displayName: "Sea Begger"
@@ -691,7 +691,7 @@ MonoBehaviour:
     baseModifier: 1
     diceCount: 1
     diceSides: 6
-    passiveKey: "sea_begger"
+    passiveKey: "sea_begger_epic"
     passiveName: "Sea Begger"
-    passiveDescription: "+1 damage when attacking."
+    passiveDescription: "When attacking, gain +1 damage."
     artworkSprite: {fileID: 0}

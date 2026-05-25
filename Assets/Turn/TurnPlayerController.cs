@@ -1,13 +1,14 @@
+using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 
 public class TurnPlayerController : MonoBehaviour
 {
-
-
     public int playerID;
     private bool isMyTurn = false;
     public bool IsMyTurn { get => isMyTurn; }
+    public bool IsResolvingAttackResult => finishAttackAfterDelayRoutine != null;
+    public bool CanReceiveTurnInput => isMyTurn && !IsResolvingAttackResult && IsCameraReadyForTurnInput();
 
     [Header("card bonuses")]
     public int motorBonus;
@@ -15,44 +16,31 @@ public class TurnPlayerController : MonoBehaviour
     public int armorBonus; //finns inget än
 
     [Header("references")]
+    [SerializeField] private DiceComponent diceComponent;
     [SerializeField] private ShipMovement shipMovement;
     [SerializeField] private ShipWeapon shipWeapon;
+    [SerializeField] private float attackResultPause = 1.26f;
 
-    //public void SetMyTurn(bool value)
-    //{
-    //    isMyTurn = value;
-
-    //    Debug.Log("Player" + playerID + " is my turn: " + isMyTurn);
-
-    //    if (isMyTurn && shipMovement != null)
-    //    {
-    //        shipMovement.avaliableTileDistance = 0;
-    //    }
-    //}
+    private Coroutine finishAttackAfterDelayRoutine;
 
     public void SetMyTurn(bool value)
     {
         isMyTurn = value;
 
+        Debug.Log("Player" + playerID + " is my turn: " + isMyTurn);
 
         if (isMyTurn && shipMovement != null)
         {
             shipMovement.avaliableTileDistance = 0;
-
-            // Visa rätt tärning direkt när det blir spelarens tur
-            int sides = shipMovement.ship.shipInfo.GetEngineDice();
-            //FindFirstObjectByType<DiceManager>().ActiveDice(sides);
-        }
-        else if (!isMyTurn)
-        {
-            // Göm tärningen när turen är slut
-            FindFirstObjectByType<DiceManager>().HideAllDice();
         }
     }
 
     private void Awake()
     {
-
+        if (diceComponent == null)
+        {
+            diceComponent = GetComponent<DiceComponent>();
+        }
 
         if (shipMovement == null)
         {
@@ -65,80 +53,81 @@ public class TurnPlayerController : MonoBehaviour
         }
     }
 
+    private void OnDisable()
+    {
+        if (finishAttackAfterDelayRoutine != null)
+        {
+            StopCoroutine(finishAttackAfterDelayRoutine);
+            finishAttackAfterDelayRoutine = null;
+        }
+    }
+
     void Update()
     {
        
-        if (!isMyTurn)
+        if (!CanReceiveTurnInput)
         {
             return;
         }
-
         HandleMovePhaseAutoProgress();
         HandleAttackPhaseAutoProgress();
 
         if (Input.GetKeyDown(KeyCode.M))
         {
-            OnMoveButtonClicked();
-            //HandleMoveKey();
+            HandleMoveKey();
         }
 
         if (Input.GetKeyDown(KeyCode.A))
         {
-            OnAttackButtonClicked();
-            //HandleAttackKey();
+            HandleAttackKey();
         }
+    }
+
+    public void RequestMoveAction()
+    {
+        if (!CanReceiveTurnInput)
+            return;
+
+        HandleMoveKey();
     }
 
     public void OnMoveButtonClicked()
     {
-        var phase = TurnManager.Instance.currentPhase;
+        RequestMoveAction();
+    }
 
-        switch (phase)
+    public void RequestAttackAction()
+    {
+        if (!CanReceiveTurnInput)
+            return;
+
+        HandleAttackKey();
+    }
+
+    public void OnAttackButtonClicked()
+    {
+        RequestAttackAction();
+    }
+
+    public void RequestEndCurrentAction()
+    {
+        if (!CanReceiveTurnInput || TurnManager.Instance == null)
+            return;
+
+        switch (TurnManager.Instance.currentPhase)
         {
             case TurnPhase.RollMovement:
-                StartMoveAction();
+                TurnManager.Instance.FinishAttackAction();
                 break;
-
             case TurnPhase.Move:
                 TryFinishMovePhase();
                 break;
-
             case TurnPhase.RollAttack:
-                //StartMoveAction();
-                OnAttackButtonClicked();
+            case TurnPhase.Attack:
+                TurnManager.Instance.FinishAttackAction();
                 break;
         }
     }
-
-    public bool OnAttackButtonClicked()
-    {
-        if (TurnManager.Instance.currentPhase != TurnPhase.RollAttack)
-            return false;
-
-        if (shipWeapon == null)
-        {
-            Debug.Log("shipWeapon missing on player " + playerID);
-            return false;
-        }
-
-        return TryStartAttackAction();
-    }
-
-    //public void OnAttackButtonClicked()
-    //{
-    //    if (TurnManager.Instance.currentPhase != TurnPhase.RollAttack)
-    //    {
-    //        return;
-    //    }
-
-    //    if (shipWeapon == null)
-    //    {
-    //        Debug.Log("shipWeapon missing on player " + playerID);
-    //        return;
-    //    }
-
-    //    TryStartAttackAction();
-    //}
 
     private void HandlePhase()
     {
@@ -186,9 +175,7 @@ public class TurnPlayerController : MonoBehaviour
         //Debug.Log("Player " + playerID + " rolled a " + moveRoll + " for movement.");
         //Debug.Log("Player " + playerID + " has a total movement of " + totalMove + ".");
 
-
-        //kommenterar bort här sålänge med nya dice
-        //TurnManager.Instance.NextPhase();
+        TurnManager.Instance.NextPhase();
     }
 
     private void TryFinishMovePhase()
@@ -232,8 +219,6 @@ public class TurnPlayerController : MonoBehaviour
         {
             return;
         }
-
-        Debug.Log("AutoProgress check — avaliableTileDistance: " + shipMovement.avaliableTileDistance);
 
         if (shipMovement.avaliableTileDistance <= 0)
         {
@@ -289,7 +274,8 @@ public class TurnPlayerController : MonoBehaviour
 
     private void HandleAttackKey()
     {
-        if (TurnManager.Instance.currentPhase != TurnPhase.RollAttack)
+        if (TurnManager.Instance.currentPhase != TurnPhase.RollAttack &&
+            TurnManager.Instance.currentPhase != TurnPhase.RollMovement)
         {
             return;
         }
@@ -312,9 +298,7 @@ public class TurnPlayerController : MonoBehaviour
         }
 
         shipMovement.EnterMovePhase(true);
-
-        //kommenterar bort sålänge med nya dice
-        //TurnManager.Instance.StartMovePhase();
+        TurnManager.Instance.StartMovePhase();
     }
 
     private bool TryStartAttackAction()
@@ -330,6 +314,7 @@ public class TurnPlayerController : MonoBehaviour
         if (targetCount <= 0)
         {
             TurnManager.BroadcastTurnFeedback("No enemies in range. Press M to move instead.");
+            Debug.Log("Player " + playerID + " cannot attack because no enemies are in range.");
             return false;
         }
 
@@ -354,10 +339,37 @@ public class TurnPlayerController : MonoBehaviour
 
         if (shipWeapon.HasAttacked)
         {
-            Debug.Log("Player " + playerID + " finished attacking.");
-            TurnManager.Instance.FinishAttackAction();
+            if (finishAttackAfterDelayRoutine == null)
+                finishAttackAfterDelayRoutine = StartCoroutine(FinishAttackAfterResultPause());
         }
 
        
+    }
+
+    private IEnumerator FinishAttackAfterResultPause()
+    {
+        Debug.Log("Player " + playerID + " finished attacking. Showing result before next turn.");
+
+        yield return new WaitForSeconds(Mathf.Max(0f, attackResultPause));
+
+        finishAttackAfterDelayRoutine = null;
+
+        if (!isMyTurn || TurnManager.Instance == null || TurnManager.Instance.currentPhase != TurnPhase.Attack)
+            yield break;
+
+        TurnManager.Instance.FinishAttackAction();
+    }
+
+    private bool IsCameraReadyForTurnInput()
+    {
+        Camera mainCamera = Camera.main;
+        CameraController cameraController = mainCamera != null
+            ? mainCamera.GetComponent<CameraController>()
+            : null;
+
+        if (cameraController == null)
+            cameraController = FindFirstObjectByType<CameraController>();
+
+        return cameraController == null || cameraController.IsReadyForTurnInput(transform);
     }
 }
