@@ -357,17 +357,14 @@ public class TurnManager : MonoBehaviour
             return -1;
 
         int index = Mathf.Clamp(startIndex, 0, Players.Length - 1);
-        int fallbackIndex = -1;
 
         for (int i = 0; i < Players.Length; i++)
         {
             int candidateIndex = (index + i) % Players.Length;
             TurnPlayerController candidate = Players[candidateIndex];
+
             if (candidate == null)
                 continue;
-
-            if (fallbackIndex < 0)
-                fallbackIndex = candidateIndex;
 
             if (!candidate.gameObject.activeInHierarchy)
                 continue;
@@ -379,7 +376,7 @@ public class TurnManager : MonoBehaviour
             return candidateIndex;
         }
 
-        return fallbackIndex;
+        return -1;
     }
 
     private void PrepareAssignedPlayers()
@@ -393,12 +390,11 @@ public class TurnManager : MonoBehaviour
             if (player == null)
                 continue;
 
-            if (!player.gameObject.activeSelf)
-                player.gameObject.SetActive(true);
-
             ShipInfo info = player.GetComponent<ShipInfo>();
             if (info != null && info.Sunk && HasAnyModuleAssigned(info))
-                info.ResetValues();
+            {
+                player.SetMyTurn(false);
+            }        
         }
     }
 
