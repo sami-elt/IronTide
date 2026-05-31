@@ -6,6 +6,9 @@ using TMPro;
 public class ShipWeapon : MonoBehaviour
 {
     [SerializeField] private Ship ship;
+    [SerializeField] private GameObject shortRangeProjectilePrefab;
+    [SerializeField] private GameObject midRangeProjectilePrefab;
+    [SerializeField] private GameObject longRangeProjectilePrefab;
 
     private ShipInfo target;
     private ShipInfo.WeaponDamageRoll preparedDamageRoll;
@@ -20,7 +23,6 @@ public class ShipWeapon : MonoBehaviour
     public Dictionary<Vector3, IronTideAttackLineType> ReachableTargetsLineTypes = new();
     public Dictionary<Vector3, int> ReachableTargetsLineSides = new();
 
-    [SerializeField] GameObject bulletObject;
 
     private void Awake()
     {
@@ -274,13 +276,35 @@ public class ShipWeapon : MonoBehaviour
 
     private void FireProjectile(ShipInfo attackTarget)
     {
-        if (bulletObject == null)
-            return;
+        GameObject prefab = GetProjectilePrefab();
 
-        GameObject newBullet = Instantiate(bulletObject, transform.position, Quaternion.identity);
-        WeaponProjectiles projScript = newBullet.GetComponent<WeaponProjectiles>();
-        if (projScript != null)
-            projScript.Shoot(attackTarget.transform);
+
+        if (prefab == null)
+        {
+            Debug.Log("PREFAB ÄR NULL");
+            return;
+        }
+
+        Vector3 spawnPos = transform.position + transform.forward * 0.6f;
+        Debug.Log($"Spawnar på position: {spawnPos}");
+
+        GameObject newBullet = Instantiate(prefab, spawnPos, Quaternion.identity);
+
+        if (newBullet.TryGetComponent(out WeaponProjectiles proj))
+            proj.Shoot(attackTarget.transform);
+    }
+    private GameObject GetProjectilePrefab()
+    {
+        if (ship.shipInfo.WeaponModule == null)
+            return midRangeProjectilePrefab;
+
+        return ship.shipInfo.WeaponModule.Archetype switch
+        {
+            IronTideModuleArchetype.ShortRangeWeapon => shortRangeProjectilePrefab,
+            IronTideModuleArchetype.LongRangeWeapon => longRangeProjectilePrefab,
+            _ => midRangeProjectilePrefab
+        };
+
     }
 
     private void ShowDamagePopup(Vector3 targetPosition, int dealtDamage)
