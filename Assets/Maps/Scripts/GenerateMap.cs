@@ -1,6 +1,7 @@
 ﻿using NueGames.NueDeck.Scripts.Managers;
 using UnityEngine;
 
+[ExecuteAlways]
 public class GenerateMap : MonoBehaviour
 {
     [Header("Map")]
