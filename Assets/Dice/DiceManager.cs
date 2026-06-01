@@ -84,9 +84,9 @@ public class DiceManager : MonoBehaviour
             case 8: if (diceD8 != null) diceD8.SetActive(true); break;
             case 12: if (diceD12 != null) diceD12.SetActive(true); break;
         }
-
+        DisableActiveDiceColliders();
     }
-        public void HideAllDice()
+    public void HideAllDice()
     {
         if (diceD4 != null) diceD4.SetActive(false);
         if (diceD6 != null) diceD6.SetActive(false);
@@ -197,5 +197,16 @@ public class DiceManager : MonoBehaviour
         if (currentSides == 8) return diceD8;
         if (currentSides == 12) return diceD12;
         return diceD6;
+    }
+
+    private void DisableActiveDiceColliders()
+    {
+        GameObject activeDiceObj = GetActiveDiceObject();
+        if (activeDiceObj == null)
+            return;
+
+        Collider[] colliders = activeDiceObj.GetComponentsInChildren<Collider>(true);
+        for (int i = 0; i < colliders.Length; i++)
+            colliders[i].enabled = false;
     }
 }

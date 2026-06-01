@@ -246,15 +246,37 @@ namespace IronTide.BasicCards
                 switch (archetype)
                 {
                     case IronTideModuleArchetype.LongRangeWeapon:
-                        return "3-4 range +0\n5 range +1\n6 range +2\nRocks: -2 each.";
+                        return "Range 1-4: +0 damage\nRange 5: +1 damage\nRange 6: +2 damage\nRock cover: -2 each";
                     case IronTideModuleArchetype.MediumRangeWeapon:
-                        return "1-4 range +0\nNo range bonus or penalty.";
+                        return "Range 1-4: +0 damage\nNo range bonus or penalty";
                     case IronTideModuleArchetype.ShortRangeWeapon:
-                        return "1 range +2\n2 range +0\n3 range -1\n4 range -2\nOptional knockback 1.";
+                        return "Range 1: +2 damage\nRange 2: +0 damage\nRange 3: -1 damage\nRange 4: -2 damage\nOptional knockback 1";
                     case IronTideModuleArchetype.Armor:
-                        return "Mitigates incoming damage by its armor value.";
+                        return "Armor modifier reduces incoming damage by this value";
                     case IronTideModuleArchetype.Engine:
-                        return "Move = 1xD6 + modifier.\nExtra move uses no modifier.";
+                        return "Move = 1xD6 + modifier\nExtra move uses no modifier unless a passive says otherwise";
+                    default:
+                        return string.Empty;
+                }
+            }
+        }
+
+        public string ModifierRulesSummary
+        {
+            get
+            {
+                switch (archetype)
+                {
+                    case IronTideModuleArchetype.LongRangeWeapon:
+                        return "R1-4 +0, R5 +1, R6 +2";
+                    case IronTideModuleArchetype.MediumRangeWeapon:
+                        return "R1-4 +0";
+                    case IronTideModuleArchetype.ShortRangeWeapon:
+                        return "R1 +2, R2 +0, R3 -1, R4 -2";
+                    case IronTideModuleArchetype.Armor:
+                        return $"{ModifierLabel} damage reduction";
+                    case IronTideModuleArchetype.Engine:
+                        return $"Move roll {ModifierLabel}";
                     default:
                         return string.Empty;
                 }

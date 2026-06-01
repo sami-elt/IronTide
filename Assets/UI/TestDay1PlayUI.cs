@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using IronTide.BasicCards;
 using TMPro;
@@ -23,6 +24,7 @@ public class TestDay1PlayUI : MonoBehaviour
     [Header("Module Test Setup")]
     [SerializeField] private IronTideModuleCardLibrary moduleLibrary;
     [SerializeField] private bool autoDealStarterModules = true;
+    [SerializeField] private float roundTransitionDelay = 1.1f;
 
     private readonly List<PlayerHudPanel> playerPanels = new List<PlayerHudPanel>();
     private readonly List<RectTransform> hudHpDividers = new List<RectTransform>();
@@ -465,9 +467,9 @@ public class TestDay1PlayUI : MonoBehaviour
         rosterPanelRoot.anchorMin = new Vector2(1f, 0f);
         rosterPanelRoot.anchorMax = new Vector2(1f, 0f);
         rosterPanelRoot.pivot = new Vector2(1f, 0f);
-        float rosterHeight = Mathf.Clamp(64f + ships.Count * 102f, 176f, 360f);
-        rosterPanelRoot.sizeDelta = new Vector2(620f, rosterHeight);
-        rosterPanelRoot.anchoredPosition = new Vector2(-18f, 172f);
+        float rosterHeight = Mathf.Clamp(72f + ships.Count * 150f, 240f, 550f);
+        rosterPanelRoot.sizeDelta = new Vector2(550f, rosterHeight);
+        rosterPanelRoot.anchoredPosition = new Vector2(-18f, 252f);
         ApplyHudImage(rosterPanelRoot, hudSprites.Panel, Image.Type.Sliced, new Color(0.04f, 0.045f, 0.050f, 0.98f), true);
         AddHudOutline(rosterPanelRoot, new Color(0f, 0f, 0f, 0.72f), new Vector2(3f, -3f));
 
@@ -659,13 +661,13 @@ public class TestDay1PlayUI : MonoBehaviour
     {
         RectTransform row = CreatePanel("Module Row", parent, new Color(0f, 0f, 0f, 0f));
         LayoutElement rowLayout = row.gameObject.AddComponent<LayoutElement>();
-        rowLayout.preferredHeight = 44f;
+        rowLayout.preferredHeight = 58f;
         rowLayout.flexibleHeight = 0f;
 
         var layout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
-        layout.spacing = 6;
+        layout.spacing = 8;
         layout.childForceExpandWidth = true;
-        layout.childForceExpandHeight = false;
+        layout.childForceExpandHeight = true;
         layout.childControlHeight = true;
         layout.childAlignment = TextAnchor.UpperLeft;
         return row;
@@ -675,19 +677,20 @@ public class TestDay1PlayUI : MonoBehaviour
     {
         RectTransform panel = CreatePanel("Player Module Panel", parent, HeaderColor);
         ApplyHudImage(panel, hudSprites.Panel, Image.Type.Sliced, HeaderColor, true);
+        AddHudOutline(panel, new Color(0f, 0f, 0f, 0.62f), new Vector2(2f, -2f));
         LayoutElement panelLayout = panel.gameObject.AddComponent<LayoutElement>();
-        panelLayout.preferredHeight = 94f;
+        panelLayout.preferredHeight = 142f;
         panelLayout.flexibleHeight = 0f;
 
         var verticalLayout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
-        verticalLayout.padding = new RectOffset(9, 9, 6, 6);
-        verticalLayout.spacing = 3;
+        verticalLayout.padding = new RectOffset(12, 12, 8, 8);
+        verticalLayout.spacing = 6;
         verticalLayout.childForceExpandWidth = true;
         verticalLayout.childForceExpandHeight = false;
         verticalLayout.childControlHeight = true;
 
         RectTransform header = CreatePanel("Player Header", panel, new Color(0f, 0f, 0f, 0f));
-        header.gameObject.AddComponent<LayoutElement>().preferredHeight = 20f;
+        header.gameObject.AddComponent<LayoutElement>().preferredHeight = 24f;
 
         var headerLayout = header.gameObject.AddComponent<HorizontalLayoutGroup>();
         headerLayout.spacing = 6;
@@ -697,25 +700,30 @@ public class TestDay1PlayUI : MonoBehaviour
         headerLayout.childControlHeight = true;
 
         int playerId = GetShipPlayerId(ship, playerPanels.Count);
-        Image icon = CreatePlayerIcon(header, playerId);
-        TextMeshProUGUI title = CreateLabel(header, IronTideGameState.GetPlayerDisplayName(playerId), 16f,
+        TextMeshProUGUI title = CreateLabel(header, IronTideGameState.GetPlayerDisplayName(playerId), 18f,
             FontStyles.Bold, IronTideGameState.GetPlayerColor(playerId, GoldColor), TextAlignmentOptions.Left);
         var titleLayout = title.gameObject.AddComponent<LayoutElement>();
-        titleLayout.preferredHeight = 20f;
+        titleLayout.preferredHeight = 24f;
         titleLayout.flexibleWidth = 1f;
+        title.overflowMode = TextOverflowModes.Ellipsis;
 
-        RectTransform hpRoot = CreatePanel("HP Bar", panel, new Color(0.025f, 0.070f, 0.035f, 1f));
-        hpRoot.gameObject.AddComponent<LayoutElement>().preferredHeight = 18f;
+        RectTransform hpRoot = CreatePanel("HP Bar", panel, new Color(0.055f, 0.095f, 0.050f, 1f));
+        LayoutElement hpLayout = hpRoot.gameObject.AddComponent<LayoutElement>();
+        hpLayout.minHeight = 28f;
+        hpLayout.preferredHeight = 28f;
+        AddHudOutline(hpRoot, new Color(0f, 0f, 0f, 0.72f), new Vector2(2f, -2f));
 
         RectTransform hpFill = CreatePanel("HP Fill", hpRoot, HpHealthyColor);
         hpFill.anchorMin = Vector2.zero;
         hpFill.anchorMax = Vector2.one;
-        hpFill.offsetMin = Vector2.zero;
-        hpFill.offsetMax = Vector2.zero;
+        hpFill.offsetMin = new Vector2(3f, 3f);
+        hpFill.offsetMax = new Vector2(-3f, -3f);
 
         List<RectTransform> hpDividers = BuildHpDividers(hpRoot, 2);
 
-        TextMeshProUGUI hpText = CreateLabel(hpRoot, "10/10", 12f, FontStyles.Bold, Color.white, TextAlignmentOptions.Center);
+        TextMeshProUGUI hpText = CreateLabel(hpRoot, "HP 10 / 10", 16f, FontStyles.Bold, Color.white, TextAlignmentOptions.Center);
+        hpText.overflowMode = TextOverflowModes.Ellipsis;
+        hpText.fontSizeMin = 10f;
         Stretch(hpText.rectTransform);
 
         RectTransform cards = CreateModuleRow(panel);
@@ -724,7 +732,6 @@ public class TestDay1PlayUI : MonoBehaviour
         {
             Ship = ship,
             Title = title,
-            Icon = icon,
             HpFill = hpFill,
             HpDividers = hpDividers,
             HpText = hpText,
@@ -756,27 +763,33 @@ public class TestDay1PlayUI : MonoBehaviour
     {
         RectTransform root = CreatePanel(label, parent, EmptyModuleColor);
         LayoutElement slotLayout = root.gameObject.AddComponent<LayoutElement>();
-        slotLayout.minHeight = 42f;
-        slotLayout.preferredHeight = 42f;
+        slotLayout.minHeight = 58f;
+        slotLayout.preferredHeight = 58f;
         slotLayout.flexibleHeight = 0f;
         root.GetComponent<Image>().raycastTarget = true;
         ApplyHudImage(root, hudSprites.Card, Image.Type.Sliced, EmptyModuleColor, true);
+        AddHudOutline(root, new Color(0f, 0f, 0f, 0.46f), new Vector2(1f, -1f));
 
         var layout = root.gameObject.AddComponent<VerticalLayoutGroup>();
-        layout.padding = new RectOffset(6, 6, 3, 3);
-        layout.spacing = 0;
+        layout.padding = new RectOffset(8, 8, 5, 5);
+        layout.spacing = 2;
         layout.childForceExpandWidth = true;
         layout.childForceExpandHeight = false;
         layout.childControlHeight = true;
 
         TextMeshProUGUI header = CreateLabel(root, label, 9f, FontStyles.Bold, GoldColor, TextAlignmentOptions.Left);
-        header.gameObject.AddComponent<LayoutElement>().preferredHeight = 10f;
+        header.characterSpacing = 1f;
+        header.gameObject.AddComponent<LayoutElement>().preferredHeight = 11f;
 
-        TextMeshProUGUI name = CreateLabel(root, "-", 12f, FontStyles.Bold, TextColor, TextAlignmentOptions.Left);
-        name.gameObject.AddComponent<LayoutElement>().preferredHeight = 16f;
+        TextMeshProUGUI name = CreateLabel(root, "-", 14f, FontStyles.Bold, TextColor, TextAlignmentOptions.Left);
+        name.gameObject.AddComponent<LayoutElement>().preferredHeight = 19f;
+        name.overflowMode = TextOverflowModes.Ellipsis;
+        name.fontSizeMin = 9f;
 
         TextMeshProUGUI detail = CreateLabel(root, "-", 10f, FontStyles.Bold, MutedTextColor, TextAlignmentOptions.Left);
-        detail.gameObject.AddComponent<LayoutElement>().preferredHeight = 12f;
+        detail.gameObject.AddComponent<LayoutElement>().preferredHeight = 14f;
+        detail.overflowMode = TextOverflowModes.Ellipsis;
+        detail.fontSizeMin = 8f;
 
         var slot = new ModuleSlotHud
         {
@@ -1041,12 +1054,14 @@ public class TestDay1PlayUI : MonoBehaviour
             panel.Title.SetText(IronTideGameState.GetPlayerDisplayName(playerId));
             panel.Title.color = IronTideGameState.GetPlayerColor(playerId, GoldColor);
         }
-        RefreshPlayerIcon(panel.Icon, playerId);
 
         float hpRatio = info.MaxHealth > 0 ? Mathf.Clamp01((float)info.Health / info.MaxHealth) : 0f;
         panel.HpFill.anchorMax = new Vector2(hpRatio, 1f);
-        panel.HpFill.GetComponent<Image>().color = HpHealthyColor;
-        panel.HpText.SetText($"{info.Health}/{info.MaxHealth}");
+        panel.HpFill.offsetMin = new Vector2(3f, 3f);
+        panel.HpFill.offsetMax = new Vector2(-3f, -3f);
+        panel.HpFill.GetComponent<Image>().color = GetHpColor(hpRatio);
+        string playerName = IronTideGameState.GetPlayerDisplayName(playerId);
+        panel.HpText.SetText($"{playerName}  |  HP {info.Health} / {info.MaxHealth}");
         RefreshHpDividers(panel, info.MaxHealth);
 
         RefreshModuleSlot(panel.WeaponSlot, info.WeaponModule, info.WeaponEnabled);
@@ -1088,10 +1103,21 @@ public class TestDay1PlayUI : MonoBehaviour
 
         float hpRatio = info.MaxHealth > 0 ? Mathf.Clamp01((float)info.Health / info.MaxHealth) : 0f;
         hudHpFill.anchorMax = new Vector2(hpRatio, 1f);
-        hudHpFill.GetComponent<Image>().color = HpHealthyColor;
+        hudHpFill.GetComponent<Image>().color = GetHpColor(hpRatio);
 
         hudHpText.SetText($"HP {info.Health}/{info.MaxHealth}");
         RefreshHpDividers(hudHpDividers, info.MaxHealth);
+    }
+
+    private static Color GetHpColor(float hpRatio)
+    {
+        if (hpRatio <= 0.3f)
+            return new Color(0.94f, 0.24f, 0.18f, 1f);
+
+        if (hpRatio <= 0.6f)
+            return new Color(0.95f, 0.66f, 0.18f, 1f);
+
+        return HpHealthyColor;
     }
 
     private void RefreshModuleSlot(ModuleSlotHud slot, IronTideModuleCardEntry card, bool enabled)
@@ -1106,7 +1132,7 @@ public class TestDay1PlayUI : MonoBehaviour
         {
             slot.Background.color = EmptyModuleColor;
             slot.Name.SetText("Empty");
-            slot.Detail.SetText("No card");
+            slot.Detail.SetText("No module");
             if (slot.Passive != null)
                 slot.Passive.SetText("No module equipped");
             if (slot.Icon != null)
@@ -1141,9 +1167,28 @@ public class TestDay1PlayUI : MonoBehaviour
             case BasicModuleType.Armor:
                 return $"{modifier} armor";
             case BasicModuleType.Engine:
-                return Mathf.Abs(card.BaseModifier) == 1 ? $"{modifier} tile" : $"{modifier} tiles";
+                string tileLabel = Mathf.Abs(card.BaseModifier) == 1 ? "tile" : "tiles";
+                return $"{modifier} {tileLabel}";
             default:
-                return $"{modifier} damage";
+                return $"{modifier} base | {GetCompactRangeLabel(card)}";
+        }
+    }
+
+    private static string GetCompactRangeLabel(IronTideModuleCardEntry card)
+    {
+        if (card == null)
+            return string.Empty;
+
+        switch (card.Archetype)
+        {
+            case IronTideModuleArchetype.LongRangeWeapon:
+                return "R1-4 +0, R5 +1, R6 +2";
+            case IronTideModuleArchetype.MediumRangeWeapon:
+                return "R1-4 +0";
+            case IronTideModuleArchetype.ShortRangeWeapon:
+                return "R1 +2, R2 +0, R3 -1, R4 -2";
+            default:
+                return card.ModifierRulesSummary;
         }
     }
 
@@ -1153,7 +1198,7 @@ public class TestDay1PlayUI : MonoBehaviour
             return string.Empty;
 
         if (card.UsesDice)
-            return $"{card.DiceCount}xD{card.DiceSides} | {card.TierLabel}";
+            return $"{card.DiceCount}xD{card.DiceSides} | {card.TierLabel} | {card.HeaderLabel}";
 
         if (card.HasPassive)
             return $"Passive | {card.TierLabel}";
@@ -1207,7 +1252,11 @@ public class TestDay1PlayUI : MonoBehaviour
             winnerNumber = winner;
             if (winIndicator != null)
             {
-                winIndicator.SetText($"{IronTideGameState.GetPlayerDisplayName(winnerNumber - 1)} won!");
+                string winnerName = IronTideGameState.GetPlayerDisplayName(winnerNumber - 1);
+                string resultText = IronTideGameState.IsFinalCombatRound
+                    ? $"{winnerName} won the match!"
+                    : $"{winnerName} won round {IronTideGameState.CombatRound}!";
+                winIndicator.SetText(resultText);
                 winIndicator.gameObject.SetActive(true);
             }
 
@@ -1220,14 +1269,35 @@ public class TestDay1PlayUI : MonoBehaviour
         if (transitionStarted)
             return;
 
+        transitionStarted = true;
         IronTideGameState.SaveLoadouts(ships);
+        DisableCombatInput();
 
         if (!IronTideGameState.ShouldOpenShopAfterCombat)
+        {
+            IronTideGameState.CompleteFinalRound(winnerPlayerId);
             return;
+        }
 
-        transitionStarted = true;
         IronTideGameState.AwardShopGold(winnerPlayerId);
+        StartCoroutine(LoadShoppingAfterRoundDelay());
+    }
+
+    private IEnumerator LoadShoppingAfterRoundDelay()
+    {
+        if (roundTransitionDelay > 0f)
+            yield return new WaitForSeconds(roundTransitionDelay);
+
         SceneManager.LoadScene(IronTideGameState.ShoppingSceneName);
+    }
+
+    private void DisableCombatInput()
+    {
+        foreach (Ship ship in ships)
+        {
+            if (ship != null && ship.turnPlayerController != null)
+                ship.turnPlayerController.SetMyTurn(false);
+        }
     }
 
     private void HandleTurnStarted(int playerId)
@@ -1285,14 +1355,14 @@ public class TestDay1PlayUI : MonoBehaviour
         if (card.SlotType == BasicModuleType.Weapon)
         {
             string damage = GetCardDamageRangeLabel(card);
-            return $"Damage {damage}\nDice {dice} | Bonus {card.ModifierLabel} | {economy}";
+            return $"Damage {damage}\nDice {dice} | Base {card.ModifierLabel}\n{card.ModifierRulesSummary} | {economy}";
         }
 
         if (card.SlotType == BasicModuleType.Armor)
-            return $"Armor {card.ModifierLabel}\nEach active module adds +10 HP | {economy}";
+            return $"Armor {card.ModifierLabel}\n{card.ModifierRulesSummary}\nEach active module adds +10 HP | {economy}";
 
         string tileWord = Mathf.Abs(card.BaseModifier) == 1 ? "tile" : "tiles";
-        return $"Movement {card.ModifierLabel} {tileWord}\nMove roll {dice} + engine bonus | {economy}";
+        return $"Movement {card.ModifierLabel} {tileWord}\n{card.ModifierRulesSummary}\nMove roll {dice} + engine bonus | {economy}";
     }
 
     private static string GetCardDamageRangeLabel(IronTideModuleCardEntry card)
@@ -1328,10 +1398,10 @@ public class TestDay1PlayUI : MonoBehaviour
         {
             int targetCount = ship.shipWeapon.ReachableTargetsDamageModifiers.Count;
             string targetText = targetCount == 1 ? "1 target" : $"{targetCount} targets";
-            return $"Choose target | {targetText}";
+            return $"Choose target, then roll | {targetText}";
         }
 
-        return "Press A when a target is in range.";
+        return "Press A, choose target, then roll.";
     }
 
     private static string FormatInfoLine(string label, string value, string valueColor)
@@ -1438,20 +1508,6 @@ public class TestDay1PlayUI : MonoBehaviour
         return fallbackPlayerId;
     }
 
-    private static Image CreatePlayerIcon(RectTransform parent, int playerId)
-    {
-        RectTransform iconRoot = CreatePanel("Player Icon", parent, new Color(1f, 1f, 1f, 0.2f));
-        var layout = iconRoot.gameObject.AddComponent<LayoutElement>();
-        layout.preferredWidth = 18f;
-        layout.preferredHeight = 18f;
-        layout.flexibleWidth = 0f;
-
-        Image icon = iconRoot.GetComponent<Image>();
-        icon.preserveAspect = true;
-        RefreshPlayerIcon(icon, playerId);
-        return icon;
-    }
-
     // Rebuild UI 
     public void RebuildUI()
     {
@@ -1489,18 +1545,6 @@ public class TestDay1PlayUI : MonoBehaviour
         BuildModuleTooltip(transform);
 
         RefreshAllModulePanels();
-    }
-
-    private static void RefreshPlayerIcon(Image icon, int playerId)
-    {
-        if (icon == null)
-            return;
-
-        Sprite playerIcon = IronTideGameState.GetPlayerIcon(playerId);
-        icon.sprite = playerIcon;
-        icon.color = playerIcon != null
-            ? Color.white
-            : IronTideGameState.GetPlayerColor(playerId, GoldColor);
     }
 
     private sealed class HudSprites
@@ -1706,7 +1750,6 @@ public class TestDay1PlayUI : MonoBehaviour
     {
         public Ship Ship;
         public TextMeshProUGUI Title;
-        public Image Icon;
         public RectTransform HpFill;
         public List<RectTransform> HpDividers;
         public TextMeshProUGUI HpText;
