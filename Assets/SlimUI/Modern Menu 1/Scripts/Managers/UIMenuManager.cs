@@ -163,22 +163,15 @@ namespace SlimUI.ModernMenu{
 		}
 
 		void DisablePanels(){
-			PanelControls.SetActive(false);
-			PanelVideo.SetActive(false);
+			
 			PanelGame.SetActive(false);
 			PanelKeyBindings.SetActive(false);
 
 			lineGame.SetActive(false);
 			lineControls.SetActive(false);
-			lineVideo.SetActive(false);
-			lineKeyBindings.SetActive(false);
+		
 
-			PanelMovement.SetActive(false);
-			lineMovement.SetActive(false);
-			PanelCombat.SetActive(false);
-			lineCombat.SetActive(false);
-			PanelGeneral.SetActive(false);
-			lineGeneral.SetActive(false);
+			
 		}
 
 		public void GamePanel(){
@@ -187,45 +180,20 @@ namespace SlimUI.ModernMenu{
 			lineGame.SetActive(true);
 		}
 
-		public void VideoPanel(){
-			DisablePanels();
-			PanelVideo.SetActive(true);
-			lineVideo.SetActive(true);
-		}
+		
 
-		public void ControlsPanel(){
-			DisablePanels();
-			PanelControls.SetActive(true);
-			lineControls.SetActive(true);
-		}
 
 		public void KeyBindingsPanel(){
 			DisablePanels();
-			MovementPanel();
 			PanelKeyBindings.SetActive(true);
-			lineKeyBindings.SetActive(true);
+			//lineKeyBindings.SetActive(true);
 		}
 
-		public void MovementPanel(){
-			DisablePanels();
-			PanelKeyBindings.SetActive(true);
-			PanelMovement.SetActive(true);
-			lineMovement.SetActive(true);
-		}
+		
 
-		public void CombatPanel(){
-			DisablePanels();
-			PanelKeyBindings.SetActive(true);
-			PanelCombat.SetActive(true);
-			lineCombat.SetActive(true);
-		}
+		
 
-		public void GeneralPanel(){
-			DisablePanels();
-			PanelKeyBindings.SetActive(true);
-			PanelGeneral.SetActive(true);
-			lineGeneral.SetActive(true);
-		}
+		
 
 		public void PlayHover(){
 			hoverSound.Play();
