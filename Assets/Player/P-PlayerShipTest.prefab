@@ -233,7 +233,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShipWeapon
   ship: {fileID: 7127912349904892570}
-  bulletObject: {fileID: 0}
+  shortRangeProjectilePrefab: {fileID: 1500739246873259539, guid: 53a935d018ca1ba4db0fcff54eb143f2, type: 3}
+  midRangeProjectilePrefab: {fileID: 9183557630575375500, guid: f38fcbc0402054e44a4232d9be74a563, type: 3}
+  longRangeProjectilePrefab: {fileID: 6249711041762233562, guid: 114a60cb6c8e8cc4194fba73a15d8932, type: 3}
 --- !u!114 &8871323467545354834
 MonoBehaviour:
   m_ObjectHideFlags: 0

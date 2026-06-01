@@ -1,6 +1,7 @@
 ﻿using NueGames.NueDeck.Scripts.Managers;
 using UnityEngine;
 
+[ExecuteAlways]
 public class GenerateMap : MonoBehaviour
 {
     [Header("Map")]
@@ -20,10 +21,10 @@ public class GenerateMap : MonoBehaviour
 
     Vector2Int[] allSpawnPoints = new Vector2Int[]
     {
-        new Vector2Int(-5, 10),
-        new Vector2Int(5, -10),
-        new Vector2Int(10, 0),
-        new Vector2Int(-10, 0)
+        new Vector2Int(-7, 15),
+        new Vector2Int(7, -15),
+        new Vector2Int(15, 0),
+        new Vector2Int(-15, 0)
     };
 
     void Start()
