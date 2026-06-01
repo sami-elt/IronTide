@@ -88,6 +88,7 @@ public class DiceVisualManager : MonoBehaviour
             return;
 
         activeDice = Instantiate(prefab, GetDisplayPosition(null), Quaternion.Euler(GetFaceRotation(sides, result)));
+        DisableRaycastColliders(activeDice);
     }
 
     public void QueueRoll(int sides, int result, Transform source = null)
@@ -140,6 +141,7 @@ public class DiceVisualManager : MonoBehaviour
 
         Vector3 position = GetDisplayPosition(source);
         activeDice = Instantiate(prefab, position, Quaternion.identity);
+        DisableRaycastColliders(activeDice);
 
         float timer = rollDuration;
         while (timer > 0f && activeDice != null)
@@ -165,6 +167,16 @@ public class DiceVisualManager : MonoBehaviour
             return source.position + fallbackOffset;
 
         return transform.position;
+    }
+
+    private static void DisableRaycastColliders(GameObject dice)
+    {
+        if (dice == null)
+            return;
+
+        Collider[] colliders = dice.GetComponentsInChildren<Collider>(true);
+        for (int i = 0; i < colliders.Length; i++)
+            colliders[i].enabled = false;
     }
 
     private GameObject GetPrefab(int sides)

@@ -403,6 +403,12 @@ public class ShipInfo : MonoBehaviour
             maxDamage += 3;
         }
 
+        if (HasActivePassive(EngineModule, "sea_begger_epic"))
+        {
+            minDamage += 1;
+            maxDamage += 1;
+        }
+
         minDamage = Mathf.Max(0, minDamage);
         maxDamage = Mathf.Max(minDamage, maxDamage);
     }

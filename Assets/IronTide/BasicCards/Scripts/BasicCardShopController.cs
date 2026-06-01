@@ -79,10 +79,10 @@ namespace IronTide.BasicCards
         private Button _advancedRerollButton;
         private Button _nextPlayerButton;
         private Button _startGameButton;
+        private TMP_Text _startGameButtonLabel;
         private TMP_Text _goldText;
         private TMP_Text _statusText;
         private TMP_Text _activePlayerText;
-        private Image _activePlayerIcon;
         private RectTransform _ownedPreviewRoot;
         private RectTransform _ownedPreviewCardRoot;
         private IronTideModuleCardView _ownedPreviewCard;
@@ -371,16 +371,8 @@ namespace IronTide.BasicCards
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -42f), new Vector2(700f, 50f),
                 TextAlignmentOptions.Center, new Color(0.96f, 0.89f, 0.73f, 1f), headingFont);
 
-            RectTransform activePlayerIcon = CreatePanel("ActivePlayerIcon", body, new Vector2(38f, 38f),
-                Color.white);
-            activePlayerIcon.anchorMin = new Vector2(0f, 1f);
-            activePlayerIcon.anchorMax = new Vector2(0f, 1f);
-            activePlayerIcon.anchoredPosition = new Vector2(52f, -54f);
-            _activePlayerIcon = activePlayerIcon.GetComponent<Image>();
-            _activePlayerIcon.preserveAspect = true;
-
             _activePlayerText = CreateLabel("ActivePlayer", body, string.Empty, 24, FontStyles.Bold,
-                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(102f, -54f), new Vector2(360f, 44f),
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(52f, -54f), new Vector2(410f, 44f),
                 TextAlignmentOptions.Left, new Color(0.96f, 0.89f, 0.73f, 1f), headingFont);
 
             _basicRerollButton = CreateButton(body, "RerollBasicButton", $"Reroll T1 ({basicRerollCost}g)",
@@ -421,10 +413,11 @@ namespace IronTide.BasicCards
                 NextPlayer, new Color(0.25f, 0.43f, 0.62f, 0.96f), headingFont,
                 buttonSprite, buttonHoverSprite, buttonPressedSprite);
 
-            _startGameButton = CreateButton(body, "StartGameButton", "Start Game 2",
+            _startGameButton = CreateButton(body, "StartGameButton", GetStartNextRoundLabel(),
                 new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-340f, 48f), new Vector2(250f, 60f),
-                FinishShoppingAndLoadGame2, new Color(0.62f, 0.29f, 0.20f, 0.96f), headingFont,
+                FinishShoppingAndLoadNextRound, new Color(0.62f, 0.29f, 0.20f, 0.96f), headingFont,
                 buttonSprite, buttonHoverSprite, buttonPressedSprite);
+            _startGameButtonLabel = _startGameButton.GetComponentInChildren<TMP_Text>();
 
             BuildShopRow(body, _advancedSlots, visibleHighPowerCards, highPowerRowY);
             BuildShopRow(body, _basicSlots, visibleShopCards, shopRowY);
@@ -556,10 +549,9 @@ namespace IronTide.BasicCards
                 _activePlayerText.color = IronTideGameState.GetPlayerColor(_activePlayerIndex,
                     new Color(0.96f, 0.89f, 0.73f, 1f));
             }
-            RefreshActivePlayerIcon();
 
             if (_activePlayerIndex >= playerCount - 1)
-                SetStatus($"{playerName} shopping. Press Start Game 2 when done.");
+                SetStatus($"{playerName} shopping. Press {GetStartNextRoundLabel()} when done.");
             else
                 SetStatus($"{playerName} shopping. Buy, sell, or press Next Player.");
 
@@ -601,7 +593,7 @@ namespace IronTide.BasicCards
             int playerCount = IronTideGameState.Players.Count;
             if (_activePlayerIndex >= playerCount - 1)
             {
-                SetStatus("All players are ready. Press Start Game 2.");
+                SetStatus($"All players are ready. Press {GetStartNextRoundLabel()}.");
                 UpdateRerollButton();
                 return;
             }
@@ -611,7 +603,7 @@ namespace IronTide.BasicCards
             ShowActivePlayer();
         }
 
-        private void FinishShoppingAndLoadGame2()
+        private void FinishShoppingAndLoadNextRound()
         {
             SaveCurrentPlayerLoadout();
             IronTideGameState.CompleteShopping();
@@ -974,18 +966,6 @@ namespace IronTide.BasicCards
             UpdateRerollButton();
         }
 
-        private void RefreshActivePlayerIcon()
-        {
-            if (_activePlayerIcon == null)
-                return;
-
-            Sprite playerIcon = IronTideGameState.GetPlayerIcon(_activePlayerIndex);
-            _activePlayerIcon.sprite = playerIcon;
-            _activePlayerIcon.color = playerIcon != null
-                ? Color.white
-                : IronTideGameState.GetPlayerColor(_activePlayerIndex, new Color(0.96f, 0.89f, 0.73f, 1f));
-        }
-
         private void UpdateRerollButton()
         {
             if (_basicRerollButton != null)
@@ -1004,6 +984,14 @@ namespace IronTide.BasicCards
 
             if (_startGameButton != null)
                 _startGameButton.interactable = playerCount > 0 && _activePlayerIndex >= playerCount - 1;
+
+            if (_startGameButtonLabel != null)
+                _startGameButtonLabel.text = GetStartNextRoundLabel();
+        }
+
+        private static string GetStartNextRoundLabel()
+        {
+            return $"Start Round {IronTideGameState.NextCombatRound}";
         }
 
         private static IronTideModuleCardEntry DrawRandomCard(List<IronTideModuleCardEntry> cards)

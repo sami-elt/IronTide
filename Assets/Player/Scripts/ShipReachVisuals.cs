@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.InputSystem.HID;
 
 public class ShipReachVisuals : MonoBehaviour
 {
@@ -108,7 +107,8 @@ public class ShipReachVisuals : MonoBehaviour
         {
             GameObject visual = Instantiate(reachableVisual, positions[i], Quaternion.identity);
             TMP_Text visualText = visual.GetComponentInChildren<TMP_Text>();
-            visualText.text = moveCosts[positions[i]].ToString();
+            if (visualText != null)
+                visualText.text = moveCosts[positions[i]].ToString();
             visuals.Add(visual);
             visualsDrawn = true;
         }
@@ -129,10 +129,8 @@ public class ShipReachVisuals : MonoBehaviour
 
             TMP_Text visualText = visual.GetComponentInChildren<TMP_Text>();
             int damageModifier = damageModifiers[positions[i]];
-            if (damageModifier == 0)
-                visualText.text = "";
-            else
-                visualText.text = $"{damageModifier}";
+            if (visualText != null)
+                visualText.text = damageModifier == 0 ? "" : $"{damageModifier}";
 
             visuals.Add(visual);
             visualsDrawn = true;
@@ -147,51 +145,15 @@ public class ShipReachVisuals : MonoBehaviour
 
         Dictionary<Vector3, int> damageModifiers = ship.shipWeapon.ReachableTargetsDamageModifiers;
         positions = new(damageModifiers.Keys);
-        IronTide.BasicCards.IronTideModuleCardEntry weapon = ship.shipInfo.WeaponModule;
-        int dSides = weapon.DiceSides;
-        int dCount = weapon.DiceCount;
 
         for (int i = 0; i < positions.Count; i++)
         {
             GameObject visual = Instantiate(enemyVisual, positions[i], Quaternion.identity);
 
             TMP_Text visualText = visual.GetComponentInChildren<TMP_Text>();
-            int damageModifier = damageModifiers[positions[i]];
-
-            //string modifierString;
-
-            //if (damageModifier > 0)
-            //    modifierString = $"+{damageModifier}";
-            //else if (damageModifier < 0)
-            //    modifierString = $"-{damageModifier}";
-            //else
-            //    modifierString = "";
-
-            //if (weapon.DiceCount == 1)
-            //{
-            //    visualText.text = $"D{dSides}{modifierString}";
-            //}
-            //else
-            //{
-            //    visualText.text = $"{weapon.DiceCount}xD{dSides}{modifierString}";
-            //}
-
-            int lowestDmg = dCount + damageModifier;
-            string lowBound;
-            if (lowestDmg < 0)
-                lowBound = "0";
-            else
-                lowBound = lowestDmg.ToString();
-
-            int highestDmg = dCount * dSides + damageModifier;
-            string highBound;
-            if (highestDmg < 0)
-                highBound = "0";
-            else
-                highBound = highestDmg.ToString();
-
+            if (visualText != null &&
+                ship.shipWeapon.TryGetPredictedDamageRange(positions[i], out int lowBound, out int highBound))
                 visualText.text = $"{lowBound}-{highBound}";
-
 
             visuals.Add(visual);
             visualsDrawn = true;

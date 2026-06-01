@@ -3,22 +3,21 @@ using UnityEngine.SceneManagement;
 
 public class PauseManager : MonoBehaviour
 {
-    
+    [SerializeField] private KeyCode pauseKey = KeyCode.Escape;
     public GameObject pauseCanvas;
 
     bool paused;
 
     void Start()
     {
-        Debug.Log("PauseManager startad");
-        pauseCanvas.SetActive(false);
+        if (pauseCanvas != null)
+            pauseCanvas.SetActive(false);
     }
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (Input.GetKeyDown(pauseKey))
         {
-            Debug.Log("Esc funkar");
             if (paused)
             {
                 ResumeGame();
@@ -32,7 +31,8 @@ public class PauseManager : MonoBehaviour
 
     public void PauseGame()
     {
-        pauseCanvas.SetActive(true);
+        if (pauseCanvas != null)
+            pauseCanvas.SetActive(true);
         Time.timeScale = 0f;
         paused = true;
     }
@@ -41,11 +41,12 @@ public class PauseManager : MonoBehaviour
 
     public void ResumeGame()
     {
-        pauseCanvas.SetActive(false);
+        if (pauseCanvas != null)
+            pauseCanvas.SetActive(false);
         Time.timeScale = 1f;
         paused = false;
     }
-    // load main scen
+
     public void QuitToMenu()
     {
         Time.timeScale = 1f;

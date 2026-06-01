@@ -11,8 +11,6 @@ public class ShipWeapon : MonoBehaviour
     [SerializeField] private GameObject longRangeProjectilePrefab;
 
     private ShipInfo target;
-    private ShipInfo.WeaponDamageRoll preparedDamageRoll;
-    private bool hasPreparedDamageRoll;
 
     public bool HasAttacked { get; private set; }
 
@@ -32,16 +30,10 @@ public class ShipWeapon : MonoBehaviour
     public void EnterAttackPhase()
     {
         HasAttacked = false;
-        preparedDamageRoll = default;
-        hasPreparedDamageRoll = false;
         FindReachableTargets();
 
         if (ReachableTargetsDamageModifiers.Count > 0)
-        {
-            preparedDamageRoll = ship.shipInfo.RollWeaponDamage(null, true);
-            hasPreparedDamageRoll = true;
-            TurnManager.BroadcastAttackPrepared(preparedDamageRoll.DiceTotal, preparedDamageRoll.BonusTotal);
-        }
+            TurnManager.BroadcastTurnFeedback("Choose a target, then roll attack.");
     }
 
     public void Attack(int damageModifier)
@@ -49,11 +41,8 @@ public class ShipWeapon : MonoBehaviour
         if (target == null)
             return;
 
-        FireProjectile(target);
-
         ShipInfo primaryTarget = target;
         Vector3 selectedTargetPosition = primaryTarget.transform.position;
-        ReachableTargetsDistance.TryGetValue(selectedTargetPosition, out int distance);
         ReachableTargetsCoverModifiers.TryGetValue(selectedTargetPosition, out int coverModifier);
         ReachableTargetsLineTypes.TryGetValue(selectedTargetPosition, out IronTideAttackLineType lineType);
 
@@ -61,9 +50,8 @@ public class ShipWeapon : MonoBehaviour
         ResolvePreAttackPassives(primaryTarget);
         ApplyBoardingPassives(primaryTarget);
 
-        ShipInfo.WeaponDamageRoll damageRoll = hasPreparedDamageRoll
-            ? preparedDamageRoll
-            : ship.shipInfo.RollWeaponDamage(null, true);
+        ShipInfo.WeaponDamageRoll damageRoll = ship.shipInfo.RollWeaponDamage(primaryTarget, true);
+        FireProjectile(primaryTarget);
 
         ShipInfo.DamageResult result = ResolveDamage(primaryTarget, damageRoll, damageModifier, coverModifier, lineType);
         ApplyPostDamagePassives(primaryTarget, result, targetWasSunk);
@@ -73,7 +61,6 @@ public class ShipWeapon : MonoBehaviour
         if (TurnManager.Instance != null)
             TurnManager.Instance.RecordShipAttack(ship.shipInfo, primaryTarget);
 
-        hasPreparedDamageRoll = false;
         target = null;
         HasAttacked = true;
     }
@@ -281,13 +268,11 @@ public class ShipWeapon : MonoBehaviour
 
         if (prefab == null)
         {
-            Debug.Log("PREFAB ÄR NULL");
+            Debug.LogWarning("Projectile prefab is missing.");
             return;
         }
 
         Vector3 spawnPos = transform.position + transform.forward * 0.6f;
-        Debug.Log($"Spawnar på position: {spawnPos}");
-
         GameObject newBullet = Instantiate(prefab, spawnPos, Quaternion.identity);
 
         if (newBullet.TryGetComponent(out WeaponProjectiles proj))
@@ -295,6 +280,9 @@ public class ShipWeapon : MonoBehaviour
     }
     private GameObject GetProjectilePrefab()
     {
+        if (ship == null || ship.shipInfo == null)
+            return midRangeProjectilePrefab;
+
         if (ship.shipInfo.WeaponModule == null)
             return midRangeProjectilePrefab;
 
@@ -315,14 +303,16 @@ public class ShipWeapon : MonoBehaviour
     private void ShowFloatingText(Vector3 targetPosition, string message, Color color)
     {
         GameObject popupObject = new GameObject("Damage Popup");
-        popupObject.transform.position = targetPosition + Vector3.up * 1.8f;
+        popupObject.transform.position = targetPosition + Vector3.up * 2.55f;
 
         TextMeshPro text = popupObject.AddComponent<TextMeshPro>();
         text.text = message;
-        text.fontSize = 4f;
+        text.fontSize = 7f;
         text.alignment = TextAlignmentOptions.Center;
         text.color = color;
         text.fontStyle = FontStyles.Bold;
+        text.outlineWidth = 0.22f;
+        text.outlineColor = new Color32(20, 0, 0, 255);
 
         if (Camera.main != null)
             popupObject.transform.rotation = Quaternion.LookRotation(popupObject.transform.position - Camera.main.transform.position);
@@ -343,6 +333,34 @@ public class ShipWeapon : MonoBehaviour
 
         if (targetObject.TryGetComponent<Ship>(out var selectedShip) && selectedShip.shipInfo != null)
             target = selectedShip.shipInfo;
+    }
+
+    public bool TryGetPredictedDamageRange(Vector3 targetPosition, out int minDamage, out int maxDamage)
+    {
+        minDamage = 0;
+        maxDamage = 0;
+
+        if (ship == null || ship.shipInfo == null)
+            return false;
+
+        if (!ReachableTargetsDamageModifiers.TryGetValue(targetPosition, out int damageModifier))
+            return false;
+
+        ShipInfo targetInfo = FindShipAtPosition(targetPosition);
+        ReachableTargetsCoverModifiers.TryGetValue(targetPosition, out int coverModifier);
+        ReachableTargetsLineTypes.TryGetValue(targetPosition, out IronTideAttackLineType lineType);
+
+        ship.shipInfo.GetWeaponDamageRange(out int baseMinDamage, out int baseMaxDamage);
+        int contextModifier = ship.shipInfo.GetAttackContextDamageModifier(targetInfo, lineType);
+        int totalModifier = damageModifier + contextModifier;
+        int rangeModifier = damageModifier - coverModifier;
+        int damageReduction = targetInfo != null
+            ? targetInfo.GetDamageReduction(ship.shipInfo, rangeModifier, coverModifier, lineType)
+            : 0;
+
+        minDamage = Mathf.Max(0, baseMinDamage + totalModifier - damageReduction);
+        maxDamage = Mathf.Max(minDamage, baseMaxDamage + totalModifier - damageReduction);
+        return true;
     }
 
     public void FindReachableTargets()

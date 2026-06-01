@@ -75,11 +75,6 @@ public class TurnManager : MonoBehaviour
             return;
         }
 
-        Debug.Log(
-    "Before turn active: " +
-    Players[CurrentPlayerIndex].gameObject.activeSelf
-);
-
         // Reset all players
         for (int i = 0; i < Players.Length; i++)
         {
@@ -161,7 +156,8 @@ public class TurnManager : MonoBehaviour
         if (Players == null || Players.Length == 0 || CurrentPlayerIndex < 0 || CurrentPlayerIndex >= Players.Length)
             return null;
 
-        return Players[CurrentPlayerIndex];
+        TurnPlayerController player = Players[CurrentPlayerIndex];
+        return IsPlayerPlayable(player) ? player : null;
     }
 
     //From dice roll
@@ -169,7 +165,11 @@ public class TurnManager : MonoBehaviour
     {
         movementRoll = value;
 
-        int motorBonus = GetCurrentPlayer().motorBonus;
+        TurnPlayerController currentPlayer = GetCurrentPlayer();
+        if (currentPlayer == null)
+            return;
+
+        int motorBonus = currentPlayer.motorBonus;
         totalMovement = movementRoll + motorBonus;
         OnMovementRolled?.Invoke(totalMovement);
 
@@ -181,7 +181,11 @@ public class TurnManager : MonoBehaviour
     {
         attackRoll = value;
 
-        int weaponBonus = GetCurrentPlayer().weaponBonus;
+        TurnPlayerController currentPlayer = GetCurrentPlayer();
+        if (currentPlayer == null)
+            return;
+
+        int weaponBonus = currentPlayer.weaponBonus;
         totalAttack = attackRoll + weaponBonus;
         OnAttackRolled?.Invoke(totalAttack);
 
@@ -363,14 +367,7 @@ public class TurnManager : MonoBehaviour
             int candidateIndex = (index + i) % Players.Length;
             TurnPlayerController candidate = Players[candidateIndex];
 
-            if (candidate == null)
-                continue;
-
-            if (!candidate.gameObject.activeInHierarchy)
-                continue;
-
-            ShipInfo info = candidate.GetComponent<ShipInfo>();
-            if (info != null && info.Sunk)
+            if (!IsPlayerPlayable(candidate))
                 continue;
 
             return candidateIndex;
@@ -402,6 +399,18 @@ public class TurnManager : MonoBehaviour
     {
         return info != null &&
             (info.WeaponModule != null || info.ArmorModule != null || info.EngineModule != null);
+    }
+
+    private bool IsPlayerPlayable(TurnPlayerController player)
+    {
+        if (player == null)
+            return false;
+
+        ShipInfo info = player.GetComponent<ShipInfo>();
+        if (info == null)
+            return player.gameObject.activeSelf;
+
+        return !info.Sunk && HasAnyModuleAssigned(info);
     }
 
 }

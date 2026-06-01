@@ -6,13 +6,24 @@ public class PlayerSetupUI : MonoBehaviour
     public PlayerSlotUI[] slots;
     public PlayerSlotUI currentSlot;
     public GameObject colorPickerPanel;
-    public GameObject iconPickerPanel;
+
+    private static readonly Color[] PlayerPalette =
+    {
+        Color.red,
+        Color.blue,
+        Color.green,
+        Color.yellow,
+        Color.grey
+    };
 
     public void ShowPlayers(int count)
     {
         for (int i = 0; i < slots.Length; i++)
         {
-            slots[i].gameObject.SetActive(i < count);
+            bool active = i < count;
+            slots[i].gameObject.SetActive(active);
+            if (active)
+                slots[i].SetColorSilently(GetDefaultColor(i));
         }
     }
 
@@ -24,39 +35,27 @@ public class PlayerSetupUI : MonoBehaviour
 
     public void SelectRed()
     {
-        currentSlot.SetColor(Color.red);
-        colorPickerPanel.SetActive(false);
+        TrySelectColor(Color.red);
     }
 
     public void SelectBlue()
     {
-        currentSlot.SetColor(Color.blue);
-        colorPickerPanel.SetActive(false);
+        TrySelectColor(Color.blue);
     }
 
     public void SelectGreen()
     {
-        currentSlot.SetColor(Color.green);
-        colorPickerPanel.SetActive(false);
+        TrySelectColor(Color.green);
     }
 
     public void SelectYellow()
     {
-        currentSlot.SetColor(Color.yellow);
-        colorPickerPanel.SetActive(false);
+        TrySelectColor(Color.yellow);
     }
     public void SelectGrey()
     {
-        currentSlot.SetColor(Color.grey);
-        colorPickerPanel.SetActive(false);
+        TrySelectColor(Color.grey);
     }
-
-    public void SelectIcon(Sprite icon)
-    {
-        currentSlot.SetIcon(icon);
-        iconPickerPanel.SetActive(false);
-    }
-
 
     public List<PlayerData> GetPlayers()
     {
@@ -83,14 +82,14 @@ public class PlayerSetupUI : MonoBehaviour
 
             Debug.Log(
                 "Player: " + players[i].playerName +
-                " | Color: " + players[i].playerColor +
-                " | Icon: " + (players[i].icon != null ? players[i].icon.name : "NULL")
+                " | Color: " + players[i].playerColor
             );
         }
     }
   
     public void StartGame()
     {
+        EnsureUniqueActiveColors();
         List<PlayerData> players = GetPlayers();
         if (GameManagerT.Instance != null)
             GameManagerT.Instance.SetPlayers(players);
@@ -98,5 +97,114 @@ public class PlayerSetupUI : MonoBehaviour
         IronTideGameState.ResetAll();
         IronTideGameState.ConfigurePlayers(players);
         SceneManager.LoadScene(IronTideGameState.CombatSceneName);
+    }
+
+    private void TrySelectColor(Color color)
+    {
+        if (currentSlot == null)
+            return;
+
+        if (IsColorUsedByAnotherActiveSlot(color, currentSlot))
+        {
+            Debug.LogWarning("Color already selected by another player.");
+            if (colorPickerPanel != null)
+                colorPickerPanel.SetActive(false);
+            return;
+        }
+
+        currentSlot.SetColor(color);
+        if (colorPickerPanel != null)
+            colorPickerPanel.SetActive(false);
+    }
+
+    private void EnsureUniqueActiveColors()
+    {
+        if (slots == null)
+            return;
+
+        var usedColors = new List<Color>();
+        for (int i = 0; i < slots.Length; i++)
+        {
+            PlayerSlotUI slot = slots[i];
+            if (slot == null || !slot.IsActive)
+                continue;
+
+            Color selectedColor = FindPaletteColor(slot.CurrentColor, out bool matchesPalette)
+                ? slot.CurrentColor
+                : GetDefaultColor(i);
+
+            if (!matchesPalette || ContainsColor(usedColors, selectedColor))
+                selectedColor = GetFirstAvailableColor(usedColors);
+
+            slot.SetColorSilently(selectedColor);
+            usedColors.Add(selectedColor);
+        }
+    }
+
+    private bool IsColorUsedByAnotherActiveSlot(Color color, PlayerSlotUI owner)
+    {
+        if (slots == null)
+            return false;
+
+        for (int i = 0; i < slots.Length; i++)
+        {
+            PlayerSlotUI slot = slots[i];
+            if (slot == null || slot == owner || !slot.IsActive)
+                continue;
+
+            if (ColorsMatch(slot.CurrentColor, color))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool FindPaletteColor(Color color, out bool matchesPalette)
+    {
+        matchesPalette = false;
+        for (int i = 0; i < PlayerPalette.Length; i++)
+        {
+            if (!ColorsMatch(color, PlayerPalette[i]))
+                continue;
+
+            matchesPalette = true;
+            return true;
+        }
+
+        return false;
+    }
+
+    private static Color GetFirstAvailableColor(List<Color> usedColors)
+    {
+        for (int i = 0; i < PlayerPalette.Length; i++)
+        {
+            if (!ContainsColor(usedColors, PlayerPalette[i]))
+                return PlayerPalette[i];
+        }
+
+        return Color.white;
+    }
+
+    private static Color GetDefaultColor(int index)
+    {
+        return PlayerPalette[Mathf.Abs(index) % PlayerPalette.Length];
+    }
+
+    private static bool ContainsColor(List<Color> colors, Color color)
+    {
+        for (int i = 0; i < colors.Count; i++)
+        {
+            if (ColorsMatch(colors[i], color))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool ColorsMatch(Color a, Color b)
+    {
+        return Mathf.Abs(a.r - b.r) <= 0.01f &&
+            Mathf.Abs(a.g - b.g) <= 0.01f &&
+            Mathf.Abs(a.b - b.b) <= 0.01f;
     }
 }

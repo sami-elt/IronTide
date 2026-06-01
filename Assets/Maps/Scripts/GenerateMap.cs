@@ -1,7 +1,5 @@
-﻿using NueGames.NueDeck.Scripts.Managers;
 using UnityEngine;
 
-[ExecuteAlways]
 public class GenerateMap : MonoBehaviour
 {
     [Header("Map")]
@@ -32,7 +30,6 @@ public class GenerateMap : MonoBehaviour
         GenerateFullMap();
     }
 
-    // 🔥 KÖR ALLT I RÄTT ORDNING
     public void GenerateFullMap()
     {
         SetupSpawnPoints();
@@ -40,7 +37,6 @@ public class GenerateMap : MonoBehaviour
         Generate();
         SpawnPlayerStarts();
 
-        // 🔥 säg till andra system att map är klar
         FindFirstObjectByType<GameManagerTest>()?.OnMapReady();
     }
 
@@ -100,7 +96,8 @@ public class GenerateMap : MonoBehaviour
                         prefab = rockPrefab;
                 }
 
-                Instantiate(prefab, pos, Quaternion.identity, transform);
+                if (prefab != null)
+                    Instantiate(prefab, pos, Quaternion.identity, transform);
             }
         }
     }
@@ -147,7 +144,8 @@ public class GenerateMap : MonoBehaviour
             Vector3 pos = HexToWorld(coord.x, coord.y);
             spawnWorldPositions[i] = pos;
 
-            Instantiate(spawnPointPrefab, pos + Vector3.up * 0.2f, Quaternion.identity, transform);
+            if (spawnPointPrefab != null)
+                Instantiate(spawnPointPrefab, pos + Vector3.up * 0.2f, Quaternion.identity, transform);
         }
     }
 

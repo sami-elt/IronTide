@@ -8,7 +8,7 @@ public class TurnPlayerController : MonoBehaviour
     private bool isMyTurn = false;
     public bool IsMyTurn { get => isMyTurn; }
     public bool IsResolvingAttackResult => finishAttackAfterDelayRoutine != null;
-    public bool CanReceiveTurnInput => isMyTurn && !IsResolvingAttackResult && IsCameraReadyForTurnInput();
+    public bool CanReceiveTurnInput => isMyTurn && !IsSunk() && !IsResolvingAttackResult && IsCameraReadyForTurnInput();
 
     [Header("card bonuses")]
     public int motorBonus;
@@ -25,6 +25,12 @@ public class TurnPlayerController : MonoBehaviour
 
     public void SetMyTurn(bool value)
     {
+        if (value && IsSunk())
+        {
+            isMyTurn = false;
+            return;
+        }
+
         isMyTurn = value;
 
         Debug.Log("Player" + playerID + " is my turn: " + isMyTurn);
@@ -55,6 +61,8 @@ public class TurnPlayerController : MonoBehaviour
 
     private void OnDisable()
     {
+        isMyTurn = false;
+
         if (finishAttackAfterDelayRoutine != null)
         {
             StopCoroutine(finishAttackAfterDelayRoutine);
@@ -320,8 +328,8 @@ public class TurnPlayerController : MonoBehaviour
 
         TurnManager.Instance.StartAttackPhase();
         TurnManager.BroadcastTurnFeedback(targetCount == 1
-            ? "Attack ready: 1 enemy in range."
-            : "Attack ready: " + targetCount + " enemies in range.");
+            ? "Choose a target, then roll attack. 1 enemy in range."
+            : "Choose a target, then roll attack. " + targetCount + " enemies in range.");
         return true;
     }
 
@@ -371,5 +379,11 @@ public class TurnPlayerController : MonoBehaviour
             cameraController = FindFirstObjectByType<CameraController>();
 
         return cameraController == null || cameraController.IsReadyForTurnInput(transform);
+    }
+
+    private bool IsSunk()
+    {
+        ShipInfo info = GetComponent<ShipInfo>();
+        return info != null && info.Sunk;
     }
 }

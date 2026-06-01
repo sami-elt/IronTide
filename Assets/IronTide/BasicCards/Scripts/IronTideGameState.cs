@@ -9,7 +9,6 @@ public sealed class IronTidePlayerState
     public int Gold;
     public string DisplayName;
     public Color PlayerColor;
-    public Sprite PlayerIcon;
     public string WeaponModuleId;
     public string ArmorModuleId;
     public string EngineModuleId;
@@ -20,6 +19,7 @@ public static class IronTideGameState
     public const int BaseShopGold = 10;
     public const int FirstKillBonus = 5;
     public const int WinnerBonus = 10;
+    public const int MaxCombatRounds = 3;
     public const string ShoppingSceneName = "Shopping Phase";
     public const string CombatSceneName = "GameMap";
 
@@ -36,8 +36,11 @@ public static class IronTideGameState
     public static int CombatRound { get; private set; } = 1;
     public static int FirstKillOwnerId { get; private set; } = -1;
     public static int RoundWinnerId { get; private set; } = -1;
+    public static int MatchWinnerId { get; private set; } = -1;
     public static bool HasSavedLoadouts { get; private set; }
-    public static bool ShouldOpenShopAfterCombat => CombatRound == 1;
+    public static bool IsFinalCombatRound => CombatRound >= MaxCombatRounds;
+    public static int NextCombatRound => Math.Min(CombatRound + 1, MaxCombatRounds);
+    public static bool ShouldOpenShopAfterCombat => CombatRound < MaxCombatRounds;
 
     public static void EnsurePlayers(int playerCount)
     {
@@ -81,7 +84,6 @@ public static class IronTideGameState
             player.PlayerColor = setup != null && setup.playerColor.a > 0f
                 ? setup.playerColor
                 : GetDefaultPlayerColor(i);
-            player.PlayerIcon = setup != null ? setup.icon : null;
         }
     }
 
@@ -105,12 +107,6 @@ public static class IronTideGameState
     {
         IronTidePlayerState player = GetPlayer(playerId);
         return player != null && player.PlayerColor.a > 0f ? player.PlayerColor : fallback;
-    }
-
-    public static Sprite GetPlayerIcon(int playerId)
-    {
-        IronTidePlayerState player = GetPlayer(playerId);
-        return player != null ? player.PlayerIcon : null;
     }
 
     public static void RecordFirstKill(int killerPlayerId)
@@ -201,9 +197,17 @@ public static class IronTideGameState
 
     public static void CompleteShopping()
     {
-        CombatRound = 2;
+        if (CombatRound < MaxCombatRounds)
+            CombatRound++;
+
         FirstKillOwnerId = -1;
         RoundWinnerId = -1;
+    }
+
+    public static void CompleteFinalRound(int winnerPlayerId)
+    {
+        RoundWinnerId = winnerPlayerId;
+        MatchWinnerId = winnerPlayerId;
     }
 
     public static void ResetAll()
@@ -212,6 +216,7 @@ public static class IronTideGameState
         CombatRound = 1;
         FirstKillOwnerId = -1;
         RoundWinnerId = -1;
+        MatchWinnerId = -1;
         HasSavedLoadouts = false;
     }
 
