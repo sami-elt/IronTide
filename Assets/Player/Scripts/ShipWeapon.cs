@@ -63,6 +63,8 @@ public class ShipWeapon : MonoBehaviour
 
         target = null;
         HasAttacked = true;
+
+        ship.shipAudioPlayer.PlayAttack();
     }
 
     private ShipInfo.DamageResult ResolveDamage(ShipInfo damageTarget, ShipInfo.WeaponDamageRoll damageRoll,
