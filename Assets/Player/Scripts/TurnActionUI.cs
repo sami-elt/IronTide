@@ -7,12 +7,8 @@ public class TurnActionUI : MonoBehaviour
     [SerializeField] private Button attackButton;
     [SerializeField] private Button endTurnButton;
 
-    private DiceManager diceManager;
-
     private void Start()
     {
-        diceManager = FindFirstObjectByType<DiceManager>();
-
         moveButton.onClick.AddListener(OnMoveClicked);
         attackButton.onClick.AddListener(OnAttackClicked);
         endTurnButton.onClick.AddListener(OnEndTurnClicked);
@@ -34,23 +30,15 @@ public class TurnActionUI : MonoBehaviour
         moveButton.interactable = (phase == TurnPhase.RollMovement || phase == TurnPhase.RollAttack)
                                    && movesUsed < 2;
 
-        //uppdatera så man kan attackera direkt
         attackButton.interactable = (phase == TurnPhase.RollAttack || phase == TurnPhase.RollMovement)
                                     && !TurnManager.Instance.HasAttackedThisTurn;
 
-        //välja att kunna avsluta sin runda direkt
         endTurnButton.interactable = phase == TurnPhase.RollMovement
                              || phase == TurnPhase.RollAttack
                              || phase == TurnPhase.Move;
-
-        //endTurnButton.interactable = phase == TurnPhase.RollMovement
-        //                             || phase == TurnPhase.RollAttack;
     }
 
-
-
     private bool isProcessing = false;
-
 
     private void OnMoveClicked()
     {
@@ -60,33 +48,10 @@ public class TurnActionUI : MonoBehaviour
         TurnPlayerController activePlayer = GetActivePlayer();
         if (activePlayer == null) { isProcessing = false; return; }
 
-        ShipMovement movement = activePlayer.GetComponent<ShipMovement>();
-
-        // Visa rätt tärning när spelaren väljer att röra sig
-        int sides = movement.Ship.shipInfo.GetEngineDice();
-        diceManager.ActiveDice(sides);
-
-        if (!movement.isWaitingForDice)
-            activePlayer.OnMoveButtonClicked();
-
-        diceManager.RollForMovement(movement);
+        activePlayer.OnMoveButtonClicked();
 
         Invoke(nameof(ResetProcessing), 0.5f);
     }
-    //private void OnAttackClicked()
-    //{
-    //    if (isProcessing) return;
-    //    isProcessing = true;
-
-    //    TurnPlayerController activePlayer = GetActivePlayer();
-    //    if (activePlayer == null) { isProcessing = false; return; }
-
-    //    // Gå direkt till attack utan att räkna som rörelse
-    //    TurnManager.Instance.GoToAttack();
-    //    activePlayer.OnAttackButtonClicked();
-
-    //    Invoke(nameof(ResetProcessing), 0.5f);
-    //}
 
     private void OnAttackClicked()
     {
@@ -101,6 +66,7 @@ public class TurnActionUI : MonoBehaviour
 
         Invoke(nameof(ResetProcessing), 0.5f);
     }
+
     private void OnEndTurnClicked()
     {
         if (isProcessing) return;
@@ -110,23 +76,19 @@ public class TurnActionUI : MonoBehaviour
 
         if (phase == TurnPhase.Move)
         {
-            // Avsluta rörelsen, gå till RollAttack
             TurnManager.Instance.FinishMoveAction();
         }
         else if (phase == TurnPhase.RollAttack)
         {
-            // Avsluta helt
             TurnManager.Instance.FinishAttackAction();
         }
         else if (phase == TurnPhase.RollMovement)
         {
-            // Skippa rörelse, gå till attack
             TurnManager.Instance.GoToAttack();
         }
 
         Invoke(nameof(ResetProcessing), 0.5f);
     }
-
 
     private void ResetProcessing()
     {
@@ -143,7 +105,7 @@ public class TurnActionUI : MonoBehaviour
     private TurnPlayerController GetActivePlayer()
     {
         TurnPlayerController[] allPlayers = FindObjectsByType<TurnPlayerController>(FindObjectsSortMode.None);
-        foreach (var player in allPlayers)
+        foreach (TurnPlayerController player in allPlayers)
             if (player.IsMyTurn) return player;
         return null;
     }

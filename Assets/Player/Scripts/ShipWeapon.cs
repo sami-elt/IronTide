@@ -50,6 +50,8 @@ public class ShipWeapon : MonoBehaviour
         ResolvePreAttackPassives(primaryTarget);
         ApplyBoardingPassives(primaryTarget);
 
+
+        //SÄTTA PÅ ELLER STÄNGA AV TÄRNING FÖR COMBAT : TRUE FÖR PÅ - FALSE FÖR OFF
         ShipInfo.WeaponDamageRoll damageRoll = ship.shipInfo.RollWeaponDamage(primaryTarget, true);
         FireProjectile(primaryTarget);
 
@@ -63,8 +65,6 @@ public class ShipWeapon : MonoBehaviour
 
         target = null;
         HasAttacked = true;
-
-        ship.shipAudioPlayer.PlayAttack();
     }
 
     private ShipInfo.DamageResult ResolveDamage(ShipInfo damageTarget, ShipInfo.WeaponDamageRoll damageRoll,

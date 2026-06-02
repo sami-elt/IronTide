@@ -9,7 +9,6 @@ public class Ship : MonoBehaviour
     public ShipWeapon shipWeapon;
     public ShipController shipController;
     public TurnPlayerController turnPlayerController;
-    public ShipAudioPlayer shipAudioPlayer;
 
     private void Awake()
     {
@@ -18,7 +17,6 @@ public class Ship : MonoBehaviour
         shipWeapon = GetComponent<ShipWeapon>();
         shipController = GetComponent<ShipController>();
         turnPlayerController = GetComponent<TurnPlayerController>();
-        shipAudioPlayer = GetComponent<ShipAudioPlayer>();
 
         if (enabled == false)
         {
