@@ -92374,7 +92374,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManagerTest
   map: {fileID: 990012156}
-  playerPrefab: {fileID: 7099184315036665023, guid: 7a53c1c662f5ba441ad205d112c38d13, type: 3}
+  playerPrefab: {fileID: 693427283123718945, guid: 7a53c1c662f5ba441ad205d112c38d13, type: 3}
   moduleLibrary: {fileID: 11400000, guid: 6fb3f4a7b1c44f1eb1a85d08dcf79050, type: 2}
 --- !u!1 &1173446664
 GameObject:
