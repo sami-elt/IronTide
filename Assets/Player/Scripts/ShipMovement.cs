@@ -6,7 +6,7 @@ public class ShipMovement : MonoBehaviour
     [SerializeField] private Ship ship;
     public Ship Ship => ship;
 
-    [SerializeField] private float speed = 20;
+    [SerializeField] private float speed = 16;
     private float moveIncrement;
 
     private float moveProgress;
@@ -85,7 +85,6 @@ public class ShipMovement : MonoBehaviour
 
         startPosition = transform.position;
         endPosition = targetPosition;
-
         moveIncrement = speed / Vector3.Distance(endPosition, startPosition);
         avaliableTileDistance -= tilesMoved;
 

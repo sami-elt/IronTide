@@ -86,7 +86,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShipMovement
   ship: {fileID: 7127912349904892570}
-  speed: 20
+  speed: 16
   avaliableTileDistance: 0
 --- !u!114 &8411895074840926514
 MonoBehaviour:

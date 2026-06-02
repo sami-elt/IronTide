@@ -7787,21 +7787,22 @@ MonoBehaviour:
   topDownYaw: 0
   topDownFieldOfView: 48
   topDownMapPadding: 1.12
+  topDownBottomViewportReserve: 0.22
   zoomSpeed: 10
   minZoom: 10
   maxZoom: 40
   minFieldOfView: 35
   maxFieldOfView: 65
-  moveSpeed: 20
+  moveSpeed: 12
   mapLimit: 100
-  followSmoothTime: 0.55
-  rotationSmoothSpeed: 5
+  followSmoothTime: 1.15
+  rotationSmoothSpeed: 2.75
   orthographicFocusHeight: 0.8
   useSafeTurnTransitions: 1
   turnTransitionPitch: 72
   turnTransitionDistanceMultiplier: 1.15
-  turnTransitionDuration: 1.45
-  turnTransitionSpeedMultiplier: 1.15
+  turnTransitionDuration: 2.35
+  turnTransitionSpeedMultiplier: 0.75
   focusReadyDistance: 0.18
   focusReadyAngle: 1
   cameraOffset: {x: 0, y: 0, z: -10}
@@ -42871,6 +42872,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7bf523f30949ae5468f4d3b43e0b4519, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PauseManager
+  pauseKey: 27
   pauseCanvas: {fileID: 1601761445}
 --- !u!1 &529047198
 GameObject:
@@ -63709,6 +63711,7 @@ MonoBehaviour:
   ships: []
   moduleLibrary: {fileID: 11400000, guid: 6fb3f4a7b1c44f1eb1a85d08dcf79050, type: 2}
   autoDealStarterModules: 1
+  roundTransitionDelay: 1.1
 --- !u!114 &801241387
 MonoBehaviour:
   m_ObjectHideFlags: 0
