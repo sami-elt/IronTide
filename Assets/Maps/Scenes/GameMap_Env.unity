@@ -92143,6 +92143,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1173244628}
   - component: {fileID: 1173244629}
+  - component: {fileID: 1173244630}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -92180,6 +92181,30 @@ MonoBehaviour:
   map: {fileID: 990012156}
   playerPrefab: {fileID: 7099184315036665023, guid: 7a53c1c662f5ba441ad205d112c38d13, type: 3}
   moduleLibrary: {fileID: 11400000, guid: 6fb3f4a7b1c44f1eb1a85d08dcf79050, type: 2}
+--- !u!114 &1173244630
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1173244626}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1f44fdaf9724473ba18c47af8e2bf09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DiceVisualManager
+  d4Prefab: {fileID: 7775085678995213916, guid: ecebc87658eb28348a15e027ac7e537a, type: 3}
+  d6Prefab: {fileID: 7480525804154556286, guid: cc2e145304a0b1e44aa1567da9218354, type: 3}
+  d8Prefab: {fileID: 7983296447845562172, guid: 3be1f75480e55f5438560d52f18275e8, type: 3}
+  d10Prefab: {fileID: 4590406764288392387, guid: 862888be00d6b15438cd0d6595438365, type: 3}
+  d12Prefab: {fileID: 4934466853842467482, guid: 3290e97a1eff5ba4888afb360c9c56c2, type: 3}
+  d20Prefab: {fileID: 0}
+  displayPoint: {fileID: 0}
+  rollDuration: 0.6
+  visibleDuration: 0.9
+  spinSpeed: 720
+  groupedDiceSpacing: 1.5
+  fallbackOffset: {x: 0, y: 2.2, z: 0}
 --- !u!1 &1173446664
 GameObject:
   m_ObjectHideFlags: 0

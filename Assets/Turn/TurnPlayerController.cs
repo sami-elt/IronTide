@@ -1,5 +1,4 @@
 using System.Collections;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class TurnPlayerController : MonoBehaviour
@@ -13,10 +12,9 @@ public class TurnPlayerController : MonoBehaviour
     [Header("card bonuses")]
     public int motorBonus;
     public int weaponBonus;
-    public int armorBonus; //finns inget än
+    public int armorBonus;
 
     [Header("references")]
-    [SerializeField] private DiceComponent diceComponent;
     [SerializeField] private ShipMovement shipMovement;
     [SerializeField] private ShipWeapon shipWeapon;
     [SerializeField] private float attackResultPause = 1.26f;
@@ -43,20 +41,11 @@ public class TurnPlayerController : MonoBehaviour
 
     private void Awake()
     {
-        if (diceComponent == null)
-        {
-            diceComponent = GetComponent<DiceComponent>();
-        }
-
         if (shipMovement == null)
-        {
             shipMovement = GetComponent<ShipMovement>();
-        }
 
         if (shipWeapon == null)
-        {
             shipWeapon = GetComponent<ShipWeapon>();
-        }
     }
 
     private void OnDisable()
@@ -72,23 +61,17 @@ public class TurnPlayerController : MonoBehaviour
 
     void Update()
     {
-       
         if (!CanReceiveTurnInput)
-        {
             return;
-        }
+
         HandleMovePhaseAutoProgress();
         HandleAttackPhaseAutoProgress();
 
         if (Input.GetKeyDown(KeyCode.M))
-        {
             HandleMoveKey();
-        }
 
         if (Input.GetKeyDown(KeyCode.A))
-        {
             HandleAttackKey();
-        }
     }
 
     public void RequestMoveAction()
@@ -137,51 +120,10 @@ public class TurnPlayerController : MonoBehaviour
         }
     }
 
-    private void HandlePhase()
-    {
-        var phase = TurnManager.Instance.currentPhase;
-
-        switch (phase)
-        {
-            case TurnPhase.RollMovement:
-                RollMovementPhase();
-                break;
-
-            case TurnPhase.Move:
-                TryFinishMovePhase();
-                break;
-
-            case TurnPhase.RollAttack:
-                RollAttackPhase();
-                break;
-
-            case TurnPhase.Attack:
-                FinishAttackPhase();
-                break;
-        }
-    }
-
     private void RollMovementPhase()
     {
-        //if (diceComponent == null)
-        //{
-        //    Debug.Log("diceComponent missing on player " + playerID);
-        //    return;
-        //}
-
-        //int moveRoll = diceComponent.RollD6();
-        //TurnManager.Instance.SetMovementRoll(moveRoll);
-
-        //int totalMove = TurnManager.Instance.GetTotalMovement();
-
         if (shipMovement != null)
-        {
-            //shipMovement.avaliableTileDistance = totalMove;
             shipMovement.EnterMovePhase(true);
-        }
-
-        //Debug.Log("Player " + playerID + " rolled a " + moveRoll + " for movement.");
-        //Debug.Log("Player " + playerID + " has a total movement of " + totalMove + ".");
 
         TurnManager.Instance.NextPhase();
     }
@@ -196,37 +138,19 @@ public class TurnPlayerController : MonoBehaviour
         }
 
         if (shipMovement.Moving)
-        {
             shipMovement.SkipMove();
-        }
 
-        //if (shipMovement.avaliableTileDistance <= 0)
-        //{
-            Debug.Log("Player " + playerID + " finished moving.");
-            TurnManager.Instance.FinishMoveAction();
-        //}
-        //else
-        //{
-        //    Debug.Log("Player " + playerID + " still has " + shipMovement.avaliableTileDistance + " movement left.");
-        //}
+        Debug.Log("Player " + playerID + " finished moving.");
+        TurnManager.Instance.FinishMoveAction();
     }
 
     private void HandleMovePhaseAutoProgress()
     {
         if (TurnManager.Instance.currentPhase != TurnPhase.Move)
-        {
             return;
-        }
 
-        if (shipMovement == null)
-        {
+        if (shipMovement == null || shipMovement.Moving)
             return;
-        }
-
-        if (shipMovement.Moving)
-        {
-            return;
-        }
 
         if (shipMovement.avaliableTileDistance <= 0)
         {
@@ -237,45 +161,26 @@ public class TurnPlayerController : MonoBehaviour
 
     private void RollAttackPhase()
     {
-        //if (diceComponent == null)
-        //{
-        //    Debug.Log("diceComponent missing on player " + playerID);
-        //    return;
-        //}
-
-        //int attackRoll = diceComponent.RollD6();
-        //TurnManager.Instance.SetAttackRoll(attackRoll);
-
-        //Debug.Log("Player " + playerID + " rolled a " + attackRoll + " for attack.");
-        //Debug.Log("Player " + playerID + " has a total attack of " + TurnManager.Instance.GetTotalAttack() + ".");
-
         TryStartAttackAction();
     }
 
     private void FinishAttackPhase()
     {
-        // For now, just end the turn after rolling attack
-
         Debug.Log("Player " + playerID + " finished attacking.");
         TurnManager.Instance.NextPhase();
     }
 
     private void HandleMoveKey()
     {
-        var phase = TurnManager.Instance.currentPhase;
-
-        switch (phase)
+        switch (TurnManager.Instance.currentPhase)
         {
             case TurnPhase.RollMovement:
+            case TurnPhase.RollAttack:
                 StartMoveAction();
                 break;
 
             case TurnPhase.Move:
                 TryFinishMovePhase();
-                break;
-
-            case TurnPhase.RollAttack:
-                StartMoveAction();
                 break;
         }
     }
@@ -284,9 +189,7 @@ public class TurnPlayerController : MonoBehaviour
     {
         if (TurnManager.Instance.currentPhase != TurnPhase.RollAttack &&
             TurnManager.Instance.currentPhase != TurnPhase.RollMovement)
-        {
             return;
-        }
 
         if (shipWeapon == null)
         {
@@ -336,22 +239,13 @@ public class TurnPlayerController : MonoBehaviour
     private void HandleAttackPhaseAutoProgress()
     {
         if (TurnManager.Instance.currentPhase != TurnPhase.Attack)
-        {
             return;
-        }
 
         if (shipWeapon == null)
-        {
             return;
-        }
 
-        if (shipWeapon.HasAttacked)
-        {
-            if (finishAttackAfterDelayRoutine == null)
-                finishAttackAfterDelayRoutine = StartCoroutine(FinishAttackAfterResultPause());
-        }
-
-       
+        if (shipWeapon.HasAttacked && finishAttackAfterDelayRoutine == null)
+            finishAttackAfterDelayRoutine = StartCoroutine(FinishAttackAfterResultPause());
     }
 
     private IEnumerator FinishAttackAfterResultPause()

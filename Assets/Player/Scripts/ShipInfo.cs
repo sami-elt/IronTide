@@ -53,16 +53,9 @@ public class ShipInfo : MonoBehaviour
     public bool Sunk { get; private set; }
 
     private readonly int defaultWeaponRange = 4;
-
-    private DiceComponent dice;
     private bool cheatDeathUsed;
 
-    private void Awake()
-    {
-        dice = GetComponent<DiceComponent>();
-        if (dice == null)
-            dice = gameObject.AddComponent<DiceComponent>();//If diceComponent is made into a singleton this will not be needed
-    }
+    // Ingen Awake beh�vs l�ngre � DiceComponent �r borttagen
 
     //Reset void to be called at start of round
     public void ResetValues()
@@ -202,7 +195,8 @@ public class ShipInfo : MonoBehaviour
         }
         else
         {
-            int destroyRoll = dice.RollD4();
+            // Anv�nder DiceVisualManager.RollD4() ist�llet f�r DiceComponent
+            int destroyRoll = DiceVisualManager.RollD4();
             bool moduleDestroyed = false;
 
             if (destroyRoll == 1 && weaponEnabled)
@@ -438,11 +432,12 @@ public class ShipInfo : MonoBehaviour
         {
             for (int i = 0; i < WeaponModule.DiceCount; i++)
             {
-                int roll = dice.RollDice(WeaponModule.DiceSides);
-                ShowDiceRollIfNeeded(showDiceVisual, WeaponModule.DiceSides, roll);
+                int roll = DiceVisualManager.RollDice(WeaponModule.DiceSides);
                 rolls.Add(roll);
                 diceDamage += roll;
             }
+
+            ShowDiceRollsIfNeeded(showDiceVisual, WeaponModule.DiceSides, rolls);
 
             if (weaponEnabled)
                 bonusDamage += GetExtraWeaponDiceDamage(rolls, showDiceVisual);
@@ -452,7 +447,7 @@ public class ShipInfo : MonoBehaviour
         }
         else
         {
-            int roll = dice.RollD6();
+            int roll = DiceVisualManager.RollD6();
             ShowDiceRollIfNeeded(showDiceVisual, 6, roll);
             rolls.Add(roll);
             diceDamage = roll;
@@ -560,20 +555,13 @@ public class ShipInfo : MonoBehaviour
 
     public int GetMoveDistance(bool addBonus, bool showDiceVisual)
     {
-        DiceComponent myDice = dice != null ? dice : GetComponent<DiceComponent>();
-        if (myDice == null)
-        {
-            Debug.LogWarning($"{gameObject.name} is missing a DiceComponent.");
-            return 0;
-        }
-
         if (HasActivePassive(ArmorModule, "king_of_the_sea_legendary"))
         {
             Debug.Log($"{gameObject.name} movement fixed to 2 by King of the Sea.");
             return 2;
         }
 
-        int value = RollEngineDice(myDice, showDiceVisual);
+        int value = RollEngineDice(showDiceVisual);
         bool secondMove = TurnManager.Instance != null && TurnManager.Instance.MovesUsedthisTurn > 0;
         bool canUseBonus = addBonus && (!secondMove || HasActivePassive(EngineModule, "momentum_t1"));
 
@@ -731,7 +719,7 @@ public class ShipInfo : MonoBehaviour
 
     public int RollPassiveD6()
     {
-        return dice != null ? dice.RollD6() : Random.Range(1, 7);
+        return DiceVisualManager.RollD6();
     }
 
     private bool ShouldCheatDeath(int damageTaken)
@@ -739,23 +727,25 @@ public class ShipInfo : MonoBehaviour
         return damageTaken > 0 && Health <= 0 && HasActivePassive(ArmorModule, "cheat_death_t2") && !cheatDeathUsed;
     }
 
-    private int RollEngineDice(DiceComponent myDice, bool showDiceVisual)
+    private int RollEngineDice(bool showDiceVisual)
     {
         if (EngineModule == null || !EngineModule.IsValid || !EngineModule.UsesDice)
         {
-            int roll = myDice.RollD6();
+            int roll = DiceVisualManager.RollD6();
             ShowDiceRollIfNeeded(showDiceVisual, 6, roll);
             return roll;
         }
 
         int total = 0;
+        var rolls = new List<int>();
         for (int i = 0; i < EngineModule.DiceCount; i++)
         {
-            int roll = myDice.RollDice(EngineModule.DiceSides);
-            ShowDiceRollIfNeeded(showDiceVisual, EngineModule.DiceSides, roll);
+            int roll = DiceVisualManager.RollDice(EngineModule.DiceSides);
+            rolls.Add(roll);
             total += roll;
         }
 
+        ShowDiceRollsIfNeeded(showDiceVisual, EngineModule.DiceSides, rolls);
         return total;
     }
 
@@ -777,19 +767,25 @@ public class ShipInfo : MonoBehaviour
 
             if (allSame)
             {
-                int roll = dice.RollDice(WeaponModule.DiceSides);
+                int roll = DiceVisualManager.RollDice(WeaponModule.DiceSides);
                 ShowDiceRollIfNeeded(showDiceVisual, WeaponModule.DiceSides, roll);
-                extraDamage += roll;
+                return roll;
             }
         }
 
-        return extraDamage;
+        return 0;
     }
 
     private void ShowDiceRollIfNeeded(bool showDiceVisual, int sides, int result)
     {
         if (showDiceVisual)
             DiceVisualManager.ShowRoll(sides, result, transform);
+    }
+
+    private void ShowDiceRollsIfNeeded(bool showDiceVisual, int sides, List<int> results)
+    {
+        if (showDiceVisual)
+            DiceVisualManager.ShowRolls(sides, results, transform);
     }
 
     private static bool DidRollCrit(List<int> rolls, int diceSides, int fallbackRoll)
@@ -941,5 +937,4 @@ public class ShipInfo : MonoBehaviour
     {
         return Health;
     }
-
 }
