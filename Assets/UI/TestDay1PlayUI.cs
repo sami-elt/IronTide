@@ -30,9 +30,12 @@ public class TestDay1PlayUI : MonoBehaviour
     private readonly List<RectTransform> hudHpDividers = new List<RectTransform>();
     private RectTransform combatHudRoot;
     private RectTransform rosterPanelRoot;
+    private RectTransform victoryOverlayRoot;
     private TextMeshProUGUI hudPlayerTitle;
+    private RectTransform hudHpLostFill;
     private RectTransform hudHpFill;
     private TextMeshProUGUI hudHpText;
+    private TextMeshProUGUI hudRound;
     private TextMeshProUGUI hudPhase;
     private TextMeshProUGUI hudMovement;
     private TextMeshProUGUI hudAttack;
@@ -54,6 +57,8 @@ public class TestDay1PlayUI : MonoBehaviour
     private TextMeshProUGUI tooltipMeta;
     private TextMeshProUGUI tooltipStats;
     private TextMeshProUGUI tooltipPassive;
+    private TextMeshProUGUI victoryTitle;
+    private TextMeshProUGUI victorySubtitle;
     private ModuleSlotHud hoveredSlot;
 
     private bool gameOver;
@@ -73,16 +78,19 @@ public class TestDay1PlayUI : MonoBehaviour
     private static readonly Color WeaponModuleColor = new Color(0.30f, 0.11f, 0.08f, 0.98f);
     private static readonly Color ArmorModuleColor = new Color(0.10f, 0.17f, 0.25f, 0.98f);
     private static readonly Color EngineModuleColor = new Color(0.08f, 0.24f, 0.22f, 0.98f);
-    private static readonly Color BrokenModuleColor = new Color(0.31f, 0.07f, 0.07f, 0.98f);
+    private static readonly Color ActiveModuleColor = new Color(0.055f, 0.060f, 0.065f, 0.98f);
+    private static readonly Color BrokenModuleColor = new Color(0.46f, 0.06f, 0.045f, 0.82f);
     private static readonly Color EmptyModuleColor = new Color(0.07f, 0.09f, 0.12f, 0.86f);
     private static readonly Color TooltipColor = new Color(0.04f, 0.06f, 0.09f, 0.98f);
     private static readonly Color HpHealthyColor = new Color(0.22f, 0.78f, 0.32f, 1f);
+    private static readonly Color HpLostColor = new Color(0.30f, 0.34f, 0.34f, 1f);
     private static readonly Color HpDividerColor = new Color(0.98f, 0.96f, 0.86f, 0.95f);
     private const string GoldHex = "#F2C84B";
     private const string MoveHex = "#89D8FF";
     private const string TextHex = "#EAF2FF";
     private const string MutedHex = "#A6B6C9";
     private const string DangerHex = "#F05C45";
+    private const string MainMenuSceneName = "GameDemo";
 
     private void Awake()
     {
@@ -178,8 +186,6 @@ public class TestDay1PlayUI : MonoBehaviour
         if (ShouldRestoreSavedModules())
         {
             RestoreSavedModules();
-            if (IronTideGameState.ShouldOpenShopAfterCombat && autoDealStarterModules)
-                DealStarterWeapons();
             return;
         }
 
@@ -371,6 +377,7 @@ public class TestDay1PlayUI : MonoBehaviour
         hudSprites = HudSprites.Create();
         BuildCombatHud(transform);
         BuildModuleTooltip(transform);
+        BuildVictoryOverlay(transform);
     }
 
     private void BuildCombatHud(Transform parent)
@@ -430,20 +437,22 @@ public class TestDay1PlayUI : MonoBehaviour
 
     private void BuildStatusPanel(RectTransform parent)
     {
-        RectTransform statusPanel = CreateHudSection("Turn Status Panel", parent, 320f);
-        statusPanel.GetComponent<VerticalLayoutGroup>().spacing = 3;
-        CreateSectionTitle(statusPanel, "TURN");
+        RectTransform statusPanel = CreateHudSection("Turn Status Panel", parent, 390f);
+        statusPanel.GetComponent<VerticalLayoutGroup>().spacing = 5;
 
-        hudPlayerTitle = CreateLabel(statusPanel, "Current Player", 15f, FontStyles.Bold, GoldColor, TextAlignmentOptions.Left);
-        hudPlayerTitle.gameObject.AddComponent<LayoutElement>().preferredHeight = 16f;
+        hudPlayerTitle = null;
+
+        hudRound = CreateLabel(statusPanel, "ROUND -", 18f, FontStyles.Bold, GoldColor, TextAlignmentOptions.Left);
+        hudRound.characterSpacing = 1.5f;
+        hudRound.gameObject.AddComponent<LayoutElement>().preferredHeight = 24f;
 
         BuildCurrentShipHpBar(statusPanel);
 
-        hudPhase = CreateInfoLine(statusPanel, "Phase: -");
-        hudMovement = CreateInfoLine(statusPanel, "Move: -");
+        hudPhase = null;
+        hudMovement = null;
         hudAttack = null;
         hudArmor = null;
-        hudLastAction = CreateInfoLine(statusPanel, lastActionText);
+        hudLastAction = null;
 
         RectTransform buttonRow = CreatePanel("Turn Buttons", statusPanel, new Color(0f, 0f, 0f, 0f));
         buttonRow.gameObject.AddComponent<LayoutElement>().preferredHeight = 28f;
@@ -496,22 +505,81 @@ public class TestDay1PlayUI : MonoBehaviour
         rosterPanelRoot.gameObject.SetActive(false);
     }
 
+    private void BuildVictoryOverlay(Transform parent)
+    {
+        victoryOverlayRoot = CreatePanel("Victory Overlay", parent, new Color(0f, 0f, 0f, 0.68f));
+        Stretch(victoryOverlayRoot);
+        victoryOverlayRoot.GetComponent<Image>().raycastTarget = true;
+
+        RectTransform modal = CreatePanel("Victory Modal", victoryOverlayRoot, new Color(0.045f, 0.047f, 0.050f, 0.98f));
+        modal.anchorMin = new Vector2(0.5f, 0.5f);
+        modal.anchorMax = new Vector2(0.5f, 0.5f);
+        modal.pivot = new Vector2(0.5f, 0.5f);
+        modal.sizeDelta = new Vector2(560f, 320f);
+        modal.anchoredPosition = Vector2.zero;
+        ApplyHudImage(modal, hudSprites.Panel, Image.Type.Sliced, new Color(0.055f, 0.052f, 0.050f, 0.98f), true);
+        AddHudOutline(modal, new Color(0f, 0f, 0f, 0.80f), new Vector2(3f, -3f));
+
+        var layout = modal.gameObject.AddComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(30, 30, 28, 26);
+        layout.spacing = 14;
+        layout.childControlWidth = true;
+        layout.childControlHeight = true;
+        layout.childForceExpandWidth = true;
+        layout.childForceExpandHeight = false;
+        layout.childAlignment = TextAnchor.MiddleCenter;
+
+        TextMeshProUGUI label = CreateLabel(modal, "MATCH COMPLETE", 18f, FontStyles.Bold, GoldColor, TextAlignmentOptions.Center);
+        label.characterSpacing = 2f;
+        label.gameObject.AddComponent<LayoutElement>().preferredHeight = 26f;
+
+        victoryTitle = CreateLabel(modal, "Player won the match!", 42f, FontStyles.Bold, Color.white, TextAlignmentOptions.Center);
+        victoryTitle.fontSizeMin = 24f;
+        victoryTitle.gameObject.AddComponent<LayoutElement>().preferredHeight = 78f;
+
+        victorySubtitle = CreateLabel(modal, "Final round complete", 18f, FontStyles.Bold, MutedTextColor, TextAlignmentOptions.Center);
+        victorySubtitle.gameObject.AddComponent<LayoutElement>().preferredHeight = 34f;
+
+        RectTransform buttonRow = CreatePanel("Victory Button Row", modal, new Color(0f, 0f, 0f, 0f));
+        buttonRow.gameObject.AddComponent<LayoutElement>().preferredHeight = 54f;
+
+        var buttonLayout = buttonRow.gameObject.AddComponent<HorizontalLayoutGroup>();
+        buttonLayout.spacing = 12;
+        buttonLayout.childControlWidth = true;
+        buttonLayout.childControlHeight = true;
+        buttonLayout.childForceExpandWidth = true;
+        buttonLayout.childForceExpandHeight = true;
+
+        CreateSmallHudButton(buttonRow, "RESET MATCH", new Color(0.20f, 0.35f, 0.43f, 1f), ResetMatch);
+        CreateSmallHudButton(buttonRow, "MAIN MENU", new Color(0.54f, 0.20f, 0.13f, 1f), ReturnToMainMenu);
+
+        victoryOverlayRoot.gameObject.SetActive(false);
+    }
+
     private void BuildCurrentShipHpBar(RectTransform parent)
     {
         RectTransform hpRoot = CreatePanel("Current Ship HP Bar", parent, new Color(0.025f, 0.070f, 0.035f, 1f));
-        hpRoot.gameObject.AddComponent<LayoutElement>().preferredHeight = 12f;
-        AddHudOutline(hpRoot, new Color(0f, 0f, 0f, 0.45f), new Vector2(1f, -1f));
+        hpRoot.gameObject.AddComponent<LayoutElement>().preferredHeight = 28f;
+        AddHudOutline(hpRoot, new Color(0f, 0f, 0f, 0.72f), new Vector2(2f, -2f));
+
+        hudHpLostFill = CreatePanel("Current Ship HP Lost Fill", hpRoot, HpLostColor);
+        hudHpLostFill.anchorMin = Vector2.zero;
+        hudHpLostFill.anchorMax = Vector2.one;
+        hudHpLostFill.offsetMin = new Vector2(3f, 3f);
+        hudHpLostFill.offsetMax = new Vector2(-3f, -3f);
+        hudHpLostFill.gameObject.SetActive(false);
 
         hudHpFill = CreatePanel("Current Ship HP Fill", hpRoot, HpHealthyColor);
         hudHpFill.anchorMin = Vector2.zero;
         hudHpFill.anchorMax = Vector2.one;
-        hudHpFill.offsetMin = Vector2.zero;
-        hudHpFill.offsetMax = Vector2.zero;
+        hudHpFill.offsetMin = new Vector2(3f, 3f);
+        hudHpFill.offsetMax = new Vector2(-3f, -3f);
 
         hudHpDividers.Clear();
         hudHpDividers.AddRange(BuildHpDividers(hpRoot, 2));
 
-        hudHpText = CreateLabel(hpRoot, "HP 0/0", 9f, FontStyles.Bold, Color.white, TextAlignmentOptions.Center);
+        hudHpText = CreateLabel(hpRoot, "HP 0/0", 16f, FontStyles.Bold, Color.white, TextAlignmentOptions.MidlineLeft);
+        hudHpText.margin = new Vector4(12f, 0f, 12f, 0f);
         Stretch(hudHpText.rectTransform);
     }
 
@@ -613,7 +681,7 @@ public class TestDay1PlayUI : MonoBehaviour
         RectTransform root = CreatePanel(label + " Card", parent, EmptyModuleColor);
         root.GetComponent<Image>().raycastTarget = true;
         ApplyHudImage(root, hudSprites.Card, Image.Type.Sliced, EmptyModuleColor, true);
-        AddHudOutline(root, new Color(0f, 0f, 0f, 0.58f), new Vector2(2f, -2f));
+        AddNeutralHudOutline(root, new Vector2(2f, -2f));
 
         LayoutElement slotLayout = root.gameObject.AddComponent<LayoutElement>();
         slotLayout.minWidth = 160f;
@@ -713,6 +781,13 @@ public class TestDay1PlayUI : MonoBehaviour
         hpLayout.preferredHeight = 28f;
         AddHudOutline(hpRoot, new Color(0f, 0f, 0f, 0.72f), new Vector2(2f, -2f));
 
+        RectTransform hpLostFill = CreatePanel("HP Lost Fill", hpRoot, HpLostColor);
+        hpLostFill.anchorMin = Vector2.zero;
+        hpLostFill.anchorMax = Vector2.one;
+        hpLostFill.offsetMin = new Vector2(3f, 3f);
+        hpLostFill.offsetMax = new Vector2(-3f, -3f);
+        hpLostFill.gameObject.SetActive(false);
+
         RectTransform hpFill = CreatePanel("HP Fill", hpRoot, HpHealthyColor);
         hpFill.anchorMin = Vector2.zero;
         hpFill.anchorMax = Vector2.one;
@@ -721,9 +796,10 @@ public class TestDay1PlayUI : MonoBehaviour
 
         List<RectTransform> hpDividers = BuildHpDividers(hpRoot, 2);
 
-        TextMeshProUGUI hpText = CreateLabel(hpRoot, "HP 10 / 10", 16f, FontStyles.Bold, Color.white, TextAlignmentOptions.Center);
+        TextMeshProUGUI hpText = CreateLabel(hpRoot, "HP 10 / 10", 16f, FontStyles.Bold, Color.white, TextAlignmentOptions.MidlineLeft);
         hpText.overflowMode = TextOverflowModes.Ellipsis;
         hpText.fontSizeMin = 10f;
+        hpText.margin = new Vector4(12f, 0f, 12f, 0f);
         Stretch(hpText.rectTransform);
 
         RectTransform cards = CreateModuleRow(panel);
@@ -732,6 +808,7 @@ public class TestDay1PlayUI : MonoBehaviour
         {
             Ship = ship,
             Title = title,
+            HpLostFill = hpLostFill,
             HpFill = hpFill,
             HpDividers = hpDividers,
             HpText = hpText,
@@ -768,7 +845,7 @@ public class TestDay1PlayUI : MonoBehaviour
         slotLayout.flexibleHeight = 0f;
         root.GetComponent<Image>().raycastTarget = true;
         ApplyHudImage(root, hudSprites.Card, Image.Type.Sliced, EmptyModuleColor, true);
-        AddHudOutline(root, new Color(0f, 0f, 0f, 0.46f), new Vector2(1f, -1f));
+        AddNeutralHudOutline(root, new Vector2(1f, -1f));
 
         var layout = root.gameObject.AddComponent<VerticalLayoutGroup>();
         layout.padding = new RectOffset(8, 8, 5, 5);
@@ -893,6 +970,8 @@ public class TestDay1PlayUI : MonoBehaviour
 
         if (hudPhase != null)
             hudPhase.SetText(FormatInfoLine("PHASE", GetPhaseLabel(), GoldHex));
+        if (hudRound != null)
+            hudRound.SetText($"ROUND {IronTideGameState.CombatRound} / {IronTideGameState.MaxCombatRounds}");
         if (hudMovement != null)
             hudMovement.SetText(FormatInfoLine("MOVE", $"{currentShip.shipMovement.avaliableTileDistance} tiles left", MoveHex));
         if (hudAttack != null)
@@ -1055,14 +1134,21 @@ public class TestDay1PlayUI : MonoBehaviour
             panel.Title.color = IronTideGameState.GetPlayerColor(playerId, GoldColor);
         }
 
-        float hpRatio = info.MaxHealth > 0 ? Mathf.Clamp01((float)info.Health / info.MaxHealth) : 0f;
+        int displayMaxHealth = GetRosterDisplayMaxHealth(info);
+        int displayHealth = Mathf.Clamp(info.Health, 0, displayMaxHealth);
+        float hpRatio = displayMaxHealth > 0 ? Mathf.Clamp01((float)displayHealth / displayMaxHealth) : 0f;
+        if (panel.HpLostFill != null)
+        {
+            bool showLostCapacity = GetEquippedModuleAmount(info) > 1 && displayHealth < displayMaxHealth;
+            panel.HpLostFill.gameObject.SetActive(showLostCapacity);
+        }
+
         panel.HpFill.anchorMax = new Vector2(hpRatio, 1f);
         panel.HpFill.offsetMin = new Vector2(3f, 3f);
         panel.HpFill.offsetMax = new Vector2(-3f, -3f);
         panel.HpFill.GetComponent<Image>().color = GetHpColor(hpRatio);
-        string playerName = IronTideGameState.GetPlayerDisplayName(playerId);
-        panel.HpText.SetText($"{playerName}  |  HP {info.Health} / {info.MaxHealth}");
-        RefreshHpDividers(panel, info.MaxHealth);
+        panel.HpText.SetText($"HP {displayHealth} / {displayMaxHealth}");
+        RefreshHpDividers(panel, displayMaxHealth);
 
         RefreshModuleSlot(panel.WeaponSlot, info.WeaponModule, info.WeaponEnabled);
         RefreshModuleSlot(panel.ArmorSlot, info.ArmorModule, info.ArmorEnabled);
@@ -1072,6 +1158,34 @@ public class TestDay1PlayUI : MonoBehaviour
     private void RefreshHpDividers(PlayerHudPanel panel, int maxHealth)
     {
         RefreshHpDividers(panel.HpDividers, maxHealth);
+    }
+
+    private static int GetRosterDisplayMaxHealth(ShipInfo info)
+    {
+        if (info == null)
+            return 0;
+
+        int equippedModules = GetEquippedModuleAmount(info);
+        if (equippedModules > 0)
+            return equippedModules * ShipInfo.HealthPerModule;
+
+        return Mathf.Max(0, info.MaxHealth);
+    }
+
+    private static int GetEquippedModuleAmount(ShipInfo info)
+    {
+        if (info == null)
+            return 0;
+
+        int amount = 0;
+        if (info.WeaponModule != null && info.WeaponModule.IsValid)
+            amount++;
+        if (info.ArmorModule != null && info.ArmorModule.IsValid)
+            amount++;
+        if (info.EngineModule != null && info.EngineModule.IsValid)
+            amount++;
+
+        return amount;
     }
 
     private void RefreshHpDividers(List<RectTransform> dividers, int maxHealth)
@@ -1101,12 +1215,22 @@ public class TestDay1PlayUI : MonoBehaviour
         if (info == null || hudHpFill == null || hudHpText == null)
             return;
 
-        float hpRatio = info.MaxHealth > 0 ? Mathf.Clamp01((float)info.Health / info.MaxHealth) : 0f;
+        int displayMaxHealth = GetRosterDisplayMaxHealth(info);
+        int displayHealth = Mathf.Clamp(info.Health, 0, displayMaxHealth);
+        float hpRatio = displayMaxHealth > 0 ? Mathf.Clamp01((float)displayHealth / displayMaxHealth) : 0f;
+        if (hudHpLostFill != null)
+        {
+            bool showLostCapacity = GetEquippedModuleAmount(info) > 1 && displayHealth < displayMaxHealth;
+            hudHpLostFill.gameObject.SetActive(showLostCapacity);
+        }
+
         hudHpFill.anchorMax = new Vector2(hpRatio, 1f);
+        hudHpFill.offsetMin = new Vector2(3f, 3f);
+        hudHpFill.offsetMax = new Vector2(-3f, -3f);
         hudHpFill.GetComponent<Image>().color = GetHpColor(hpRatio);
 
-        hudHpText.SetText($"HP {info.Health}/{info.MaxHealth}");
-        RefreshHpDividers(hudHpDividers, info.MaxHealth);
+        hudHpText.SetText($"HP {displayHealth} / {displayMaxHealth}");
+        RefreshHpDividers(hudHpDividers, displayMaxHealth);
     }
 
     private static Color GetHpColor(float hpRatio)
@@ -1144,7 +1268,7 @@ public class TestDay1PlayUI : MonoBehaviour
             return;
         }
 
-        slot.Background.color = enabled ? slot.ActiveColor : BrokenModuleColor;
+        slot.Background.color = enabled ? ActiveModuleColor : BrokenModuleColor;
         slot.Name.SetText(card.DisplayName);
         slot.Detail.SetText(enabled ? GetModuleBonusLabel(card) : "Damaged");
         if (slot.Passive != null)
@@ -1276,11 +1400,55 @@ public class TestDay1PlayUI : MonoBehaviour
         if (!IronTideGameState.ShouldOpenShopAfterCombat)
         {
             IronTideGameState.CompleteFinalRound(winnerPlayerId);
+            ShowVictoryOverlay(winnerPlayerId);
             return;
         }
 
         IronTideGameState.AwardShopGold(winnerPlayerId);
         StartCoroutine(LoadShoppingAfterRoundDelay());
+    }
+
+    private void ShowVictoryOverlay(int winnerPlayerId)
+    {
+        if (victoryOverlayRoot == null)
+            return;
+
+        string winnerName = IronTideGameState.GetPlayerDisplayName(winnerPlayerId);
+        Color winnerColor = IronTideGameState.GetPlayerColor(winnerPlayerId, GoldColor);
+
+        if (victoryTitle != null)
+        {
+            victoryTitle.SetText($"{winnerName} won the match!");
+            victoryTitle.color = winnerColor;
+        }
+
+        if (victorySubtitle != null)
+            victorySubtitle.SetText($"Round {IronTideGameState.CombatRound} complete");
+
+        if (rosterPanelRoot != null)
+            rosterPanelRoot.gameObject.SetActive(false);
+        rosterOpen = false;
+
+        if (moduleTooltip != null)
+            moduleTooltip.gameObject.SetActive(false);
+        hoveredSlot = null;
+
+        victoryOverlayRoot.gameObject.SetActive(true);
+        victoryOverlayRoot.SetAsLastSibling();
+    }
+
+    private void ResetMatch()
+    {
+        Time.timeScale = 1f;
+        IronTideGameState.ResetAll();
+        SceneManager.LoadScene(IronTideGameState.CombatSceneName);
+    }
+
+    private void ReturnToMainMenu()
+    {
+        Time.timeScale = 1f;
+        IronTideGameState.ResetAll();
+        SceneManager.LoadScene(MainMenuSceneName);
     }
 
     private IEnumerator LoadShoppingAfterRoundDelay()
@@ -1457,6 +1625,20 @@ public class TestDay1PlayUI : MonoBehaviour
         outline.effectDistance = new Vector2(1.2f, -1.2f);
     }
 
+    private static void AddNeutralHudOutline(RectTransform rect, Vector2 distance)
+    {
+        if (rect == null)
+            return;
+
+        Shadow shadow = rect.gameObject.AddComponent<Shadow>();
+        shadow.effectColor = new Color(0f, 0f, 0f, 0.58f);
+        shadow.effectDistance = distance;
+
+        Outline outline = rect.gameObject.AddComponent<Outline>();
+        outline.effectColor = new Color(0f, 0f, 0f, 0.55f);
+        outline.effectDistance = new Vector2(1f, -1f);
+    }
+
     private static RectTransform CreatePanel(string name, Transform parent, Color color)
     {
         var panelObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
@@ -1517,6 +1699,7 @@ public class TestDay1PlayUI : MonoBehaviour
         Transform oldHud = transform.Find("Combat Command HUD");
         Transform oldRoster = transform.Find("All Player Module Panel");
         Transform oldTooltip = transform.Find("Module Tooltip");
+        Transform oldVictory = transform.Find("Victory Overlay");
 
         if (oldSidebar != null)
         {
@@ -1534,6 +1717,10 @@ public class TestDay1PlayUI : MonoBehaviour
         {
             DestroyImmediate(oldTooltip.gameObject);
         }
+        if (oldVictory != null)
+        {
+            DestroyImmediate(oldVictory.gameObject);
+        }
 
         ResolveShipReferences();
 
@@ -1543,6 +1730,7 @@ public class TestDay1PlayUI : MonoBehaviour
         hudSprites = HudSprites.Create();
         BuildCombatHud(transform);
         BuildModuleTooltip(transform);
+        BuildVictoryOverlay(transform);
 
         RefreshAllModulePanels();
     }
@@ -1750,6 +1938,7 @@ public class TestDay1PlayUI : MonoBehaviour
     {
         public Ship Ship;
         public TextMeshProUGUI Title;
+        public RectTransform HpLostFill;
         public RectTransform HpFill;
         public List<RectTransform> HpDividers;
         public TextMeshProUGUI HpText;

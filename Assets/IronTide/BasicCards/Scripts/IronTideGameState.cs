@@ -21,7 +21,7 @@ public static class IronTideGameState
     public const int WinnerBonus = 10;
     public const int MaxCombatRounds = 3;
     public const string ShoppingSceneName = "Shopping Phase";
-    public const string CombatSceneName = "GameMap";
+    public const string CombatSceneName = "GameMap_Env";
 
     private static readonly List<IronTidePlayerState> players = new List<IronTidePlayerState>();
     private static readonly Color[] defaultPlayerColors =
@@ -154,7 +154,15 @@ public static class IronTideGameState
         if (ships == null)
             return;
 
-        EnsurePlayers(ships.Count);
+        int requiredPlayerCount = players.Count;
+        for (int i = 0; i < ships.Count; i++)
+        {
+            int playerId = GetShipPlayerId(ships[i], i);
+            if (playerId >= 0)
+                requiredPlayerCount = Math.Max(requiredPlayerCount, playerId + 1);
+        }
+
+        EnsurePlayers(Math.Max(requiredPlayerCount, ships.Count));
 
         for (int i = 0; i < ships.Count; i++)
         {
@@ -162,7 +170,11 @@ public static class IronTideGameState
             if (ship == null || ship.shipInfo == null)
                 continue;
 
-            IronTidePlayerState player = players[i];
+            int playerId = GetShipPlayerId(ship, i);
+            IronTidePlayerState player = GetPlayer(playerId);
+            if (player == null)
+                continue;
+
             player.WeaponModuleId = GetCardId(ship.shipInfo.WeaponModule);
             player.ArmorModuleId = GetCardId(ship.shipInfo.ArmorModule);
             player.EngineModuleId = GetCardId(ship.shipInfo.EngineModule);
@@ -223,6 +235,14 @@ public static class IronTideGameState
     private static string GetCardId(IronTide.BasicCards.IronTideModuleCardEntry card)
     {
         return card != null && card.IsValid ? card.Id : string.Empty;
+    }
+
+    private static int GetShipPlayerId(Ship ship, int fallbackPlayerId)
+    {
+        if (ship != null && ship.turnPlayerController != null)
+            return ship.turnPlayerController.playerID;
+
+        return fallbackPlayerId;
     }
 
     private static void ApplyPlayerDefaults(IronTidePlayerState player)

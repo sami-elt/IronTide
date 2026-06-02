@@ -9,8 +9,8 @@ EditorBuildSettings:
     path: Assets/GameDemo.unity
     guid: 829a86ba161cdd840842063447f41aab
   - enabled: 1
-    path: Assets/Maps/Scenes/GameMap.unity
-    guid: 8f5458d46c7c9bf479fa2e5f5f12f82f
+    path: Assets/Maps/Scenes/GameMap_Env.unity
+    guid: 15e8a02406388764082a0342012ff9cc
   - enabled: 1
     path: Assets/Shopping Phase.unity
     guid: 7bd38afeb6d183745b478ef64d797041
