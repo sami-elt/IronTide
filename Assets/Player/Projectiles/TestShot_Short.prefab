@@ -230,11 +230,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9fc6add94d422b843abbdc929a2631f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponProjectiles
-  speed: 14
+  speed: 13
   hitEffectPrefab: {fileID: 1499802335197950763, guid: 7bc92711b1e9069419899ed745dde0d4, type: 3}
   targetHeightOffset: 0.8
-  hitDistance: 0.35
-  lifeTime: 5
+  hitDistance: 0.45
+  lifeTime: 3
+  arcHeight: 0.25
+  spreadChildProjectiles: 1
+  childSpread: 0.42
 --- !u!96 &2098755921832692027
 TrailRenderer:
   serializedVersion: 4

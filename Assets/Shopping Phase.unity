@@ -656,6 +656,9 @@ MonoBehaviour:
   buttonPressedSprite: {fileID: 0}
   headingFont: {fileID: 0}
   bodyFont: {fileID: 0}
+  weaponModuleIcon: {fileID: 21300000, guid: 05f17a2e373de4c09ac6149eee65d27f, type: 3}
+  armorModuleIcon: {fileID: 21300000, guid: 87dd8e552c5484b8081fe7546af31551, type: 3}
+  engineModuleIcon: {fileID: 21300000, guid: b38639500ce4a4d26a3bffb622aac3cf, type: 3}
   highPowerRowY: 220
   shopRowY: -150
   ownedRowY: -430
@@ -669,6 +672,8 @@ MonoBehaviour:
   ownedCardOffsetY: -4
   ownedPreviewCardSize: {x: 214, y: 304}
   ownedPreviewOffsetY: 214
+  shopPreviewCardSize: {x: 214, y: 312}
+  shopPreviewScale: 1.65
 --- !u!224 &1527363434 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4074951006874003167, guid: 5a4412ae6207a4126b4c08f748fa82e8, type: 3}
