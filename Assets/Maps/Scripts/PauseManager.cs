@@ -53,4 +53,9 @@ public class PauseManager : MonoBehaviour
         SceneManager.LoadScene("GameDemo");
     }
 
+    private void OnDestroy()
+    {
+        if (paused)
+            Time.timeScale = 1f;
+    }
 }

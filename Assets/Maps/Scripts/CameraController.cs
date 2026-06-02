@@ -26,6 +26,7 @@ public class CameraController : MonoBehaviour
     public float topDownYaw = 0f;
     [Range(35f, 65f)] public float topDownFieldOfView = 48f;
     [Range(1f, 1.4f)] public float topDownMapPadding = 1.12f;
+    [Range(0f, 0.35f)] public float topDownBottomViewportReserve = 0.22f;
 
     [Header("Zoom")]
     public float zoomSpeed = 10f;
@@ -35,16 +36,16 @@ public class CameraController : MonoBehaviour
     public float maxFieldOfView = 65f;
 
     [Header("Movement")]
-    public float moveSpeed = 20f;
+    public float moveSpeed = 12f;
     public float mapLimit = 100f;
-    public float followSmoothTime = 0.55f;
-    public float rotationSmoothSpeed = 5f;
+    public float followSmoothTime = 1.15f;
+    public float rotationSmoothSpeed = 2.75f;
     public float orthographicFocusHeight = 0.8f;
     public bool useSafeTurnTransitions = true;
     [Range(60f, 82f)] public float turnTransitionPitch = 72f;
     public float turnTransitionDistanceMultiplier = 1.15f;
-    public float turnTransitionDuration = 1.45f;
-    public float turnTransitionSpeedMultiplier = 1.15f;
+    public float turnTransitionDuration = 2.35f;
+    public float turnTransitionSpeedMultiplier = 0.75f;
     public float focusReadyDistance = 0.18f;
     public float focusReadyAngle = 1f;
 
@@ -411,7 +412,7 @@ public class CameraController : MonoBehaviour
         float speed = Mathf.Max(1f, moveSpeed * Mathf.Max(0.01f, turnTransitionSpeedMultiplier));
         float distanceDuration = Vector3.Distance(turnTransitionStartPosition, finalTurnPosition) / speed;
         float baseDuration = turnTransitionDuration / Mathf.Max(0.01f, turnTransitionSpeedMultiplier);
-        currentTurnTransitionDuration = Mathf.Clamp(Mathf.Max(baseDuration, distanceDuration), 0.75f, 2.2f);
+        currentTurnTransitionDuration = Mathf.Clamp(Mathf.Max(baseDuration, distanceDuration), 1.2f, 3.4f);
 
         targetPosition = finalTurnPosition;
         targetRotation = finalTurnRotation;
@@ -608,7 +609,8 @@ public class CameraController : MonoBehaviour
         for (int i = 0; i < 24; i++)
         {
             float testDistance = (minDistance + maxDistance) * 0.5f;
-            transform.position = target - forward * testDistance;
+            Vector3 framedTarget = GetHudAdjustedTopDownTarget(target, rotation, testDistance);
+            transform.position = framedTarget - forward * testDistance;
             transform.rotation = rotation;
 
             if (CameraBoundsFitViewport(bounds))
@@ -617,7 +619,21 @@ public class CameraController : MonoBehaviour
                 minDistance = testDistance;
         }
 
-        position = target - forward * (maxDistance * topDownMapPadding);
+        float finalDistance = maxDistance * topDownMapPadding;
+        Vector3 finalTarget = GetHudAdjustedTopDownTarget(target, rotation, finalDistance);
+        position = finalTarget - forward * finalDistance;
+    }
+
+    Vector3 GetHudAdjustedTopDownTarget(Vector3 target, Quaternion rotation, float distance)
+    {
+        Vector3 screenUp = rotation * Vector3.up;
+        screenUp.y = 0f;
+        if (screenUp.sqrMagnitude < 0.0001f)
+            return target;
+
+        float halfViewHeight = Mathf.Tan(topDownFieldOfView * 0.5f * Mathf.Deg2Rad) * distance;
+        float hudOffset = halfViewHeight * topDownBottomViewportReserve;
+        return target - screenUp.normalized * hudOffset;
     }
 
     void FramePerspectiveBounds(Bounds bounds)

@@ -30,7 +30,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 265.95828, y: 0.2218, z: -118.36629}
-  m_LocalScale: {x: 0.08, y: 0.5, z: 0.08}
+  m_LocalScale: {x: 0.055, y: 0.42, z: 0.055}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -104,11 +104,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9fc6add94d422b843abbdc929a2631f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponProjectiles
-  speed: 26
+  speed: 32
   hitEffectPrefab: {fileID: 1499802335197950763, guid: 7bc92711b1e9069419899ed745dde0d4, type: 3}
   targetHeightOffset: 0.8
   hitDistance: 0.35
-  lifeTime: 5
+  lifeTime: 4
+  arcHeight: 0.18
+  spreadChildProjectiles: 0
+  childSpread: 0.35
 --- !u!96 &7685855035736948461
 TrailRenderer:
   serializedVersion: 4

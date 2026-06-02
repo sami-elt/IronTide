@@ -17,10 +17,13 @@ namespace IronTide.BasicCards
         private Image _background;
         private Image _frame;
         private Image _topBand;
+        private Image _moduleIconImage;
         private TMP_Text _iconText;
         private TMP_Text _tierText;
+        private Image _diceBadge;
         private TMP_Text _titleText;
         private TMP_Text _diceText;
+        private Image _modifierBubble;
         private TMP_Text _modifierText;
         private Image _artFrame;
         private Image _artImage;
@@ -30,16 +33,18 @@ namespace IronTide.BasicCards
 
         private Vector3 _initialScale;
         private Color _baseColor;
+        private Sprite _moduleIconSprite;
 
         internal IronTideModuleCardEntry Card => _card;
 
         public void Initialize(BasicCardShopController controller, IronTideModuleCardEntry card,
-            CardInteractionMode mode, CardVisualMode visualMode = CardVisualMode.Standard)
+            CardInteractionMode mode, CardVisualMode visualMode = CardVisualMode.Standard, Sprite moduleIconSprite = null)
         {
             _controller = controller;
             _card = card;
             _mode = mode;
             _visualMode = visualMode;
+            _moduleIconSprite = moduleIconSprite;
 
             EnsureBuilt();
             ApplyCard();
@@ -49,7 +54,10 @@ namespace IronTide.BasicCards
         public void OnPointerEnter(PointerEventData eventData)
         {
             transform.localScale = _initialScale * (_visualMode == CardVisualMode.Compact ? 1.08f : 1.02f);
-            _background.color = Tint(_baseColor, 0.05f);
+            if (_visualMode == CardVisualMode.Compact)
+                _background.color = Tint(_baseColor, 0.05f);
+            else
+                _frame.color = Tint(_baseColor, 0.02f);
 
             if (_mode == CardInteractionMode.Equipped && _visualMode == CardVisualMode.Compact)
                 _controller?.ShowOwnedCardPreview(_card);
@@ -60,7 +68,10 @@ namespace IronTide.BasicCards
         public void OnPointerExit(PointerEventData eventData)
         {
             transform.localScale = _initialScale;
-            _background.color = _baseColor;
+            if (_visualMode == CardVisualMode.Compact)
+                _background.color = _baseColor;
+            else
+                _frame.color = Tint(_baseColor, -0.08f);
 
             if (_mode == CardInteractionMode.Equipped && _visualMode == CardVisualMode.Compact)
                 _controller?.HideOwnedCardPreview(_card);
@@ -91,40 +102,45 @@ namespace IronTide.BasicCards
 
         private void BuildStandardLayout(RectTransform rectTransform)
         {
-            _frame = CreateImage("Frame", rectTransform, new Color(0f, 0f, 0f, 0.14f),
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(204f, 300f));
+            _frame = CreateImage("Frame", rectTransform, new Color(0.015f, 0.018f, 0.020f, 0.42f),
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -8f), new Vector2(206f, 268f));
 
-            _topBand = CreateImage("TopBand", rectTransform, new Color(0f, 0f, 0f, 0.15f),
-                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -28f), new Vector2(204f, 56f));
+            _topBand = CreateImage("TopBand", rectTransform, new Color(0.02f, 0.025f, 0.028f, 0.48f),
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -16f), new Vector2(196f, 64f));
 
-            var iconBadge = CreateImage("IconBadge", _topBand.rectTransform, new Color(1f, 1f, 1f, 0.17f),
-                new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(20f, 0f), new Vector2(36f, 36f));
+            var iconBadge = CreateImage("IconBadge", _topBand.rectTransform, new Color(0.88f, 0.94f, 0.84f, 0.88f),
+                new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(10f, 0f), new Vector2(44f, 44f));
+            _moduleIconImage = CreateImage("ModuleIcon", iconBadge.rectTransform, Color.white,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(34f, 34f));
+            _moduleIconImage.preserveAspect = true;
             _iconText = CreateText("IconText", iconBadge.rectTransform, 16, FontStyles.Bold,
                 Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero,
                 TextAlignmentOptions.Center, Color.white, 11f, 16f);
 
-            _tierText = CreateText("TierText", _topBand.rectTransform, 14, FontStyles.Bold,
-                new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(60f, 0f), new Vector2(78f, 22f),
-                TextAlignmentOptions.Left, new Color(0.95f, 0.97f, 1f, 0.98f), 10f, 14f);
+            _tierText = CreateText("TierText", _topBand.rectTransform, 11.5f, FontStyles.Bold,
+                new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(58f, 12f), new Vector2(60f, 16f),
+                TextAlignmentOptions.Left, new Color(0.88f, 0.93f, 1f, 0.84f), 8.5f, 11.5f);
 
-            var diceBadge = CreateImage("DiceBadge", _topBand.rectTransform, new Color(1f, 1f, 1f, 0.9f),
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(26f, 0f), new Vector2(42f, 36f));
-            _diceText = CreateText("DiceText", diceBadge.rectTransform, 13, FontStyles.Bold,
+            _titleText = CreateText("TitleText", _topBand.rectTransform, 14f, FontStyles.Bold,
+                new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(58f, -11f), new Vector2(92f, 28f),
+                TextAlignmentOptions.Left, Color.white, 9f, 14f);
+            _titleText.overflowMode = TextOverflowModes.Ellipsis;
+
+            _diceBadge = CreateImage("DiceBadge", _topBand.rectTransform, new Color(0.92f, 0.90f, 0.82f, 0.86f),
+                new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-10f, 12f), new Vector2(38f, 23f));
+            _diceText = CreateText("DiceText", _diceBadge.rectTransform, 11.2f, FontStyles.Bold,
                 Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero,
-                TextAlignmentOptions.Center, new Color(0.25f, 0.27f, 0.31f, 1f), 9f, 13f);
+                TextAlignmentOptions.Center, new Color(0.18f, 0.19f, 0.21f, 1f), 8f, 11.2f);
 
-            var modifierBubble = CreateImage("ModifierBubble", _topBand.rectTransform, new Color(1f, 1f, 1f, 0.2f),
-                new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-20f, 0f), new Vector2(42f, 42f));
-            _modifierText = CreateText("ModifierText", modifierBubble.rectTransform, 22, FontStyles.Bold,
+            _modifierBubble = CreateImage("ModifierBubble", _topBand.rectTransform, new Color(0.86f, 0.95f, 0.82f, 0.24f),
+                new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-10f, -15f), new Vector2(38f, 25f));
+            _modifierText = CreateText("ModifierText", _modifierBubble.rectTransform, 15.5f, FontStyles.Bold,
                 Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero,
-                TextAlignmentOptions.Center, Color.white, 14f, 22f);
-
-            _titleText = CreateText("TitleText", rectTransform, 23, FontStyles.Bold,
-                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -68f), new Vector2(184f, 34f),
-                TextAlignmentOptions.Center, Color.white, 13f, 23f);
+                TextAlignmentOptions.Center, Color.white, 10f, 15.5f);
 
             _artFrame = CreateImage("ArtFrame", rectTransform, new Color(1f, 1f, 1f, 0.92f),
                 new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -116f), new Vector2(184f, 44f));
+            _artFrame.gameObject.SetActive(false);
 
             _artImage = CreateImage("ArtImage", _artFrame.rectTransform, Color.white,
                 Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
@@ -134,14 +150,15 @@ namespace IronTide.BasicCards
                 Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero,
                 TextAlignmentOptions.Center, new Color(0.34f, 0.37f, 0.42f, 1f), 11f, 17f);
 
-            _rulesPanel = CreateImage("RulesPanel", rectTransform, new Color(0f, 0f, 0f, 0.22f),
-                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 56f), new Vector2(190f, 154f));
+            _rulesPanel = CreateImage("RulesPanel", rectTransform, new Color(0.015f, 0.025f, 0.018f, 0.52f),
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -88f), new Vector2(186f, 156f));
 
-            _rulesText = CreateText("RulesText", _rulesPanel.rectTransform, 14.5f, FontStyles.Normal,
+            _rulesText = CreateText("RulesText", _rulesPanel.rectTransform, 12.2f, FontStyles.Normal,
                 new Vector2(0f, 0f), new Vector2(1f, 1f), Vector2.zero, new Vector2(-18f, -16f),
-                TextAlignmentOptions.TopLeft, new Color(0.98f, 0.99f, 1f, 1f), 10.5f, 14.5f);
-            _rulesText.margin = new Vector4(10f, 8f, 10f, 8f);
-            _rulesText.lineSpacing = -1f;
+                TextAlignmentOptions.TopLeft, new Color(0.95f, 0.98f, 1f, 0.98f), 9f, 12.2f);
+            _rulesText.margin = new Vector4(10f, 9f, 10f, 9f);
+            _rulesText.lineSpacing = -2f;
+            _rulesText.overflowMode = TextOverflowModes.Ellipsis;
         }
 
         private void BuildCompactLayout(RectTransform rectTransform)
@@ -149,33 +166,9 @@ namespace IronTide.BasicCards
             _frame = CreateImage("Frame", rectTransform, new Color(0f, 0f, 0f, 0.18f),
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(92f, 88f));
 
-            _topBand = CreateImage("TopBand", rectTransform, new Color(0f, 0f, 0f, 0.2f),
-                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -11f), new Vector2(92f, 20f));
-
-            _tierText = CreateText("TierText", _topBand.rectTransform, 10, FontStyles.Bold,
-                new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(12f, 0f), new Vector2(44f, 16f),
-                TextAlignmentOptions.Left, new Color(0.96f, 0.97f, 1f, 0.98f), 7.5f, 10f);
-
-            var modifierBubble = CreateImage("ModifierBubble", rectTransform, new Color(1f, 1f, 1f, 0.2f),
-                new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-12f, -12f), new Vector2(32f, 32f));
-            _modifierText = CreateText("ModifierText", modifierBubble.rectTransform, 16, FontStyles.Bold,
-                Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero,
-                TextAlignmentOptions.Center, Color.white, 10f, 16f);
-
-            _artFrame = CreateImage("ArtFrame", rectTransform, new Color(1f, 1f, 1f, 0.9f),
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 4f), new Vector2(58f, 40f));
-
-            _artImage = CreateImage("ArtImage", _artFrame.rectTransform, Color.white,
-                Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-            _artImage.preserveAspect = true;
-
-            _artPlaceholderText = CreateText("ArtPlaceholder", _artFrame.rectTransform, 11, FontStyles.Bold,
-                Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero,
-                TextAlignmentOptions.Center, new Color(0.34f, 0.37f, 0.42f, 1f), 8f, 11f);
-
-            _iconText = CreateText("IconText", rectTransform, 14, FontStyles.Bold,
-                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 12f), new Vector2(78f, 16f),
-                TextAlignmentOptions.Center, Color.white, 9f, 14f);
+            _moduleIconImage = CreateImage("ModuleIcon", rectTransform, Color.white,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(54f, 54f));
+            _moduleIconImage.preserveAspect = true;
         }
 
         private void ApplyCard()
@@ -187,7 +180,7 @@ namespace IronTide.BasicCards
 
             _frame.color = Tint(_baseColor, -0.08f);
             if (_topBand != null)
-                _topBand.color = Tint(_baseColor, -0.14f);
+                _topBand.color = Tint(_baseColor, -0.18f);
 
             if (_visualMode == CardVisualMode.Compact)
                 ApplyCompactCard();
@@ -198,16 +191,19 @@ namespace IronTide.BasicCards
         private void ApplyStandardCard()
         {
             if (_rulesPanel != null)
-                _rulesPanel.color = Tint(_baseColor, -0.3f);
+                _rulesPanel.color = Tint(_baseColor, -0.24f);
 
             if (_iconText != null)
                 _iconText.text = _card.IconLabel;
+            ApplyModuleIcon();
             if (_tierText != null)
                 _tierText.text = _card.TierLabel;
             if (_titleText != null)
                 _titleText.text = _card.DisplayName;
             if (_diceText != null)
                 _diceText.text = _card.DiceLabel;
+            if (_diceBadge != null)
+                _diceBadge.gameObject.SetActive(_card.UsesDice);
             if (_modifierText != null)
                 _modifierText.text = _card.ModifierLabel;
 
@@ -225,8 +221,36 @@ namespace IronTide.BasicCards
                 _modifierText.text = _card.ModifierLabel;
             if (_iconText != null)
                 _iconText.text = _card.DisplayName;
+            ApplyModuleIcon();
 
             ApplyArtwork();
+        }
+
+        private void ApplyModuleIcon()
+        {
+            if (_moduleIconImage == null)
+                return;
+
+            Sprite icon = _moduleIconSprite != null ? _moduleIconSprite : _card.ArtworkSprite;
+            if (icon != null)
+            {
+                _moduleIconImage.sprite = icon;
+                _moduleIconImage.color = Color.white;
+                _moduleIconImage.enabled = true;
+                _moduleIconImage.gameObject.SetActive(true);
+
+                if (_iconText != null)
+                    _iconText.gameObject.SetActive(false);
+            }
+            else
+            {
+                _moduleIconImage.sprite = null;
+                _moduleIconImage.enabled = false;
+                _moduleIconImage.gameObject.SetActive(false);
+
+                if (_iconText != null)
+                    _iconText.gameObject.SetActive(true);
+            }
         }
 
         private void ApplyArtwork()
@@ -254,11 +278,11 @@ namespace IronTide.BasicCards
             if (card == null)
                 return string.Empty;
 
-            var baseBlock = $"<b>{card.BaseRulesTitle}</b>\n{card.BaseRulesText}";
+            var baseBlock = $"<color=#F0D27A><b>{card.BaseRulesTitle}</b></color>\n{card.BaseRulesText}";
             if (!card.HasPassive)
                 return baseBlock;
 
-            return $"{baseBlock}\n\n<b>{card.PassiveName}:</b>\n{card.PassiveDescription}";
+            return $"{baseBlock}\n\n<color=#F0D27A><b>{card.PassiveName}:</b></color>\n{card.PassiveDescription}";
         }
 
         private static Image CreateImage(string name, RectTransform parent, Color color, Vector2 anchorMin,
@@ -313,13 +337,13 @@ namespace IronTide.BasicCards
             switch (tier)
             {
                 case IronTideCardTier.Tier1:
-                    return new Color(0.44f, 0.67f, 0.36f, 1f);
+                    return new Color(0.31f, 0.53f, 0.25f, 1f);
                 case IronTideCardTier.Tier2:
-                    return new Color(0.58f, 0.54f, 0.8f, 1f);
+                    return new Color(0.43f, 0.40f, 0.65f, 1f);
                 case IronTideCardTier.Legendary:
-                    return new Color(0.77f, 0.62f, 0.24f, 1f);
+                    return new Color(0.64f, 0.49f, 0.17f, 1f);
                 case IronTideCardTier.Epic:
-                    return new Color(0.69f, 0.39f, 0.48f, 1f);
+                    return new Color(0.55f, 0.25f, 0.36f, 1f);
                 default:
                     return new Color(0.42f, 0.46f, 0.53f, 1f);
             }

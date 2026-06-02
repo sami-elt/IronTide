@@ -40,6 +40,11 @@ namespace IronTide.BasicCards
         [SerializeField] private TMP_FontAsset headingFont;
         [SerializeField] private TMP_FontAsset bodyFont;
 
+        [Header("Module Icons")]
+        [SerializeField] private Sprite weaponModuleIcon;
+        [SerializeField] private Sprite armorModuleIcon;
+        [SerializeField] private Sprite engineModuleIcon;
+
         [Header("Card Layout")]
         [SerializeField] private float highPowerRowY = 220f;
         [SerializeField] private float shopRowY = -150f;
@@ -47,16 +52,16 @@ namespace IronTide.BasicCards
         [SerializeField] private float shopSlotSpacing = 270f;
         [SerializeField] private float equippedSlotSpacing = 360f;
         [SerializeField] private Vector2 slotSize = new Vector2(222f, 334f);
-        [SerializeField] private Vector2 cardSize = new Vector2(198f, 292f);
+        [SerializeField] private Vector2 cardSize = new Vector2(198f, 276f);
         [SerializeField] private float cardOffsetY = 18f;
 
         [Header("Owned Module Layout")]
         [SerializeField] private Vector2 ownedSlotSize = new Vector2(178f, 120f);
         [SerializeField] private Vector2 ownedCardSize = new Vector2(88f, 88f);
         [SerializeField] private float ownedCardOffsetY = -4f;
-        [SerializeField] private Vector2 ownedPreviewCardSize = new Vector2(214f, 304f);
+        [SerializeField] private Vector2 ownedPreviewCardSize = new Vector2(214f, 276f);
         [SerializeField] private float ownedPreviewOffsetY = 214f;
-        [SerializeField] private Vector2 shopPreviewCardSize = new Vector2(214f, 312f);
+        [SerializeField] private Vector2 shopPreviewCardSize = new Vector2(214f, 276f);
         [SerializeField] private float shopPreviewScale = 1.65f;
 
         private readonly List<IronTideModuleCardEntry> _availableBasicCards = new List<IronTideModuleCardEntry>();
@@ -67,6 +72,7 @@ namespace IronTide.BasicCards
         private readonly List<IronTideModuleCardEntry> _currentAdvancedCards = new List<IronTideModuleCardEntry>();
         private readonly Dictionary<BasicModuleType, IronTideModuleCardEntry> _equippedCards =
             new Dictionary<BasicModuleType, IronTideModuleCardEntry>();
+        private readonly Dictionary<int, string> _shopEntryWeaponIds = new Dictionary<int, string>();
         private readonly List<CardSlotView> _basicSlots = new List<CardSlotView>();
         private readonly List<CardSlotView> _advancedSlots = new List<CardSlotView>();
         private readonly Dictionary<BasicModuleType, CardSlotView> _ownedSlots =
@@ -117,6 +123,7 @@ namespace IronTide.BasicCards
             IronTideGameState.EnsurePlayers(playerCount);
             EnsureDirectShopGold();
             ReserveSavedLoadouts();
+            _shopEntryWeaponIds.Clear();
             _activePlayerIndex = 0;
             HideOwnedCardPreview();
             RollFreshShops();
@@ -289,6 +296,24 @@ namespace IronTide.BasicCards
                 bodyFont = UnityEditor.AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(
                     "Assets/SlimUI/Modern Menu 1/Fonts/LATO-LIGHT SDF.asset");
             }
+
+            if (weaponModuleIcon == null)
+            {
+                weaponModuleIcon = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(
+                    "Assets/IronTide/BasicCards/Icons/Icon_Module_Weapon.png");
+            }
+
+            if (armorModuleIcon == null)
+            {
+                armorModuleIcon = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(
+                    "Assets/IronTide/BasicCards/Icons/Icon_Module_Armor.png");
+            }
+
+            if (engineModuleIcon == null)
+            {
+                engineModuleIcon = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(
+                    "Assets/IronTide/BasicCards/Icons/Icon_Module_Engine.png");
+            }
 #endif
         }
 
@@ -328,7 +353,7 @@ namespace IronTide.BasicCards
             ownedRowY = -418f;
             shopSlotSpacing = 286f;
             slotSize = new Vector2(238f, 348f);
-            cardSize = new Vector2(214f, 312f);
+            cardSize = new Vector2(214f, 276f);
             cardOffsetY = 14f;
             ownedSlotSize = new Vector2(190f, 126f);
             ownedCardSize = new Vector2(98f, 94f);
@@ -392,7 +417,7 @@ namespace IronTide.BasicCards
 
             CreateLabel("BasicHeading", body, "Basic Modules", 24, FontStyles.Bold,
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0f, shopRowY + slotSize.y * 0.5f + 38f), new Vector2(360f, 30f),
+                new Vector2(0f, shopRowY + slotSize.y * 0.5f + 20f), new Vector2(360f, 30f),
                 TextAlignmentOptions.Center, new Color(0.96f, 0.89f, 0.73f, 1f), headingFont);
 
             CreateLabel("OwnedHeading", body, "Equipped Modules", 24, FontStyles.Bold,
@@ -432,7 +457,8 @@ namespace IronTide.BasicCards
                 new Vector2(equippedCenterX + equippedSlotSpacing, ownedRowY), true, BasicModuleType.Engine,
                 ownedSlotSize, ownedCardSize, ownedCardOffsetY, headingFont, bodyFont, buttonSprite, buttonSprite, true);
 
-            _ownedPreviewRoot = CreatePanel("OwnedPreview", body, ownedPreviewCardSize + new Vector2(18f, 18f),
+            var ownedPreviewSize = (ownedPreviewCardSize * shopPreviewScale) + new Vector2(28f, 28f);
+            _ownedPreviewRoot = CreatePanel("OwnedPreview", body, ownedPreviewSize,
                 new Color(0.08f, 0.11f, 0.16f, 0.94f), buttonSprite, Image.Type.Sliced);
             _ownedPreviewRoot.gameObject.SetActive(false);
             _ownedPreviewRoot.SetAsLastSibling();
@@ -444,6 +470,7 @@ namespace IronTide.BasicCards
             _ownedPreviewCardRoot.pivot = new Vector2(0.5f, 0.5f);
             _ownedPreviewCardRoot.anchoredPosition = Vector2.zero;
             _ownedPreviewCardRoot.sizeDelta = ownedPreviewCardSize;
+            _ownedPreviewCardRoot.localScale = Vector3.one * shopPreviewScale;
 
             var shopPreviewSize = (shopPreviewCardSize * shopPreviewScale) + new Vector2(28f, 28f);
             _shopPreviewRoot = CreatePanel("ShopCardPreview", body, shopPreviewSize,
@@ -536,6 +563,7 @@ namespace IronTide.BasicCards
         private void ShowActivePlayer()
         {
             LoadPlayerLoadout(ActivePlayer);
+            RememberShopEntryWeapon(ActivePlayer);
             RefreshOwnedCards();
             UpdateGoldText();
 
@@ -550,7 +578,9 @@ namespace IronTide.BasicCards
                     new Color(0.96f, 0.89f, 0.73f, 1f));
             }
 
-            if (_activePlayerIndex >= playerCount - 1)
+            if (!HasEquippedWeapon())
+                SetStatus($"{playerName} needs a weapon module before leaving the shop.");
+            else if (_activePlayerIndex >= playerCount - 1)
                 SetStatus($"{playerName} shopping. Press {GetStartNextRoundLabel()} when done.");
             else
                 SetStatus($"{playerName} shopping. Buy, sell, or press Next Player.");
@@ -583,11 +613,120 @@ namespace IronTide.BasicCards
             _equippedCards.TryGetValue(BasicModuleType.Weapon, out var weapon);
             _equippedCards.TryGetValue(BasicModuleType.Armor, out var armor);
             _equippedCards.TryGetValue(BasicModuleType.Engine, out var engine);
-            IronTideGameState.UpdatePlayerLoadout(_activePlayerIndex, weapon, armor, engine);
+            int playerId = ActivePlayer != null ? ActivePlayer.PlayerId : _activePlayerIndex;
+            IronTideGameState.UpdatePlayerLoadout(playerId, weapon, armor, engine);
+        }
+
+        private bool CanLeaveActivePlayer()
+        {
+            if (HasEquippedWeapon())
+                return true;
+
+            if (TryRestoreEntryWeaponWhenUnableToBuy())
+                return true;
+
+            string playerName = IronTideGameState.GetPlayerDisplayName(_activePlayerIndex);
+            SetStatus($"{playerName} needs a weapon module before leaving the shop.");
+            UpdateRerollButton();
+            return false;
+        }
+
+        private void RememberShopEntryWeapon(IronTidePlayerState player)
+        {
+            if (player == null || _shopEntryWeaponIds.ContainsKey(player.PlayerId))
+                return;
+
+            _shopEntryWeaponIds[player.PlayerId] = player.WeaponModuleId;
+        }
+
+        private bool HasEquippedWeapon()
+        {
+            return _equippedCards.TryGetValue(BasicModuleType.Weapon, out var weapon) &&
+                weapon != null && weapon.IsValid;
+        }
+
+        private bool AllPlayersHaveSavedWeapons()
+        {
+            for (int i = 0; i < IronTideGameState.Players.Count; i++)
+            {
+                IronTidePlayerState player = IronTideGameState.GetPlayer(i);
+                if (player == null || !HasValidWeaponId(player.WeaponModuleId))
+                {
+                    string playerName = IronTideGameState.GetPlayerDisplayName(i);
+                    SetStatus($"{playerName} needs a weapon module before the next round can start.");
+                    UpdateRerollButton();
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private bool HasValidWeaponId(string moduleId)
+        {
+            if (cardLibrary == null || string.IsNullOrWhiteSpace(moduleId))
+                return false;
+
+            IronTideModuleCardEntry card = cardLibrary.FindById(moduleId);
+            return card != null && card.IsValid && card.SlotType == BasicModuleType.Weapon;
+        }
+
+        private bool TryRestoreEntryWeaponWhenUnableToBuy()
+        {
+            if (CanAffordVisibleWeapon())
+                return false;
+
+            IronTidePlayerState player = ActivePlayer;
+            if (player == null || !_shopEntryWeaponIds.TryGetValue(player.PlayerId, out string weaponId))
+                return false;
+
+            IronTideModuleCardEntry weapon = cardLibrary != null ? cardLibrary.FindById(weaponId) : null;
+            if (weapon == null || !weapon.IsValid || weapon.SlotType != BasicModuleType.Weapon)
+                return false;
+
+            _equippedCards[BasicModuleType.Weapon] = weapon;
+            RemoveFromAvailablePool(weapon);
+            RemoveFromCurrentRows(weapon);
+            FillOpenShopSlots();
+
+            RefreshOwnedCards();
+            RefreshShopCards();
+            UpdateRerollButton();
+            SaveCurrentPlayerLoadout();
+
+            SetStatus($"{player.DisplayName} could not afford a weapon, so {weapon.DisplayName} was restored.");
+            return true;
+        }
+
+        private bool MaybeRestoreEntryWeaponIfNeeded()
+        {
+            return !HasEquippedWeapon() && TryRestoreEntryWeaponWhenUnableToBuy();
+        }
+
+        private bool CanAffordVisibleWeapon()
+        {
+            return CanAffordVisibleWeapon(_currentBasicCards) || CanAffordVisibleWeapon(_currentAdvancedCards);
+        }
+
+        private bool CanAffordVisibleWeapon(List<IronTideModuleCardEntry> cards)
+        {
+            if (cards == null)
+                return false;
+
+            foreach (IronTideModuleCardEntry card in cards)
+            {
+                if (card != null && card.IsValid && card.SlotType == BasicModuleType.Weapon && CurrentGold >= card.BuyCost)
+                    return true;
+            }
+
+            return false;
         }
 
         private void NextPlayer()
         {
+            if (!CanLeaveActivePlayer())
+                return;
+
             SaveCurrentPlayerLoadout();
 
             int playerCount = IronTideGameState.Players.Count;
@@ -605,7 +744,13 @@ namespace IronTide.BasicCards
 
         private void FinishShoppingAndLoadNextRound()
         {
+            if (!CanLeaveActivePlayer())
+                return;
+
             SaveCurrentPlayerLoadout();
+            if (!AllPlayersHaveSavedWeapons())
+                return;
+
             IronTideGameState.CompleteShopping();
             SceneManager.LoadScene(IronTideGameState.CombatSceneName);
         }
@@ -621,6 +766,10 @@ namespace IronTide.BasicCards
             CurrentGold -= basicRerollCost;
             RollFreshShop(_availableBasicCards, _currentBasicCards, _basicSlots.Count);
             RefreshShopCards();
+            UpdateRerollButton();
+            if (MaybeRestoreEntryWeaponIfNeeded())
+                return;
+
             SetStatus($"Rerolled Tier 1 modules for {basicRerollCost} gold.");
         }
 
@@ -635,6 +784,10 @@ namespace IronTide.BasicCards
             CurrentGold -= advancedRerollCost;
             RollFreshAdvancedShop();
             RefreshShopCards();
+            UpdateRerollButton();
+            if (MaybeRestoreEntryWeaponIfNeeded())
+                return;
+
             SetStatus($"Rerolled high-power modules for {advancedRerollCost} gold.");
         }
 
@@ -739,7 +892,7 @@ namespace IronTide.BasicCards
 
             var cardView = viewObject.GetComponent<IronTideModuleCardView>();
             var visualMode = mode == CardInteractionMode.Equipped ? CardVisualMode.Compact : CardVisualMode.Standard;
-            cardView.Initialize(this, sourceCard, mode, visualMode);
+            cardView.Initialize(this, sourceCard, mode, visualMode, GetModuleIcon(sourceCard));
 
             var button = viewObject.GetComponent<Button>();
             button.transition = Selectable.Transition.None;
@@ -752,7 +905,7 @@ namespace IronTide.BasicCards
                 slot.PriceFrame.enabled = mode == CardInteractionMode.Shop;
             slot.PriceLabel.text = mode == CardInteractionMode.Shop
                 ? $"{sourceCard.BuyCost}g"
-                : $"Sell {sourceCard.SellValue}g";
+                : string.Empty;
         }
 
         private void ClearSlot(CardSlotView slot, string placeholderText)
@@ -800,7 +953,11 @@ namespace IronTide.BasicCards
 
             RefreshOwnedCards();
             RefreshShopCards();
+            UpdateRerollButton();
             SaveCurrentPlayerLoadout();
+
+            if (MaybeRestoreEntryWeaponIfNeeded())
+                return;
 
             SetStatus($"Bought {sourceCard.DisplayName}.");
         }
@@ -824,7 +981,13 @@ namespace IronTide.BasicCards
             RefreshOwnedCards();
             UpdateRerollButton();
             SaveCurrentPlayerLoadout();
-            SetStatus($"Sold {sourceCard.DisplayName} for {sourceCard.SellValue} gold.");
+            if (MaybeRestoreEntryWeaponIfNeeded())
+                return;
+
+            if (sourceCard.SlotType == BasicModuleType.Weapon)
+                SetStatus($"Sold {sourceCard.DisplayName} for {sourceCard.SellValue} gold. Buy a weapon module before leaving the shop.");
+            else
+                SetStatus($"Sold {sourceCard.DisplayName} for {sourceCard.SellValue} gold.");
         }
 
         private void RemoveFromAvailablePool(IronTideModuleCardEntry card)
@@ -978,12 +1141,13 @@ namespace IronTide.BasicCards
             }
 
             int playerCount = IronTideGameState.Players.Count;
+            bool hasWeapon = HasEquippedWeapon();
 
             if (_nextPlayerButton != null)
-                _nextPlayerButton.interactable = playerCount > 1 && _activePlayerIndex < playerCount - 1;
+                _nextPlayerButton.interactable = hasWeapon && playerCount > 1 && _activePlayerIndex < playerCount - 1;
 
             if (_startGameButton != null)
-                _startGameButton.interactable = playerCount > 0 && _activePlayerIndex >= playerCount - 1;
+                _startGameButton.interactable = hasWeapon && playerCount > 0 && _activePlayerIndex >= playerCount - 1;
 
             if (_startGameButtonLabel != null)
                 _startGameButtonLabel.text = GetStartNextRoundLabel();
@@ -1041,7 +1205,8 @@ namespace IronTide.BasicCards
             rectTransform.localRotation = Quaternion.identity;
 
             _ownedPreviewCard = previewObject.GetComponent<IronTideModuleCardView>();
-            _ownedPreviewCard.Initialize(this, sourceCard, CardInteractionMode.Preview, CardVisualMode.Standard);
+            _ownedPreviewCard.Initialize(this, sourceCard, CardInteractionMode.Preview, CardVisualMode.Standard,
+                GetModuleIcon(sourceCard));
             _previewedOwnedCard = sourceCard;
         }
 
@@ -1087,7 +1252,8 @@ namespace IronTide.BasicCards
             previewImage.raycastTarget = false;
 
             _shopPreviewCard = previewObject.GetComponent<IronTideModuleCardView>();
-            _shopPreviewCard.Initialize(this, sourceCard, CardInteractionMode.Preview, CardVisualMode.Standard);
+            _shopPreviewCard.Initialize(this, sourceCard, CardInteractionMode.Preview, CardVisualMode.Standard,
+                GetModuleIcon(sourceCard));
             previewObject.GetComponent<Image>().raycastTarget = false;
             _previewedShopCard = sourceCard;
         }
@@ -1153,7 +1319,7 @@ namespace IronTide.BasicCards
 
         private Vector2 GetOwnedPreviewPosition(CardSlotView slot, BasicModuleType slotType)
         {
-            var previewSize = ownedPreviewCardSize + new Vector2(18f, 18f);
+            var previewSize = (ownedPreviewCardSize * shopPreviewScale) + new Vector2(28f, 28f);
             var sideOffset = (ownedSlotSize.x * 0.5f) + (previewSize.x * 0.5f) + 28f;
             var defaultY = slot.Root.anchoredPosition.y + ownedPreviewOffsetY;
             var previewPosition = new Vector2(slot.Root.anchoredPosition.x, defaultY);
@@ -1218,6 +1384,24 @@ namespace IronTide.BasicCards
                     return "Engine";
                 default:
                     return "Module";
+            }
+        }
+
+        private Sprite GetModuleIcon(IronTideModuleCardEntry card)
+        {
+            if (card == null)
+                return null;
+
+            switch (card.SlotType)
+            {
+                case BasicModuleType.Weapon:
+                    return weaponModuleIcon;
+                case BasicModuleType.Armor:
+                    return armorModuleIcon;
+                case BasicModuleType.Engine:
+                    return engineModuleIcon;
+                default:
+                    return null;
             }
         }
 
@@ -1388,7 +1572,7 @@ namespace IronTide.BasicCards
                 priceFrameRect.anchorMin = new Vector2(0.5f, 0.5f);
                 priceFrameRect.anchorMax = new Vector2(0.5f, 0.5f);
                 priceFrameRect.pivot = new Vector2(0.5f, 0.5f);
-                priceFrameRect.anchoredPosition = new Vector2(0f, cardOffsetY - (cardSize.y * 0.5f) + 28f);
+                priceFrameRect.anchoredPosition = new Vector2(0f, cardOffsetY - (cardSize.y * 0.5f) + 14.5f);
                 priceFrameRect.sizeDelta = new Vector2(Mathf.Clamp(cardSize.x - 54f, 96f, 144f), 34f);
 
                 priceFrame = priceFrameObject.GetComponent<Image>();
